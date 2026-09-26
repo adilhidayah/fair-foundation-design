@@ -675,7 +675,7 @@
             <label id="ow-dir-label">Section direction</label>
             <div class="radio-row" id="ow-dir" role="radiogroup" aria-labelledby="ow-dir-label">
               <button data-val="x" class="sel">⟂ x (b<sub>w</sub> = L<sub>f</sub>)</button>
-              <button data-val="y">⟂ y (b<sub>w</sub> = B<sub>f</sub>)</button>
+              <button data-val="y">⟂ z (b<sub>w</sub> = B<sub>f</sub>)</button>
             </div>
           </div>
           <div class="note">Sections at d from the pedestal face (pedestal size and load point from Tab 02). b<sub>w</sub> must equal the cap width perpendicular to the section: <strong id="ow-bw-hint">—</strong> mm. Reactions come from the separate factored LRFD combinations.</div>
@@ -745,7 +745,7 @@
           </div>
         </div>
         <div id="tw-vu-piles-fields" style="display:none;">
-          <div class="note">V<sub>u</sub> = pile reactions outside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along y), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
+          <div class="note">V<sub>u</sub> = pile reactions outside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along z), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
           <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         <div class="field">
@@ -753,7 +753,7 @@
           <input type="number" id="tw-muz" value="0" step="10">
         </div>
         <div class="field">
-          <label for="tw-mux"><span>Unbalanced moment M<sub>ux</sub> (bending along y)</span> <span class="unit">kN·m</span></label>
+          <label for="tw-mux"><span>Unbalanced moment M<sub>ux</sub> (bending along z)</span> <span class="unit">kN·m</span></label>
           <input type="number" id="tw-mux" value="0" step="10">
         </div>
         <div class="field">
@@ -808,7 +808,7 @@
         <div class="gt-body">
         <div class="overflow-x">
           <table class="calc-table pile-table" id="pf-pile-table">
-            <tr><th>Pile</th><th>x</th><th>y</th><th></th></tr>
+            <tr><th>Pile</th><th>x</th><th>z</th><th></th></tr>
             <tbody id="pf-pile-body"></tbody>
           </table>
         </div>
@@ -819,7 +819,7 @@
           <input type="number" id="pf-gen-nx" value="2" min="1" step="1">
         </div>
         <div class="field">
-          <label for="pf-gen-ny"><span>Rows (piles along y)</span></label>
+          <label for="pf-gen-ny"><span>Rows (piles along z)</span></label>
           <input type="number" id="pf-gen-ny" value="2" min="1" step="1">
         </div>
         <div class="field">
@@ -827,18 +827,18 @@
           <input type="number" id="pf-gen-sx" value="1.2" min="0" step="0.05">
         </div>
         <div class="field">
-          <label for="pf-gen-sy"><span>Spacing in y</span> <span class="unit">m</span></label>
+          <label for="pf-gen-sy"><span>Spacing in z</span> <span class="unit">m</span></label>
           <input type="number" id="pf-gen-sy" value="1.2" min="0" step="0.05">
         </div>
         <button type="button" id="pf-gen-grid" class="combo-add-btn">Generate grid (replaces all piles)</button>
-        <div class="note">M is applied biaxially: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −y side.</div>
+        <div class="note">M is applied biaxially: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −z side.</div>
         </div>
         </details>
         <details class="gt-group" open>
         <summary>Diagram Display</summary>
         <div class="gt-body">
         <div class="field">
-          <label class="pf-check"><input type="checkbox" id="pf-show-coords" checked> Show coordinates (x / y rulers)</label>
+          <label class="pf-check"><input type="checkbox" id="pf-show-coords" checked> Show coordinates (x / z rulers)</label>
         </div>
         <div class="field">
           <label class="pf-check"><input type="checkbox" id="pf-show-dims" checked> Show dimensions (s<sub>min</sub>, e<sub>min</sub>)</label>
@@ -862,7 +862,7 @@
           <div class="pf-lim-row"><input type="number" id="pf-fit-edge" min="0" step="0.1" placeholder="blank = warning limit"><select id="pf-fit-edge-u" aria-label="Unit"><option value="D" selected>× D</option><option value="mm">mm</option></select></div>
         </div>
         <button type="button" id="pf-fit-cap" class="combo-add-btn">Set B<sub>f</sub> × L<sub>f</sub> from the piles</button>
-        <div class="note" id="pf-fit-msg">B<sub>f</sub> = 2·(largest |x| + edge), L<sub>f</sub> = 2·(largest |y| + edge), rounded up to 50 mm, written to Tab 02 (cap centred on the origin). If the edge field is blank, the edge-distance warning limit below is used.</div>
+        <div class="note" id="pf-fit-msg">B<sub>f</sub> = 2·(largest |x| + edge), L<sub>f</sub> = 2·(largest |z| + edge), rounded up to 50 mm, written to Tab 02 (cap centred on the origin). If the edge field is blank, the edge-distance warning limit below is used.</div>
         </div>
         </details>
         <details class="gt-group" open>
@@ -1105,7 +1105,7 @@
         <div class="section-label">Bolt Layout (manual coordinates, mm)</div>
         <div class="overflow-x">
           <table class="calc-table pile-table" id="ab-bolt-table">
-            <tr><th>Bolt</th><th>x</th><th>y</th><th></th></tr>
+            <tr><th>Bolt</th><th>x</th><th>z</th><th></th></tr>
             <tbody id="ab-bolt-body"></tbody>
           </table>
         </div>
@@ -1117,7 +1117,7 @@
           <input type="number" id="ab-Bp" value="1250" min="0" step="10" readonly>
         </div>
         <div class="field">
-          <label for="ab-Lp"><span>Pedestal length, L<sub>p</sub> (perpendicular, y)</span> <span class="unit">mm</span></label>
+          <label for="ab-Lp"><span>Pedestal length, L<sub>p</sub> (perpendicular, z)</span> <span class="unit">mm</span></label>
           <input type="number" id="ab-Lp" value="1250" min="0" step="10" readonly>
         </div>
         <div class="note" id="ab-ped-src"></div>
@@ -1228,7 +1228,7 @@
           <input type="number" id="rb-Lcap" value="2400" min="0" step="10" readonly>
         </div>
         <div class="field">
-          <label for="rb-Bcap"><span>Cap width ⟂ y-bending, B<sub>cap</sub> (= B<sub>f</sub>)</span> <span class="unit">mm</span></label>
+          <label for="rb-Bcap"><span>Cap width ⟂ z-bending, B<sub>cap</sub> (= B<sub>f</sub>)</span> <span class="unit">mm</span></label>
           <input type="number" id="rb-Bcap" value="2400" min="0" step="10" readonly>
         </div>
         <div class="note">Both widths, the pedestal size B<sub>p</sub> × L<sub>p</sub> and the load point are read from "02 — FOUNDATION DIMENSION" — edit them there. The pedestal size is shown here only when Tab 02 has a pedestal.</div>
@@ -1696,6 +1696,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260926h"></script>
+<script type="module" src="js/app.js?v=20260926j"></script>
 </body>
 </html>

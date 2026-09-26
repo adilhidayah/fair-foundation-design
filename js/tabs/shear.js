@@ -1,12 +1,12 @@
 // Pile cap one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20260926h';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926h';
-import { fmt } from '../core/format.js?v=20260926h';
-import { lastResults, pileList } from '../core/state.js?v=20260926h';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926h';
-import { pileComboLoads } from '../tabs/pile.js?v=20260926h';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926h';
+import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20260926j';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926j';
+import { fmt } from '../core/format.js?v=20260926j';
+import { lastResults, pileList } from '../core/state.js?v=20260926j';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926j';
+import { pileComboLoads } from '../tabs/pile.js?v=20260926j';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926j';
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group
@@ -66,13 +66,13 @@ function punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) {
 // Preview of the pile-reaction shear: formula + governing-combination pile table + every combination's V_u.
 function pileShearHtml(pv) {
   const one = pv.kind === 'one-way', g = pv.gov;
-  const coordName = one ? (pv.axis === 'x' ? 'x' : 'y') : '';
+  const coordName = one ? (pv.axis === 'x' ? 'x' : 'z') : '';
   let html = `<div class="lc-formula">
     <div class="lc-formula-title">V<sub>u</sub> from pile reactions — factored (LRFD) combinations, governing ${escapeHtml(comboLabel(g.combo))}</div>`;
   if (one) {
     html += `Critical sections at d from the pedestal face: ${coordName}<sub>±</sub> = ${coordName}<sub>p</sub> ± (${pv.axis === 'x' ? 'B' : 'L'}<sub>p</sub>/2 + d) = ${fmt(pv.center, 3)} ± (${fmt(pv.half, 3)} + ${fmt(pv.d, 3)}) → ${fmt(g.res.pos.plus, 3)} m / ${fmt(g.res.pos.minus, 3)} m<br>`;
   } else {
-    html += `Critical perimeter at d/2 from the pedestal faces: half-sizes h<sub>x</sub> = c<sub>1</sub>/2 + d/2 = ${fmt(pv.c1 / 2, 3)} + ${fmt(pv.d / 2, 3)} = ${fmt(g.res.hx, 3)} m, h<sub>y</sub> = c<sub>2</sub>/2 + d/2 = ${fmt(g.res.hy, 3)} m, centred at (${fmt(pv.center.x, 3)}, ${fmt(pv.center.y, 3)}) m<br>`;
+    html += `Critical perimeter at d/2 from the pedestal faces: half-sizes h<sub>x</sub> = c<sub>1</sub>/2 + d/2 = ${fmt(pv.c1 / 2, 3)} + ${fmt(pv.d / 2, 3)} = ${fmt(g.res.hx, 3)} m, h<sub>z</sub> = c<sub>2</sub>/2 + d/2 = ${fmt(g.res.hy, 3)} m, centred at (${fmt(pv.center.x, 3)}, ${fmt(pv.center.y, 3)}) m<br>`;
   }
   html += `V<sub>u</sub> = Σ F<sub>i</sub>·share<sub>i</sub>,  share = 1 if s ≥ d<sub>p</sub>/2, 0 if s ≤ −d<sub>p</sub>/2, else (s + d<sub>p</sub>/2)/d<sub>p</sub> — s = distance of the pile centre outside the section, d<sub>p</sub> = ${fmt(pv.dp, 3)} m<br>
     → V<sub>u</sub> = <strong>${fmt(pv.Vu, 1)} kN</strong>${one ? ` (${g.res.side} side)` : ''}
@@ -80,7 +80,7 @@ function pileShearHtml(pv) {
   </div>`;
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>${one ? 'One-way' : 'Punching'} shear — pile reactions in the governing combination ${escapeHtml(comboLabel(g.combo))}</caption>
-    <tr><th>Pile</th><th>x (m)</th><th>y (m)</th><th>F (kN)</th><th>s (m)</th><th>Share</th><th>Share·F (kN)</th></tr>
+    <tr><th>Pile</th><th>x (m)</th><th>z (m)</th><th>F (kN)</th><th>s (m)</th><th>Share</th><th>Share·F (kN)</th></tr>
     ${g.res.perPile.map(p => `<tr class="${p.frac > 0 ? 'governing' : ''}"><td>${p.i}</td><td class="num">${fmt(p.x, 2)}</td><td class="num">${fmt(p.y, 2)}</td><td class="num">${fmt(p.F, 1)}</td><td class="num">${fmt(p.s, 3)}</td><td class="num">${fmt(p.frac, 2)}</td><td class="num">${fmt(p.F * p.frac, 1)}</td></tr>`).join('')}
   </table></div>`;
   html += `<div class="overflow-x"><table class="calc-table">
@@ -269,7 +269,7 @@ export function calcTwoWay() {
     <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
     <tr><td>Direct shear stress</td><td class="clause">V<sub>u</sub>/(b<sub>o</sub>·d) = ${fmt(vu,1)}·10³/(${fmt(bo,0)}·${fmt(d,0)})</td><td class="num">${fmt(ecc.vDirect,3)} MPa</td></tr>
     ${termRows(tz, 'M<sub>z</sub>', 'M<sub>uz</sub> (bending along x)')}
-    ${termRows(tx, 'M<sub>x</sub>', 'M<sub>ux</sub> (bending along y)')}
+    ${termRows(tx, 'M<sub>x</sub>', 'M<sub>ux</sub> (bending along z)')}
     <tr class="governing"><td>Combined stress, v<sub>u</sub></td><td class="clause">V<sub>u</sub>/(b<sub>o</sub>d) + Σ γ<sub>v</sub>M<sub>u</sub>c<sub>AB</sub>/J<sub>c</sub></td><td class="num">${fmt(ecc.vu,3)} MPa</td></tr>
     <tr><td>φ·v<sub>c</sub></td><td class="clause">0.75 × ${fmt(vc_gov,3)}</td><td class="num">${fmt(phiVcStress,3)} MPa</td></tr>
     <tr class="governing"><td>UC</td><td class="clause">v<sub>u</sub> / (φ·v<sub>c</sub>)</td><td class="num">${fmt(uc,3)}</td></tr>

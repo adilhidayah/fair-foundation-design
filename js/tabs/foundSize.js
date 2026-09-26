@@ -1,11 +1,11 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926h';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926h';
-import { fmt } from '../core/format.js?v=20260926h';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926h';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926h';
-import { recalcAll } from '../workflow/recalc.js?v=20260926h';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926j';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926j';
+import { fmt } from '../core/format.js?v=20260926j';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926j';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926j';
+import { recalcAll } from '../workflow/recalc.js?v=20260926j';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -75,7 +75,7 @@ export function calcFoundSize() {
   if (abNote) abNote.innerHTML = hasPed
     ? 'From the pedestal in "02 — FOUNDATION DIMENSION" — edit it there.'
     : `No pedestal in Tab 02: the bolts sit in the ${isPile ? 'pile cap' : 'footing'} itself, so its plan size B<sub>f</sub> × L<sub>f</sub> is used — edit it in "02 — FOUNDATION DIMENSION". Bolt group assumed centred on it.`;
-  const pedNote = hasPed ? 'From the pedestal in "02 — FOUNDATION DIMENSION" (B<sub>p</sub> along x, L<sub>p</sub> along y) — edit it there.'
+  const pedNote = hasPed ? 'From the pedestal in "02 — FOUNDATION DIMENSION" (B<sub>p</sub> along x, L<sub>p</sub> along z) — edit it there.'
     : 'No pedestal in Tab 02 (cap only) — enter the column / base-plate size the load is applied through.';
   ['rb-ped-src', 'tw-ped-src'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = pedNote; });
   const blockGp = 0; // unused by foundationSizing() since the "Only" mode uses input Hf (kept for signature)

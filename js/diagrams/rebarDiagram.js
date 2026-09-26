@@ -1,8 +1,8 @@
-import { fmt } from '../core/format.js?v=20260926h';
+import { fmt } from '../core/format.js?v=20260926j';
 
 // Reinforcement drawings for Section 5 — pure SVG string builders (no DOM access): values in, markup out.
 //   pedestalSectionSVG      5A  pedestal cross-section with the bars of the P-M design
-//   pileCapRebarPlanSVG     5B  plan of the pile cap: piles, pedestal and the bar mats (bottom / top, x / y)
+//   pileCapRebarPlanSVG     5B  plan of the pile cap: piles, pedestal and the bar mats (bottom / top, x / z)
 //   pileCapRebarSectionSVG  5B  section through the pile cap: bar layers, cover, thickness, pedestal and pile stubs
 // The drawings show exactly what was designed (counts, spacing, cover); nothing is recomputed here except geometry.
 
@@ -15,9 +15,9 @@ const svg = (W, H, body) => `<svg class="fdn-diagram" viewBox="0 0 ${W} ${H}" xm
 // Bar-layer styles shared by the plan, the section and the legend.
 const LAYER = {
   xb: { name: 'x-direction bottom', stroke: 'var(--accent)', dash: '', fill: 'var(--accent)' },
-  yb: { name: 'y-direction bottom', stroke: 'var(--pass)', dash: '', fill: 'var(--pass)' },
+  yb: { name: 'z-direction bottom', stroke: 'var(--pass)', dash: '', fill: 'var(--pass)' },
   xt: { name: 'x-direction top', stroke: 'var(--caution)', dash: '7 3', fill: 'var(--caution)' },
-  yt: { name: 'y-direction top', stroke: 'var(--ink-soft)', dash: '2 3', fill: 'var(--ink-soft)' }
+  yt: { name: 'z-direction top', stroke: 'var(--ink-soft)', dash: '2 3', fill: 'var(--ink-soft)' }
 };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -102,7 +102,7 @@ export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers }) {
     out += `<rect class="outline-pedestal" x="${(toX(ped.x) - pw / 2).toFixed(1)}" y="${(toY(ped.y) - ph / 2).toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" style="fill-opacity:0.35;"/>`;
     out += txt(toX(ped.x), toY(ped.y) + 3.5, 'pedestal', 'middle', 'font-weight:600;');
   }
-  // bar mats — bars along x are spread across Lf, bars along y across Bf (positions b/(n+1), as reported in the schedule)
+  // bar mats — bars along x are spread across Lf, bars along z across Bf (positions b/(n+1), as reported in the schedule)
   // (the top mat is drawn 3 px off the bottom mat so the two stay distinguishable in plan)
   const bar = (k, kind, off = 0) => {
     const L = LAYER[kind], nn = layers[kind].n;
@@ -120,12 +120,12 @@ export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers }) {
   if (layers.yt) out += bar('y', 'yt', 3.5);
   if (layers.xt) out += bar('x', 'xt', 3.5);
   // axes
-  out += `<path d="M${(x0 - 14).toFixed(1)} ${(y0 + h + 14).toFixed(1)}h22M${(x0 - 14).toFixed(1)} ${(y0 + h + 14).toFixed(1)}v-22" style="stroke:var(--ink);stroke-width:1.2;fill:none;"/>` + txt(x0 + 12, y0 + h + 18, 'x', 'start') + txt(x0 - 18, y0 + h - 12, 'y', 'end');
+  out += `<path d="M${(x0 - 14).toFixed(1)} ${(y0 + h + 14).toFixed(1)}h22M${(x0 - 14).toFixed(1)} ${(y0 + h + 14).toFixed(1)}v-22" style="stroke:var(--ink);stroke-width:1.2;fill:none;"/>` + txt(x0 + 12, y0 + h + 18, 'x', 'start') + txt(x0 - 18, y0 + h - 12, 'z', 'end');
   out += legend(layers, M.l, y0 + h + 26);
   return svg(W, H, out);
 }
 
-// 5B section (looking along y): the x-direction bars run in the plane of the drawing, the y-direction bars are cut and appear as dots.
+// 5B section (looking along z): the x-direction bars run in the plane of the drawing, the z-direction bars are cut and appear as dots.
 // Bf in m; t, cc, db in mm; piles [{x,y}] (m); D (m); ped = { x, Bp } (m, mm) or null.
 export function pileCapRebarSectionSVG({ Bf, t, cc, db, piles, D, ped, layers }) {
   const W = 640, nLeg = Object.keys(LAYER).filter(k => layers[k]).length;
@@ -148,7 +148,7 @@ export function pileCapRebarSectionSVG({ Bf, t, cc, db, piles, D, ped, layers })
     out += txt(toX(ped.x), y0 - stubUp / 2 + 3.5, 'pedestal', 'middle', 'font-weight:600;');
   }
   out += `<rect class="outline-footing" x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>`;
-  // layers: outer = x-direction (line), inner = y-direction (dots), for the bottom and for the top face
+  // layers: outer = x-direction (line), inner = z-direction (dots), for the bottom and for the top face
   const rDot = Math.max(2.6, db / 2 * pxmm), sw = Math.max(2.4, db * pxmm);
   const yBotOuter = y0 + h - (cc + db / 2) * pxmm, yBotInner = y0 + h - (cc + db * 1.5) * pxmm;
   const yTopOuter = y0 + (cc + db / 2) * pxmm, yTopInner = y0 + (cc + db * 1.5) * pxmm;

@@ -2,13 +2,13 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260926h';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926h';
-import { fmt as fmtRaw } from '../core/format.js?v=20260926h';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260926h';
-import { comboLabel } from '../core/worksheet.js?v=20260926h';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260926h';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260926h';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260926j';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926j';
+import { fmt as fmtRaw } from '../core/format.js?v=20260926j';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260926j';
+import { comboLabel } from '../core/worksheet.js?v=20260926j';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260926j';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260926j';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -36,7 +36,7 @@ export function generatePileGrid() {
   return true;
 }
 // Sets the pile cap plan size in Tab 02 from the pile layout: the cap is centred on the origin, so
-//   Bf = 2·(largest |x| + e),  Lf = 2·(largest |y| + e),  rounded up to 50 mm,   e = edge distance (pile centre to edge).
+//   Bf = 2·(largest |x| + e),  Lf = 2·(largest |z| + e),  rounded up to 50 mm,   e = edge distance (pile centre to edge).
 // e comes from the "Fit cap size" field, or — when blank — from the edge-distance warning limit; never a built-in value.
 // Returns { ok, msg }; on success the caller re-runs Tab 02 (fs-Bf / fs-Lf are updated here).
 export function fitCapToPiles() {
@@ -232,7 +232,7 @@ export function calcPile() {
     <tr><th>Check</th><th>Expression</th><th>Actual</th><th>Limit</th><th>UC</th><th>Status</th></tr>
     <tr><td>Minimum spacing, s<sub>min</sub></td><td class="clause">min √(Δx² + Δy²), all pairs; UC = s<sub>lim</sub> / s</td><td class="num">${spActual}</td><td class="num">${sp.limit === null ? 'not set' : '≥ ' + inD(sp.limit, D)}</td><td class="num">${sp.uc === null ? '—' : fmt(sp.uc, 3)}</td><td>${stTxt(sp.status)}</td></tr>
     <tr><td>Recommended spacing (warning)</td><td class="clause">s<sub>min</sub> ≥ s<sub>rec</sub></td><td class="num">${sp.actual === null ? '—' : inD(sp.actual, D)}</td><td class="num">${sp.warnLimit === null ? 'not set' : '≥ ' + inD(sp.warnLimit, D)}</td><td class="num">—</td><td>${stTxt(warnStatus)}</td></tr>
-    <tr><td>Minimum edge distance, e<sub>min</sub></td><td class="clause">min[B<sub>f</sub>/2 − |x|, L<sub>f</sub>/2 − |y|], pile centre to cap edge</td><td class="num">${ed.actual === null ? '—' : inD(ed.actual, D) + ` (pile ${ed.pile})`}</td><td class="num">${ed.warnLimit === null ? 'not set' : '≥ ' + inD(ed.warnLimit, D) + ' (warning only)'}</td><td class="num">—</td><td>${stTxt(ed.status)}</td></tr>
+    <tr><td>Minimum edge distance, e<sub>min</sub></td><td class="clause">min[B<sub>f</sub>/2 − |x|, L<sub>f</sub>/2 − |z|], pile centre to cap edge</td><td class="num">${ed.actual === null ? '—' : inD(ed.actual, D) + ` (pile ${ed.pile})`}</td><td class="num">${ed.warnLimit === null ? 'not set' : '≥ ' + inD(ed.warnLimit, D) + ' (warning only)'}</td><td class="num">—</td><td>${stTxt(ed.status)}</td></tr>
     <tr><td>Pile centres inside the cap</td><td class="clause">e<sub>min</sub> ≥ 0 (B<sub>f</sub> = ${fmt(Bf, 2)} m, L<sub>f</sub> = ${fmt(Lf, 2)} m)</td><td class="num">${ed.actual === null ? '—' : fmt(ed.actual, 3) + ' m'}</td><td class="num">≥ 0</td><td class="num">—</td><td>${stTxt(layout.inside === null ? 'NOT SET' : (layout.inside ? 'OK' : 'FAIL'))}</td></tr>
   </table></div>`;
 
@@ -277,7 +277,7 @@ export function calcPile() {
       <caption>Lateral group reduction — p-multipliers P<sub>m</sub> (H<sub>all</sub>,row = P<sub>m</sub> · H<sub>all</sub>), ${latMethod === 'average' ? 'average of rows' : 'governing (minimum) row'} used — ${escapeHtml(pm.table.source)}</caption>
       <tr><th>Load direction</th><th>Row spacing</th><th>P<sub>m</sub> by row (leading row first, worse sign shown)</th><th>Summary</th><th>P<sub>m</sub> used</th></tr>
       ${dirRows(latInfoX, 'along x (H<sub>x</sub>)')}
-      ${dirRows(latInfoZ, 'along y (H<sub>z</sub>)')}
+      ${dirRows(latInfoZ, 'along z (H<sub>z</sub>)')}
     </table></div>`;
   }
 
@@ -293,15 +293,15 @@ export function calcPile() {
       <tr><td>Lateral, H<sub>x</sub> / H<sub>z</sub></td><td class="clause">Tab 03</td><td class="num">${fmt(L.Hx, 1)} / ${fmt(L.Hz, 1)} kN</td></tr>
       <tr><td>Moments, M<sub>x</sub> / M<sub>z</sub> (incl. H·Δh)</td><td class="clause">Tab 03</td><td class="num">${fmt(L.Mx, 1)} / ${fmt(L.Mz, 1)} kN·m</td></tr>
       <tr><td>Load point (pedestal centre)</td><td class="clause">(Off<sub>X</sub>, Off<sub>Z</sub>) from the cap centre</td><td class="num">(${fmt(g.at.x, 3)}, ${fmt(g.at.y, 3)}) m</td></tr>
-      <tr><td>Pile-group centroid (centre of rigidity)</td><td class="clause">x̅ = Σx/n, ȳ = Σy/n</td><td class="num">(${fmt(g.xbar, 3)}, ${fmt(g.ybar, 3)}) m</td></tr>
+      <tr><td>Pile-group centroid (centre of rigidity)</td><td class="clause">x̅ = Σx/n, z̅ = Σz/n</td><td class="num">(${fmt(g.xbar, 3)}, ${fmt(g.ybar, 3)}) m</td></tr>
       <tr><td>Eccentricity of load point, a</td><td class="clause">a = load point − centroid</td><td class="num">(${fmt(ax, 3)}, ${fmt(ay, 3)}) m</td></tr>
-      <tr><td>Moments about the centroid</td><td class="clause">M<sub>z,c</sub> = M<sub>z</sub> + P·a<sub>x</sub>;  M<sub>x,c</sub> = M<sub>x</sub> − P·a<sub>y</sub></td><td class="num">${fmt(g.Mzc, 1)} / ${fmt(g.Mxc, 1)} kN·m</td></tr>
-      <tr><td>Torsion about the vertical axis, T</td><td class="clause">T = a<sub>y</sub>·H<sub>x</sub> − a<sub>x</sub>·H<sub>z</sub></td><td class="num">${fmt(g.T, 1)} kN·m</td></tr>
-      <tr><td>Polar moment of the pile group, J</td><td class="clause">Σ[(x−x̅)² + (y−ȳ)²] = ${fmt(g.Sxx, 3)} + ${fmt(g.Syy, 3)}</td><td class="num">${fmt(g.J, 3)} m²</td></tr>
+      <tr><td>Moments about the centroid</td><td class="clause">M<sub>z,c</sub> = M<sub>z</sub> + P·a<sub>x</sub>;  M<sub>x,c</sub> = M<sub>x</sub> − P·a<sub>z</sub></td><td class="num">${fmt(g.Mzc, 1)} / ${fmt(g.Mxc, 1)} kN·m</td></tr>
+      <tr><td>Torsion about the vertical axis, T</td><td class="clause">T = a<sub>z</sub>·H<sub>x</sub> − a<sub>x</sub>·H<sub>z</sub></td><td class="num">${fmt(g.T, 1)} kN·m</td></tr>
+      <tr><td>Polar moment of the pile group, J</td><td class="clause">Σ[(x−x̅)² + (z−z̅)²] = ${fmt(g.Sxx, 3)} + ${fmt(g.Syy, 3)}</td><td class="num">${fmt(g.J, 3)} m²</td></tr>
     </table></div>`;
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Governing combination: ${escapeHtml(comboLabel(g.combo))} — force on each pile</caption>
-      <tr><th>Pile</th><th>x (m)</th><th>y (m)</th><th>Axial F (kN)</th><th>Axial check</th><th>V<sub>x</sub> (kN)</th><th>V<sub>z</sub> (kN)</th><th>V (kN)</th><th>UC<sub>l</sub></th></tr>
+      <tr><th>Pile</th><th>x (m)</th><th>z (m)</th><th>Axial F (kN)</th><th>Axial check</th><th>V<sub>x</sub> (kN)</th><th>V<sub>z</sub> (kN)</th><th>V (kN)</th><th>UC<sub>l</sub></th></tr>
       ${g.pileForces.map((pf, k) => {
         const lp = g.latPiles[k];
         const cap = pf.F < 0 ? g.QtG : g.QcG;
@@ -327,13 +327,13 @@ export function calcPile() {
     const ucMax = Math.max(...summaryRows.map(x => x.uc));
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Demand / capacity ratio (DCR) per check — each check with its own governing load combination (ASD)</caption>
-      <tr><th>Check</th><th>Demand</th><th>Capacity</th><th>DCR</th><th>Governing combination</th><th>Pile</th><th>(x, y) m</th><th>Status</th></tr>
+      <tr><th>Check</th><th>Demand</th><th>Capacity</th><th>DCR</th><th>Governing combination</th><th>Pile</th><th>(x, z) m</th><th>Status</th></tr>
       ${summaryRows.map(x => `<tr class="${x.uc === ucMax ? 'governing' : ''}"><td>${x.name}</td><td class="num">${x.demand}</td><td class="num">${x.cap}</td><td class="num">${fmt(x.uc, 3)}</td><td>${x.combo ? escapeHtml(comboLabel(x.combo)) : '—'}</td>${pileCells(x.pile)}<td>${okTxt(x.uc)}</td></tr>`).join('')}
     </table></div>`;
 
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Compression per load combination — DCR<sub>c</sub> = F<sub>max</sub> / P<sub>all,g</sub>, P<sub>all,g</sub> = E<sub>g</sub>·P<sub>all</sub> = ${fmt(g.QcG, 1)} kN${compGov ? ` — governing ${escapeHtml(comboLabel(compGov.combo))}` : ''}</caption>
-      <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>F<sub>max</sub> (kN)</th><th>Pile</th><th>(x, y) m</th><th>DCR<sub>c</sub></th><th>Check</th></tr>
+      <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>F<sub>max</sub> (kN)</th><th>Pile</th><th>(x, z) m</th><th>DCR<sub>c</sub></th><th>Check</th></tr>
       ${results.map(r => {
         if (!r.valid) return invalidRow(r, 6);
         return `<tr class="${r === compGov ? 'governing' : ''}"><td>${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.load.P, 1)}</td><td class="num">${fmt(compDemand(r), 1)}</td>${pileCells(compDemand(r) > 0 ? r.FmaxPile : null)}<td class="num">${fmt(r.checks[0].uc, 3)}</td><td>${okTxt(r.checks[0].uc)}</td></tr>`;
@@ -342,7 +342,7 @@ export function calcPile() {
 
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Tension (uplift) per load combination — DCR<sub>t</sub> = |F<sub>min</sub>| / T<sub>all,g</sub>, T<sub>all,g</sub> = E<sub>g</sub>·T<sub>all</sub> = ${fmt(g.QtG, 1)} kN${tensGov && tensDemand(tensGov) > 0 ? ` — governing ${escapeHtml(comboLabel(tensGov.combo))}` : ' — no pile in tension in any combination'}</caption>
-      <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>T<sub>max</sub> (kN)</th><th>Pile</th><th>(x, y) m</th><th>DCR<sub>t</sub></th><th>Check</th></tr>
+      <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>T<sub>max</sub> (kN)</th><th>Pile</th><th>(x, z) m</th><th>DCR<sub>t</sub></th><th>Check</th></tr>
       ${results.map(r => {
         if (!r.valid) return invalidRow(r, 6);
         return `<tr class="${r === tensGov && tensDemand(r) > 0 ? 'governing' : ''}"><td>${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.load.P, 1)}</td><td class="num">${fmt(tensDemand(r), 1)}</td>${pileCells(tensDemand(r) > 0 ? r.FminPile : null)}<td class="num">${fmt(r.checks[1].uc, 3)}</td><td>${okTxt(r.checks[1].uc)}</td></tr>`;
@@ -351,7 +351,7 @@ export function calcPile() {
 
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Lateral per load combination — DCR<sub>l</sub> = √[(V<sub>x</sub>/(P<sub>m,x</sub>·H<sub>all</sub>))² + (V<sub>z</sub>/(P<sub>m,z</sub>·H<sub>all</sub>))²] on the most loaded pile (direct H/n plus torsion), H<sub>all</sub> = ${fmt(Ql, 1)} kN${latGov ? ` — governing ${escapeHtml(comboLabel(latGov.combo))}` : ''}</caption>
-      <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>V<sub>max</sub> (kN)</th><th>Pile</th><th>(x, y) m</th><th>DCR<sub>l</sub></th><th>Check</th></tr>
+      <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>V<sub>max</sub> (kN)</th><th>Pile</th><th>(x, z) m</th><th>DCR<sub>l</sub></th><th>Check</th></tr>
       ${results.map(r => {
         if (!r.valid) return invalidRow(r, 6);
         return `<tr class="${r === latGov ? 'governing' : ''}"><td>${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.load.P, 1)}</td><td class="num">${fmt(r.Vmax, 1)}</td>${pileCells(r.Vmax > 0 ? r.VmaxPile : null)}<td class="num">${fmt(r.checks[2].uc, 3)}</td><td>${okTxt(r.checks[2].uc)}</td></tr>`;
@@ -365,7 +365,7 @@ export function calcPile() {
       const tz = r.Sxx > 1e-9 ? r.Mzc * dx / r.Sxx : 0, tx = r.Syy > 1e-9 ? r.Mxc * dy / r.Syy : 0;
       return `<div class="lc-formula">
         <div class="lc-formula-title">${title} — pile ${p.i}, governing combination ${escapeHtml(comboLabel(r.combo))}</div>
-        F<sub>i</sub> = P/n + M<sub>z,c</sub>·(x<sub>i</sub> − x̅)/Σ(x − x̅)² − M<sub>x,c</sub>·(y<sub>i</sub> − ȳ)/Σ(y − ȳ)²<br>
+        F<sub>i</sub> = P/n + M<sub>z,c</sub>·(x<sub>i</sub> − x̅)/Σ(x − x̅)² − M<sub>x,c</sub>·(z<sub>i</sub> − z̅)/Σ(z − z̅)²<br>
         F<sub>${p.i}</sub> = ${fmt(r.load.P, 1)}/${r.n} + ${paren(r.Mzc, 1)}·${paren(dx, 3)}/${fmt(r.Sxx, 3)} − ${paren(r.Mxc, 1)}·${paren(dy, 3)}/${fmt(r.Syy, 3)}
         = ${fmt(r.load.P / r.n, 1)} + ${paren(tz, 1)} − ${paren(tx, 1)} = <strong>${fmt(p.F, 1)} kN</strong><br>
         ${ucText}
@@ -374,7 +374,7 @@ export function calcPile() {
     if (compGov && compDemand(compGov) > 0) {
       html += axialFormula(compGov, compGov.FmaxPile, 'Compression',
         `DCR<sub>c</sub> = F<sub>max</sub>/(E<sub>g</sub>·P<sub>all</sub>) = ${fmt(compDemand(compGov), 1)}/(${fmt(g.Eg, 4)}·${fmt(Qc, 1)}) = <strong>${fmt(compGov.checks[0].uc, 3)}</strong>
-        <div class="lc-formula-where">Moment sign: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −y side (same as the load vectors of Tab 03). Compression positive.</div>`);
+        <div class="lc-formula-where">Moment sign: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −z side (same as the load vectors of Tab 03). Compression positive.</div>`);
     }
     if (tensGov && tensDemand(tensGov) > 0) {
       html += axialFormula(tensGov, tensGov.FminPile, 'Tension (uplift)',
@@ -385,8 +385,8 @@ export function calcPile() {
       const lax = lr.at.x - lr.xbar, lay = lr.at.y - lr.ybar, ldx = lp.x - lr.xbar, ldy = lp.y - lr.ybar;
       html += `<div class="lc-formula">
         <div class="lc-formula-title">Lateral — pile ${lp.i}, governing combination ${escapeHtml(comboLabel(lr.combo))} — direct shear plus torsion from the load-point eccentricity</div>
-        T = a<sub>y</sub>·H<sub>x</sub> − a<sub>x</sub>·H<sub>z</sub> = ${paren(lay, 3)}·${paren(lr.load.Hx, 1)} − ${paren(lax, 3)}·${paren(lr.load.Hz, 1)} = ${fmt(lr.T, 1)} kN·m,  J = ${fmt(lr.J, 3)} m²<br>
-        V<sub>x</sub> = H<sub>x</sub>/n + T·(y − ȳ)/J = ${fmt(lr.load.Hx / lr.n, 1)} + ${paren(lr.T, 1)}·${paren(ldy, 3)}/${fmt(lr.J, 3)} = ${fmt(lp.Vx, 1)} kN<br>
+        T = a<sub>z</sub>·H<sub>x</sub> − a<sub>x</sub>·H<sub>z</sub> = ${paren(lay, 3)}·${paren(lr.load.Hx, 1)} − ${paren(lax, 3)}·${paren(lr.load.Hz, 1)} = ${fmt(lr.T, 1)} kN·m,  J = ${fmt(lr.J, 3)} m²<br>
+        V<sub>x</sub> = H<sub>x</sub>/n + T·(z − z̅)/J = ${fmt(lr.load.Hx / lr.n, 1)} + ${paren(lr.T, 1)}·${paren(ldy, 3)}/${fmt(lr.J, 3)} = ${fmt(lp.Vx, 1)} kN<br>
         V<sub>z</sub> = H<sub>z</sub>/n − T·(x − x̅)/J = ${fmt(lr.load.Hz / lr.n, 1)} − ${paren(lr.T, 1)}·${paren(ldx, 3)}/${fmt(lr.J, 3)} = ${fmt(lp.Vz, 1)} kN<br>
         DCR<sub>l</sub> = √[(V<sub>x</sub>/(P<sub>m,x</sub>·H<sub>all</sub>))² + (V<sub>z</sub>/(P<sub>m,z</sub>·H<sub>all</sub>))²] = √[(${fmt(Math.abs(lp.Vx), 1)}/(${fmt(lr.PmX, 3)}·${fmt(Ql, 1)}))² + (${fmt(Math.abs(lp.Vz), 1)}/(${fmt(lr.PmZ, 3)}·${fmt(Ql, 1)}))²] = <strong>${fmt(lp.uc, 3)}</strong>
         <div class="lc-formula-where">Equal lateral stiffness for every pile, so the centre of rigidity is the pile-group centroid. T = 0 when the load point coincides with the centroid; then V<sub>i</sub> = H/n for all piles.</div>

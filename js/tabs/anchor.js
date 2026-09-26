@@ -1,12 +1,12 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260926h';
-import { getRadioVal, num } from '../core/dom.js?v=20260926h';
-import { fmt } from '../core/format.js?v=20260926h';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20260926h';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926h';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926h';
-import { buildStdComboBase } from '../tabs/combos.js?v=20260926h';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260926j';
+import { getRadioVal, num } from '../core/dom.js?v=20260926j';
+import { fmt } from '../core/format.js?v=20260926j';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20260926j';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926j';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926j';
+import { buildStdComboBase } from '../tabs/combos.js?v=20260926j';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -87,7 +87,7 @@ export function calcAnchor() {
     html += sectionHeader('9.3', 'Bolt Forces and Checks', 'Bolt tension from P and M (linear distribution over the bolt group), shear H/n per bolt, and the tension-shear interaction for every LRFD combination.');
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Governing combination: ${comboLabel(governing.combo)} — per-bolt tension</caption>
-      <tr><th>Bolt</th><th>x (mm)</th><th>y (mm)</th><th>Tension (kN)</th></tr>
+      <tr><th>Bolt</th><th>x (mm)</th><th>z (mm)</th><th>Tension (kN)</th></tr>
       ${governing.boltForces.map(bf => `<tr class="${bf.tension === governing.Tmax && bf.tension > 0 ? 'governing' : ''}"><td>${bf.i}</td><td class="num">${fmt(bf.x,0)}</td><td class="num">${fmt(bf.y,0)}</td><td class="num">${fmt(bf.tension,2)}</td></tr>`).join('')}
     </table></div>`;
     html += `<div class="overflow-x"><table class="calc-table">

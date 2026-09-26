@@ -1,14 +1,14 @@
 // 5A pedestal P-M reinforcement + 5B pile cap flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20260926h';
-import { num } from '../core/dom.js?v=20260926h';
-import { fmt } from '../core/format.js?v=20260926h';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20260926h';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926h';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20260926h';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20260926h';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926h';
-import { pileComboLoads } from '../tabs/pile.js?v=20260926h';
+import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20260926j';
+import { num } from '../core/dom.js?v=20260926j';
+import { fmt } from '../core/format.js?v=20260926j';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20260926j';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926j';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20260926j';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20260926j';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926j';
+import { pileComboLoads } from '../tabs/pile.js?v=20260926j';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -107,7 +107,7 @@ export function calcRebar() {
 // strength-level actions, not the ASD service set used by 4B. Critical sections are at the pedestal faces, measured from
 // the pedestal centre (Off X / Off Z), with the pedestal size and the cap widths taken from Tab 02 (see calcFoundSize()).
 // Units: pedestal / cap sizes are in mm (inputs), pile coordinates in m -> half-sizes are converted to m first, and
-// pileCapMomentAxis() then returns kN·m directly. Bars: x-direction bars are taken as the outer layer (d), y-direction
+// pileCapMomentAxis() then returns kN·m directly. Bars: x-direction bars are taken as the outer layer (d), z-direction (internal field y)
 // bars as the inner layer (d − d_b), for both faces.
 function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   let html = sectionHeader('5B.3', 'Pile Cap Flexure', 'Bottom and top reinforcement in both directions from the factored pile reactions beyond the pedestal faces — ACI 318M-19 Ch.13 (footings).', true);
@@ -118,7 +118,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     document.getElementById('calc-rebarcap').innerHTML = html + box;
   };
   if (pileList.length === 0) return fail(`<div class="warn-box"><strong>⚠  No piles defined:</strong> add piles in the "4B — PILE FOUNDATION STABILITY" tab first.</div>`, 'No piles defined.');
-  if (d - capBar <= 0) return fail(`<div class="warn-box"><strong>⚠  Invalid section:</strong> effective depth d = t - cc - d<sub>b,cap</sub> = ${fmt(d,0)} mm (y-direction inner layer ${fmt(d - capBar,0)} mm) is zero or negative.</div>`, 'Invalid section (d ≤ 0).');
+  if (d - capBar <= 0) return fail(`<div class="warn-box"><strong>⚠  Invalid section:</strong> effective depth d = t - cc - d<sub>b,cap</sub> = ${fmt(d,0)} mm (z-direction inner layer ${fmt(d - capBar,0)} mm) is zero or negative.</div>`, 'Invalid section (d ≤ 0).');
   if (Bp <= 0 || Lp <= 0 || Lcap <= 0 || Bcap <= 0) return fail(`<div class="warn-box"><strong>⚠  Invalid input:</strong> the pedestal size B<sub>p</sub> × L<sub>p</sub> and the cap size B<sub>f</sub> × L<sub>f</sub> (both from "02 — FOUNDATION DIMENSION") must be greater than zero.</div>`, 'Invalid input (pedestal / cap size must be > 0).');
 
   const halfX = Bp / 2000, halfY = Lp / 2000;
@@ -136,10 +136,10 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   }
 
   const CASES = [
-    { key: 'xb', axis: 'x', face: 'bottom', title: 'x-direction — bottom', b: Lcap, dEff: d, half: halfX, ref: at.x, bName: 'L<sub>cap</sub>' },
-    { key: 'yb', axis: 'y', face: 'bottom', title: 'y-direction — bottom', b: Bcap, dEff: d - capBar, half: halfY, ref: at.y, bName: 'B<sub>cap</sub>' },
-    { key: 'xt', axis: 'x', face: 'top', title: 'x-direction — top', b: Lcap, dEff: d, half: halfX, ref: at.x, bName: 'L<sub>cap</sub>' },
-    { key: 'yt', axis: 'y', face: 'top', title: 'y-direction — top', b: Bcap, dEff: d - capBar, half: halfY, ref: at.y, bName: 'B<sub>cap</sub>' }
+    { key: 'xb', axis: 'x', lbl: 'x', face: 'bottom', title: 'x-direction — bottom', b: Lcap, dEff: d, half: halfX, ref: at.x, bName: 'L<sub>cap</sub>' },
+    { key: 'yb', axis: 'y', lbl: 'z', face: 'bottom', title: 'z-direction — bottom', b: Bcap, dEff: d - capBar, half: halfY, ref: at.y, bName: 'B<sub>cap</sub>' },
+    { key: 'xt', axis: 'x', lbl: 'x', face: 'top', title: 'x-direction — top', b: Lcap, dEff: d, half: halfX, ref: at.x, bName: 'L<sub>cap</sub>' },
+    { key: 'yt', axis: 'y', lbl: 'z', face: 'top', title: 'z-direction — top', b: Bcap, dEff: d - capBar, half: halfY, ref: at.y, bName: 'B<sub>cap</sub>' }
   ];
   const Abar = Math.PI / 4 * capBar * capBar;
   CASES.forEach(c => {
@@ -160,8 +160,8 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   lastResults.pileCapRebar = {
     label: 'Pile Cap Reinforcement',
     status,
-    metric: tooSmall.length ? 'SECTION TOO SMALL' : `x ${barTxt(CASES[0])}; y ${barTxt(CASES[1])}${topCases.length ? '; top ' + topCases.map(c => `${c.axis} ${barTxt(c)}`).join(', ') : ''}`,
-    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.axis}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
+    metric: tooSmall.length ? 'SECTION TOO SMALL' : `x ${barTxt(CASES[0])}; z ${barTxt(CASES[1])}${topCases.length ? '; top ' + topCases.map(c => `${c.lbl} ${barTxt(c)}`).join(', ') : ''}`,
+    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
       + (invalidCap.length ? ` | ${invalidCap.length} combination(s) invalid` : '') + (tooSmall.length ? ' | section too small: ' + tooSmall.map(c => c.title).join(', ') : '')
   };
 
@@ -190,9 +190,9 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     text: `Clear spacing < ${fmt(minCapClear, 0)} mm = max(25 mm, d_b) (ACI 318M-19 §25.2.1): ${tightCap.map(c => `${c.title} ${fmt(c.spacing - capBar, 0)} mm (${c.n} × D${fmt(capBar, 0)})`).join('; ')} — use a larger bar or a second layer.` }] : [];
   html += `<div class="lc-formula">
     <div class="lc-formula-title">Flexure at the pedestal faces</div>
-    M<sub>u</sub> = Σ F<sub>i</sub>·(|c<sub>i</sub> − c<sub>p</sub>| − h<sub>p</sub>) over the piles beyond the face, per side; c = x (h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(halfX,3)} m, c<sub>p</sub> = ${fmt(at.x,3)} m) or y (h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(halfY,3)} m, c<sub>p</sub> = ${fmt(at.y,3)} m)<br>
+    M<sub>u</sub> = Σ F<sub>i</sub>·(|c<sub>i</sub> − c<sub>p</sub>| − h<sub>p</sub>) over the piles beyond the face, per side; c = x (h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(halfX,3)} m, c<sub>p</sub> = ${fmt(at.x,3)} m) or z (h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(halfY,3)} m, c<sub>p</sub> = ${fmt(at.y,3)} m)<br>
     net &gt; 0 → sagging, bottom steel;  net &lt; 0 → hogging, top steel (uplift piles);  A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(π·b·d²), π = 0.9, and A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>)
-    <div class="lc-formula-where">d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer); y-direction bars are the inner layer, d − d<sub>b</sub> = ${fmt(d - capBar,0)} mm. b = cap width perpendicular to the bending (L<sub>f</sub> for x, B<sub>f</sub> for y).</div>
+    <div class="lc-formula-where">d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer); z-direction bars are the inner layer, d − d<sub>b</sub> = ${fmt(d - capBar,0)} mm. b = cap width perpendicular to the bending (L<sub>f</sub> for x, B<sub>f</sub> for z).</div>
   </div>`;
 
   // Substitution behind each governing M_u: the piles beyond the face on the governing side, with their lever arms.
@@ -204,8 +204,8 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     const gov = c.face === 'bottom' ? (sum(sp) >= sum(sn) ? sp : sn) : (sum(sp) <= sum(sn) ? sp : sn);
     if (!gov.length) return;
     html += `<div class="overflow-x"><table class="calc-table">
-      <caption>${c.title} — governing combination ${c.gov.name}: piles beyond the pedestal face (${c.axis}<sub>p</sub> = ${fmt(c.ref,3)} m, h<sub>p</sub> = ${fmt(c.half,3)} m)</caption>
-      <tr><th>Pile</th><th>${c.axis} (m)</th><th>F<sub>i</sub> (kN)</th><th>Arm (m)</th><th>F<sub>i</sub>·arm (kN·m)</th></tr>
+      <caption>${c.title} — governing combination ${c.gov.name}: piles beyond the pedestal face (${c.lbl}<sub>p</sub> = ${fmt(c.ref,3)} m, h<sub>p</sub> = ${fmt(c.half,3)} m)</caption>
+      <tr><th>Pile</th><th>${c.lbl} (m)</th><th>F<sub>i</sub> (kN)</th><th>Arm (m)</th><th>F<sub>i</sub>·arm (kN·m)</th></tr>
       ${gov.map(p => `<tr><td>${p.i}</td><td class="num">${fmt(c.axis === 'x' ? p.x : p.y,2)}</td><td class="num">${fmt(p.F,1)}</td><td class="num">${fmt(p.arm,3)}</td><td class="num">${fmt(p.M,1)}</td></tr>`).join('')}
       <tr class="calc-total"><td colspan="4">net M = Σ F<sub>i</sub>·arm</td><td class="num">${fmt(sum(gov),1)}</td></tr>
     </table></div>`;
@@ -217,7 +217,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     ${capResults.map(r => `<tr><td>${r.name}</td>${CASES.map(c => `<td class="num">${r.invalid ? '—' : (r.m[c.key] > 1e-6 || c.face === 'bottom' ? (r === c.gov && c.required ? `<strong>${fmt(r.m[c.key],1)}</strong>` : fmt(r.m[c.key],1)) : '—')}</td>`).join('')}</tr>`).join('')}
   </table></div>`;
   html += `<div class="limits-box">
-    <strong>Limitation:</strong> Critical sections are taken at the pedestal faces (simplified — does not shift the section per §13.2.7.2 for non-square pedestals or consider two-way action toward all four faces). One-way and punching shear for the pile cap are checked separately in this tab (5B), with the pile cap's own b<sub>w</sub>/d and factored shear. Pile reactions come from the 4B group model (biaxial, including the moment of an off-centroid load point) evaluated for the separate factored LRFD combinations (ASCE 7-22 §2.3, LC201+). Both directions are designed with x-direction bars as the outer layer and y-direction bars as the inner layer (d − d<sub>b</sub>) — swap them in the detailing if the opposite layering is used. Top steel is designed only where the combinations produce hogging from uplift piles; minimum top steel for crack control / detailing is not added. Cap self-weight and soil over the cap are not deducted. The bar count assumes one layer across the full cap width — check spacing, development length and the cap-edge cover in the detailing.
+    <strong>Limitation:</strong> Critical sections are taken at the pedestal faces (simplified — does not shift the section per §13.2.7.2 for non-square pedestals or consider two-way action toward all four faces). One-way and punching shear for the pile cap are checked separately in this tab (5B), with the pile cap's own b<sub>w</sub>/d and factored shear. Pile reactions come from the 4B group model (biaxial, including the moment of an off-centroid load point) evaluated for the separate factored LRFD combinations (ASCE 7-22 §2.3, LC201+). Both directions are designed with x-direction bars as the outer layer and z-direction bars as the inner layer (d − d<sub>b</sub>) — swap them in the detailing if the opposite layering is used. Top steel is designed only where the combinations produce hogging from uplift piles; minimum top steel for crack control / detailing is not added. Cap self-weight and soil over the cap are not deducted. The bar count assumes one layer across the full cap width — check spacing, development length and the cap-edge cover in the detailing.
   </div>`;
   document.getElementById('calc-rebarcap').innerHTML = numberTables(html, '5B');
 }

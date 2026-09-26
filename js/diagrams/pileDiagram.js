@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20260926h';
+import { fmt } from '../core/format.js?v=20260926j';
 
 // Pile group plan: pile cap outline (Bf x Lf from "02", centred on the origin), piles at true diameter with their number
 // inside and the axial force beside them, optional coordinate rulers (x along the top, y along the left, with dotted
@@ -60,7 +60,7 @@ export function pileDiagramSVG(piles, capB, capL, D, pileForces, info = {}, opts
       if (row) out += L(capLeft, Y, toX(row.x) - r, Y, dotted);
       if (Y - lastY >= 14) { out += T(capLeft - 8, Y + 3.5, fmt(yv, 2), 'end'); lastY = Y; } // Y grows downward
     });
-    out += T(capRight, capTop - 22, 'x (m)', 'end') + T(capLeft - 8, capTop - 6, 'y (m)', 'end');
+    out += T(capRight, capTop - 22, 'x (m)', 'end') + T(capLeft - 8, capTop - 6, 'z (m)', 'end');
   }
 
   // ---- dimensions in the margins ----
