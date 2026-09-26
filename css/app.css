@@ -1449,12 +1449,17 @@
   /* Radio groups whose value is derived from another tab (e.g. Tab 08 footing shape from Tab 02) */
   .radio-row button:disabled { cursor: not-allowed; opacity: 0.6; }
 
-  /* Report preview (calc panels, incl. the Summary Report): sub-chapter titles and table captions in normal case,
-     as written ("2.1 Foundation Layout", "Table 2.2.1. Pile Cap Size") — not all capitals. Input-panel labels unchanged. */
-  .calc-panel .section-label,
-  .calc-panel table.calc-table caption,
-  .calc-panel table.dl-worksheet caption {
+  /* Sub-chapter titles, table captions and the input-panel section headings in normal case, as written
+     ("2.1 Foundation Layout", "Table 2.2.1. Pile Cap Size", "Soil Parameters", "Auto Fill") — not all capitals (user request). */
+  .section-label,
+  table.calc-table caption,
+  table.dl-worksheet caption,
+  .gen-tree .gt-head,
+  .gen-tree .gt-group > summary {
     text-transform: none;
     letter-spacing: 0.01em;
   }
+  .section-label { font-size: 11.5px; }
   .calc-panel .section-label { font-size: 12px; }
+  .gen-tree .gt-head,
+  .gen-tree .gt-group > summary { font-size: 11.5px; }
