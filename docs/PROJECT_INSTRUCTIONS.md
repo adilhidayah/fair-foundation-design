@@ -18,7 +18,7 @@
   Modul fondasi gedung direncanakan kemudian (belum ada).
 
 ## 2. Status Saat Ini (25 Sep 2026)
-- Rumus kalkulasi sudah diekstrak ke library pure functions di `lib/foundation/` (tanpa DOM), divalidasi hand-calc lewat `lib/foundation/validation/` (part1–7, semua PASS).
+- Rumus kalkulasi sudah diekstrak ke library pure functions di `lib/foundation/` (tanpa DOM), divalidasi hand-calc lewat `lib/foundation/validation/` (part1–11, 402 cek, semua PASS per 26 Sep 2026).
 - UI yang dulu satu file raksasa (~408 KB) sudah dipecah:
   - `FAIR Foundation Design.html` — markup saja (~92 KB)
   - `css/app.css` — style
@@ -171,7 +171,7 @@ Mau ubah apa → buka file mana: lihat `PROJECT_MAP.md`. Aturan edit UI (modul h
 5. Isi sumber tabel p-multiplier; cek nomor pasal ACI untuk interpolasi reaksi tiang d_p/2; cek persamaan angin ASCE 7-22 (K_d, K_e) di Wind Generator.
 6. Uji visual cetak/PDF Tab 4B dan 5B; lalu bug OCR nomor LC dan `git init`.
 
-**Cara verifikasi yang dipakai:** validasi `lib/` part1–9 (semua PASS) + uji headless Edge (server statis + CDP) dengan pembanding hitung tangan independen untuk gaya per tiang, M_u, dan V_u.
+**Cara verifikasi yang dipakai:** validasi `lib/` part1–11 (semua PASS) + uji headless Edge (server statis + CDP) dengan pembanding hitung tangan independen untuk gaya per tiang, M_u, dan V_u.
 
 ---
 *Disimpan dari rangkuman diskusi user untuk ditempel ke Claude Code.*
