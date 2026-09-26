@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20260925e">
+<link rel="stylesheet" href="css/app.css?v=20260926l">
 </head>
 <body>
 <div class="sheet">
@@ -1398,10 +1398,10 @@
             </label>
           </div>
           <div class="gt-ai-file" id="fs-ai-file-name"></div>
-          <button type="button" id="fs-ai-chat-apply" class="gt-ai-send" disabled title="Not wired yet">Apply to Form</button>
+          <button type="button" id="fs-ai-chat-apply" class="gt-ai-send" disabled>Read &amp; Review</button>
           <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
-          <div class="note" style="margin-top:8px;">Preview only — drawing extraction and chat parsing are not wired yet; no values are filled.</div>
-          <div class="note" id="fs-ai-parser-note" style="display:none;"></div>
+          <details style="margin-top:8px;"><summary class="note" style="cursor:pointer;">What can be read?</summary><div class="note" id="fs-ai-parser-note"></div></details>
+          <div id="fs-ai-review" style="margin-top:8px;"></div>
         </div>
         </div>
         </details>
@@ -1696,6 +1696,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260926k"></script>
+<script type="module" src="js/app.js?v=20260926l"></script>
 </body>
 </html>

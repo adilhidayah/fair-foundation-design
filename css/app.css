@@ -1435,3 +1435,13 @@
     border-radius: 8px;
   }
 
+
+  /* Auto Fill: a field filled from pasted text / OCR stays marked until the user edits it (js/ocr/review.js) */
+  input.ai-filled {
+    background: var(--caution-bg) !important;
+    border-color: var(--caution) !important;
+  }
+  /* Tab 02 Auto Fill review table: fits the narrow input panel */
+  .fs-ai-table { table-layout: fixed; width: 100%; font-size: 12px; }
+  .fs-ai-table th, .fs-ai-table td { padding: 4px 5px; overflow-wrap: anywhere; }
+  .fs-ai-table td.num { overflow-wrap: normal; white-space: nowrap; }

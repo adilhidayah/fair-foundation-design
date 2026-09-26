@@ -1,12 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926k';
-import { fmt } from '../core/format.js?v=20260926k';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926k';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926k';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926k';
-import { recalcAll } from '../workflow/recalc.js?v=20260926k';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926l';
+import { fmt } from '../core/format.js?v=20260926l';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926l';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926l';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926l';
+import { recalcAll } from '../workflow/recalc.js?v=20260926l';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -39,9 +39,7 @@ export function calcFoundSize() {
   document.getElementById('fs-ai-file-label').textContent = isPile ? 'Upload a pile cap / pedestal drawing or datasheet, or type the dimensions.' : 'Upload a footing / pedestal drawing or datasheet, or type the dimensions.';
   document.getElementById('fs-ai-chat-label').textContent = 'Chat / paste spec text';
   document.getElementById('fs-ai-chat').placeholder = isPile ? 'pile cap 2.4 x 2.4 x 0.8, Df 1.5, pedestal 1.25 x 1.25 Gp 0.275 ...' : 'footing 2.4 x 2.4 x 0.8, Df 1.5, pedestal 1.25 x 1.25 Gp 0.275 ...';
-  document.getElementById('fs-ai-parser-note').innerHTML = isPile
-    ? 'Chat parser understands Bf/Lf/Hf/Df/Bp/Lp/Gp/OffX/OffZ, "pile cap 3x3x0.8", "Df 2m", mm/cm/m auto-converted, plus keywords: pile/shallow, pedestal/block.'
-    : 'Chat parser understands Bf/Lf/Hf/Df/Bp/Lp/Gp/OffX/OffZ, "footing 3x3x0.8", "Df 2m", mm/cm/m auto-converted, plus keywords: pile/shallow, pedestal/block.';
+  document.getElementById('fs-ai-parser-note').innerHTML = `Reads Bf, Lf, Hf, Df, Bp, Lp, Gp, Off X, Off Z, grout thickness and embedment h, and size groups such as "${isPile ? 'pile cap' : 'footing'} 3 x 3 x 0.8" or "pedestal 1.25 x 1.25". Units mm / cm / m are converted; a number without a unit is read as m (mm when ≥ 50). Keywords: pile / shallow, pedestal / "footing only" / "no pedestal". Images are read by OCR; PDF is not supported yet.`;
   const piles = isPile ? pileList : [];
   const Bf = num('fs-Bf'), Lf = num('fs-Lf');
   const Hf0 = num('fs-Hf');

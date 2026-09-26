@@ -1,12 +1,13 @@
 // OCR / pasted-text review tables (parsers live in lib/foundation/import/textParsers.js).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { parseComboImport, parseEquipmentWeightText, parseLoadTypeText } from '../../lib/foundation/index.js?v=20260926k';
-import { escapeHtml } from '../core/dom.js?v=20260926k';
-import { fmt } from '../core/format.js?v=20260926k';
-import { comboState, state } from '../core/state.js?v=20260926k';
-import { renderComboTable } from '../tabs/combos.js?v=20260926k';
-import { renderEquipmentLoad, renderLoadTypesTable } from '../tabs/loading.js?v=20260926k';
-import { recalcAll } from '../workflow/recalc.js?v=20260926k';
+import { parseComboImport, parseEquipmentWeightText, parseFoundationDimText, parseLoadTypeText } from '../../lib/foundation/index.js?v=20260926l';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20260926l';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926l';
+import { fmt } from '../core/format.js?v=20260926l';
+import { comboState, state } from '../core/state.js?v=20260926l';
+import { renderComboTable } from '../tabs/combos.js?v=20260926l';
+import { renderEquipmentLoad, renderLoadTypesTable } from '../tabs/loading.js?v=20260926l';
+import { recalcAll } from '../workflow/recalc.js?v=20260926l';
 
 // parseLoadTypeText() lives in lib/foundation/import/textParsers.js.
 export function renderLtOcrReview(text) {
@@ -104,6 +105,76 @@ export function renderEqOcrReview(text) {
   document.getElementById('eq-ocr-apply-all').addEventListener('click', () => {
     results.filter(r => r.found).forEach(r => { document.getElementById(r.key).value = r.val.toFixed(2); });
     renderEquipmentLoad();
+  });
+}
+// parseFoundationDimText() (lib/foundation/import/textParsers.js) returns raw value + unit per key; the conversion
+// to the field unit happens here. A number with no unit is read in the field unit, except a length >= 50 in an
+// m-field, which is read as mm (a 50 m footing is not plausible) — the Unit column always says which was used.
+export const FS_IMPORT_FIELDS = {
+  Bf: { id: 'fs-Bf', label: 'Width, B<sub>f</sub>', unit: 'm' },
+  Lf: { id: 'fs-Lf', label: 'Length, L<sub>f</sub>', unit: 'm' },
+  Hf: { id: 'fs-Hf', label: 'Height, H<sub>f</sub>', unit: 'm' },
+  Df: { id: 'fs-Df', label: 'Depth, D<sub>f</sub>', unit: 'm' },
+  Bp: { id: 'fs-Bp', label: 'Pedestal width, B<sub>p</sub>', unit: 'm' },
+  Lp: { id: 'fs-Lp', label: 'Pedestal length, L<sub>p</sub>', unit: 'm' },
+  Gp: { id: 'fs-Gp', label: 'Pedestal height above ground, G<sub>p</sub>', unit: 'm' },
+  OffX: { id: 'fs-OffX', label: 'Offset X, Off<sub>X</sub>', unit: 'm' },
+  OffZ: { id: 'fs-OffZ', label: 'Offset Z, Off<sub>Z</sub>', unit: 'm' },
+  tGrout: { id: 'fs-grout-t', label: 'Grout thickness, t<sub>grout</sub>', unit: 'mm' },
+  hEmbed: { id: 'fs-hpile', label: 'Embedded pile in pile cap, h', unit: 'm' }
+};
+const FS_TO_M = { mm: 0.001, cm: 0.01, m: 1 };
+function fsToFieldUnit(value, unit, fieldUnit) {
+  if (fieldUnit === 'mm') {
+    if (!unit) return { val: value, how: 'no unit → mm' };
+    return { val: value * FS_TO_M[unit] * 1000, how: unit };
+  }
+  if (!unit) return Math.abs(value) >= 50 ? { val: value / 1000, how: 'no unit, ≥ 50 → mm' } : { val: value, how: 'no unit → m' };
+  return { val: value * FS_TO_M[unit], how: unit };
+}
+const FS_SUPPORT_LABEL = { pile: 'Pile', shallow: 'Shallow' };
+const FS_TYPE_LABEL = { pedestal: 'Yes', block: 'No' };
+export function renderFsAutoFillReview(text, source = 'text') {
+  const reviewEl = document.getElementById('fs-ai-review');
+  const res = parseFoundationDimText(text);
+  const rows = res.fields.filter(f => FS_IMPORT_FIELDS[f.key]).map(f => {
+    const d = FS_IMPORT_FIELDS[f.key], c = fsToFieldUnit(f.value, f.unit, d.unit);
+    return { ...d, key: f.key, src: f.src, val: +c.val.toFixed(4), how: c.how, cur: document.getElementById(d.id)?.value ?? '' };
+  });
+  const curSupport = getRadioVal('fs-support'), curType = getRadioVal('fs-type');
+  const rawBlock = source === 'ocr' ? `<details style="margin-top:8px;"><summary class="note" style="cursor:pointer;">Raw OCR text</summary><pre class="ocr-raw">${escapeHtml(text || '(empty)')}</pre></details>` : '';
+  if (!rows.length && !res.support && !res.type) {
+    reviewEl.innerHTML = `<div class="warn-box"><strong>⚠  Nothing recognised.</strong> Use labels such as <code>Bf 2.4</code>, <code>Df 1.5 m</code>, <code>Gp 275 mm</code>, or a size group such as <code>footing 2.4 x 2.4 x 0.8</code> / <code>pedestal 1.25 x 1.25</code>.</div>${rawBlock}`;
+    return;
+  }
+  // Three narrow columns (the input panel is narrow): field + the text it came from, new value, current value.
+  const srcLine = s => `<div class="clause" style="font-size:11px;margin-top:2px;">${s}</div>`;
+  const kwRow = (lbl, v, cur, map) => v ? `<tr><td>${lbl}${srcLine('keyword')}</td><td class="num">${map[v]}</td><td class="num">${map[cur] || '—'}</td></tr>` : '';
+  reviewEl.innerHTML = `
+    <div class="warn-box"><strong>⚠  Verify before use:</strong> compare every value with the source${source === 'ocr' ? ' — OCR can misread digits (e.g. 0.8 as 0.6)' : ''}. Filled fields are highlighted until you edit them.
+      ${res.conflicts.length ? `<br><strong>Different values found for the same field</strong> (the first one is used): ${res.conflicts.map(c => `${escapeHtml(c.src)}`).join('; ')}.` : ''}
+      ${res.ignored.length ? `<br><strong>Not used:</strong> ${res.ignored.map(escapeHtml).join('; ')}.` : ''}</div>
+    <div class="overflow-x"><table class="calc-table fs-ai-table">
+      <tr><th style="width:54%;">Field</th><th style="width:23%;">New</th><th style="width:23%;">Now</th></tr>
+      ${kwRow('Support', res.support, curSupport, FS_SUPPORT_LABEL)}
+      ${kwRow('Pedestal', res.type, curType, FS_TYPE_LABEL)}
+      ${rows.map(r => `<tr><td>${r.label} [${r.unit}]${srcLine(`${escapeHtml(r.src)} · ${r.how}`)}</td><td class="num">${r.val}</td><td class="num">${escapeHtml(r.cur)}</td></tr>`).join('')}
+    </table></div>
+    <button type="button" id="fs-ai-apply-all" class="combo-add-btn">Apply to form</button>
+    ${rawBlock}`;
+  document.getElementById('fs-ai-apply-all').addEventListener('click', () => {
+    // Radios first (their handlers show / hide the pedestal and pile groups), then the values, then one recalculation.
+    if (res.support && res.support !== curSupport) document.querySelector(`#fs-support button[data-val="${res.support}"]`)?.click();
+    if (res.type && res.type !== curType) document.querySelector(`#fs-type button[data-val="${res.type}"]`)?.click();
+    rows.forEach(r => {
+      const el = document.getElementById(r.id);
+      if (!el) return;
+      el.value = String(r.val);
+      el.classList.add('ai-filled');
+      if (r.key === 'tGrout') document.getElementById('fs-grout').checked = r.val > 0;
+    });
+    calcFoundSize();
+    reviewEl.innerHTML = `<div class="note">✓ ${rows.length} value(s)${res.support || res.type ? ' and the foundation type' : ''} applied — highlighted fields stay marked until you edit them.</div>`;
   });
 }
 // parseComboImport(text, codes) and parseFactorCell() live in lib/foundation/import/textParsers.js.

@@ -1,28 +1,28 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20260926k'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20260926k';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260926k';
-import { dlWorksheetItem } from './core/worksheet.js?v=20260926k';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260926k';
-import { renderComboImportReview, renderEqOcrReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260926k';
-import { loadTesseract } from './ocr/tesseract.js?v=20260926k';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260926k';
-import { renderSummaryReport } from './report/summary.js?v=20260926k';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260926k';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260926k';
-import { calcFoundation } from './tabs/foundation.js?v=20260926k';
-import { calcFoundSize } from './tabs/foundSize.js?v=20260926k';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260926k';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260926k';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260926k';
-import { calcRebar } from './tabs/rebar.js?v=20260926k';
-import { calcSettlement } from './tabs/settlement.js?v=20260926k';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260926k';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260926k';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260926k';
-import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260926k';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260926k';
+} from '../lib/foundation/index.js?v=20260926l'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20260926l';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260926l';
+import { dlWorksheetItem } from './core/worksheet.js?v=20260926l';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260926l';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260926l';
+import { loadTesseract } from './ocr/tesseract.js?v=20260926l';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260926l';
+import { renderSummaryReport } from './report/summary.js?v=20260926l';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260926l';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260926l';
+import { calcFoundation } from './tabs/foundation.js?v=20260926l';
+import { calcFoundSize } from './tabs/foundSize.js?v=20260926l';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260926l';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260926l';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260926l';
+import { calcRebar } from './tabs/rebar.js?v=20260926l';
+import { calcSettlement } from './tabs/settlement.js?v=20260926l';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260926l';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260926l';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260926l';
+import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260926l';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260926l';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -299,13 +299,36 @@ document.addEventListener('keydown', (e) => {
     setAssistantOpen(false);
   }
 }, true); // capture: runs before the modal Escape handler, so one Esc closes an open popup first, not both
-// Auto Fill cards (Tab 01 / Tab 02) — UI only for now: show the chosen file name, no extraction/auto-fill yet.
-[['gen-ai-file', 'gen-ai-file-name'], ['fs-ai-file', 'fs-ai-file-name']].forEach(([inId, outId]) => {
-  document.getElementById(inId)?.addEventListener('change', (e) => {
-    const f = e.target.files && e.target.files[0];
-    document.getElementById(outId).textContent = f ? ('Selected: ' + f.name + ' — extraction not available yet') : '';
-  });
+// Auto Fill card, Tab 01 — UI only for now: show the chosen file name, no extraction/auto-fill yet.
+document.getElementById('gen-ai-file')?.addEventListener('change', (e) => {
+  const f = e.target.files && e.target.files[0];
+  document.getElementById('gen-ai-file-name').textContent = f ? ('Selected: ' + f.name + ' — extraction not available yet') : '';
 });
+// Auto Fill card, Tab 02 — pasted text or an OCR'd image -> parseFoundationDimText() -> review table -> "Apply to form".
+{
+  const chat = document.getElementById('fs-ai-chat'), readBtn = document.getElementById('fs-ai-chat-apply');
+  const nameEl = document.getElementById('fs-ai-file-name');
+  chat.addEventListener('input', () => { readBtn.disabled = !chat.value.trim(); });
+  readBtn.addEventListener('click', () => renderFsAutoFillReview(chat.value, 'text'));
+  document.getElementById('fs-ai-file').addEventListener('change', async (e) => {
+    const f = e.target.files && e.target.files[0];
+    e.target.value = ''; // the same file can be picked again
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { nameEl.textContent = `${f.name}: PDF is not supported yet — upload an image (PNG / JPG) or paste the text.`; return; }
+    nameEl.textContent = `${f.name}: loading OCR engine…`;
+    if (!(await loadTesseract())) { nameEl.textContent = '⚠  OCR library failed to load — check your internet connection and try again.'; return; }
+    nameEl.textContent = `${f.name}: running OCR… (longer the first time, while the engine downloads)`;
+    try {
+      const { data: { text } } = await Tesseract.recognize(f, 'eng');
+      nameEl.textContent = `${f.name}: OCR complete — review the values below.`;
+      renderFsAutoFillReview(text, 'ocr');
+    } catch (err) {
+      nameEl.textContent = '⚠  OCR failed: ' + err.message;
+    }
+  });
+}
+// Auto Fill highlight: a field filled from text stays marked until the user edits it.
+document.addEventListener('input', (e) => { e.target.classList?.remove('ai-filled'); }, true);
 document.querySelectorAll('.modal-close').forEach(btn => {
   btn.addEventListener('click', () => closeModal(btn.dataset.close));
 });
