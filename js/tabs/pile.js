@@ -2,13 +2,13 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927a';
-import { fmt as fmtRaw } from '../core/format.js?v=20260927a';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260927a';
-import { comboLabel } from '../core/worksheet.js?v=20260927a';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927a';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927a';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927b';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927b';
+import { fmt as fmtRaw } from '../core/format.js?v=20260927b';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260927b';
+import { comboLabel } from '../core/worksheet.js?v=20260927b';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927b';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927b';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -234,7 +234,7 @@ export function calcPile() {
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Pile layout check — spacing and edge distance (limits are project-specific inputs${limSource ? ` — per ${escapeHtml(limSource)}` : ''})</caption>
     <tr><th>Check</th><th>Expression</th><th>Actual (m)</th><th>Actual / D</th><th>Pile</th><th>Limit</th><th>UC</th><th>Status</th></tr>
-    <tr><td>Minimum spacing, s<sub>min</sub></td><td class="clause">min √(Δx² + Δz²); UC = s<sub>lim</sub> / s</td>${actCells(sp.actual, sp.pair ? `${sp.pair[0]}–${sp.pair[1]}` : '—')}<td class="num">${spLimit}</td><td class="num">${sp.uc === null ? '—' : fmt(sp.uc, 3)}</td><td>${stTxt(sp.status)}</td></tr>
+    <tr><td>Minimum spacing, s<sub>min</sub></td><td class="clause">min √(Δx² + Δz²)</td>${actCells(sp.actual, sp.pair ? `${sp.pair[0]}–${sp.pair[1]}` : '—')}<td class="num">${spLimit}</td><td class="num">${sp.uc === null ? '—' : fmt(sp.uc, 3)}</td><td>${stTxt(sp.status)}</td></tr>
     <tr><td>Minimum edge distance, e<sub>min</sub></td><td class="clause">min[B<sub>f</sub>/2 − |x|, L<sub>f</sub>/2 − |z|]</td>${actCells(ed.actual, ed.pile)}<td class="num">${ed.warnLimit === null ? 'not set' : '≥ ' + inD(ed.warnLimit, D) + ' (warning only)'}</td><td class="num">—</td><td>${stTxt(ed.status)}</td></tr>
   </table></div>`;
 
