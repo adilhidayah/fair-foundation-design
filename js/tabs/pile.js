@@ -2,13 +2,13 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927d';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927d';
-import { fmt as fmtRaw } from '../core/format.js?v=20260927d';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260927d';
-import { comboLabel } from '../core/worksheet.js?v=20260927d';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927d';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927d';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927e';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927e';
+import { fmt as fmtRaw } from '../core/format.js?v=20260927e';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260927e';
+import { comboLabel } from '../core/worksheet.js?v=20260927e';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927e';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927e';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -278,9 +278,9 @@ export function calcPile() {
         <td class="num">avg ${fmt(info.PmAvg, 3)} / min ${fmt(info.PmMin, 3)}</td>
         <td class="num">${fmt(latMethod === 'average' ? info.PmAvg : info.PmMin, 3)}</td></tr>`;
     };
-    html += section('Lateral Group Reduction', 'The lateral capacity of each pile is reduced by row in the load direction with p-multipliers P<sub>m</sub>. The single-pile lateral capacity H<sub>all</sub> must not already include group effects.');
+    html += section('Lateral Group Reduction', `The lateral capacity of each pile is reduced by row in the load direction with p-multipliers P<sub>m</sub>: H<sub>all,row</sub> = P<sub>m</sub>·H<sub>all</sub>, ${latMethod === 'average' ? 'average of the rows' : 'governing (minimum) row'} used. Source of the P<sub>m</sub> values: ${escapeHtml(pm.table.source)}. The single-pile lateral capacity H<sub>all</sub> must not already include group effects.`);
     html += `<div class="overflow-x"><table class="calc-table">
-      <caption>Lateral group reduction — p-multipliers P<sub>m</sub> (H<sub>all</sub>,row = P<sub>m</sub> · H<sub>all</sub>), ${latMethod === 'average' ? 'average of rows' : 'governing (minimum) row'} used — ${escapeHtml(pm.table.source)}</caption>
+      <caption>Lateral group reduction (p-multipliers)</caption>
       <tr><th>Load direction</th><th>Row spacing</th><th>P<sub>m</sub> by row (leading row first, worse sign shown)</th><th>Summary</th><th>P<sub>m</sub> used</th></tr>
       ${dirRows(latInfoX, 'along x (H<sub>x</sub>)')}
       ${dirRows(latInfoZ, 'along z (H<sub>z</sub>)')}
@@ -312,8 +312,10 @@ export function calcPile() {
       ${summaryRows.map(x => `<tr class="${x.uc === ucMax ? 'governing' : ''}"><td>${x.name}</td><td class="num">${x.demand}</td><td class="num">${x.cap}</td><td class="num">${fmt(x.uc, 3)}</td><td>${x.combo ? escapeHtml(comboLabel(x.combo)) : '—'}</td>${pileCells(x.pile)}<td>${okTxt(x.uc)}</td></tr>`).join('')}
     </table></div>`;
 
+    // Captions are names only (user request) — the formula, capacity and governing combination go in the sentence above.
+    html += introP(`Compression: DCR<sub>c</sub> = F<sub>max</sub> / P<sub>all,g</sub>, with P<sub>all,g</sub> = E<sub>g</sub>·P<sub>all</sub> = ${fmt(g.QcG, 1)} kN.${compGov ? ` Governing: ${escapeHtml(comboLabel(compGov.combo))}.` : ''}`);
     html += `<div class="overflow-x"><table class="calc-table">
-      <caption>Compression per load combination — DCR<sub>c</sub> = F<sub>max</sub> / P<sub>all,g</sub>, P<sub>all,g</sub> = E<sub>g</sub>·P<sub>all</sub> = ${fmt(g.QcG, 1)} kN${compGov ? ` — governing ${escapeHtml(comboLabel(compGov.combo))}` : ''}</caption>
+      <caption>Compression per load combination</caption>
       <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>F<sub>max</sub> (kN)</th><th>Pile</th><th>(x, z) m</th><th>DCR<sub>c</sub></th><th>Check</th></tr>
       ${results.map(r => {
         if (!r.valid) return invalidRow(r, 6);
@@ -321,8 +323,9 @@ export function calcPile() {
       }).join('')}
     </table></div>`;
 
+    html += introP(`Tension (uplift): DCR<sub>t</sub> = |F<sub>min</sub>| / T<sub>all,g</sub>, with T<sub>all,g</sub> = E<sub>g</sub>·T<sub>all</sub> = ${fmt(g.QtG, 1)} kN.${tensGov && tensDemand(tensGov) > 0 ? ` Governing: ${escapeHtml(comboLabel(tensGov.combo))}.` : ' No pile is in tension in any combination.'}`);
     html += `<div class="overflow-x"><table class="calc-table">
-      <caption>Tension (uplift) per load combination — DCR<sub>t</sub> = |F<sub>min</sub>| / T<sub>all,g</sub>, T<sub>all,g</sub> = E<sub>g</sub>·T<sub>all</sub> = ${fmt(g.QtG, 1)} kN${tensGov && tensDemand(tensGov) > 0 ? ` — governing ${escapeHtml(comboLabel(tensGov.combo))}` : ' — no pile in tension in any combination'}</caption>
+      <caption>Tension (uplift) per load combination</caption>
       <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>T<sub>max</sub> (kN)</th><th>Pile</th><th>(x, z) m</th><th>DCR<sub>t</sub></th><th>Check</th></tr>
       ${results.map(r => {
         if (!r.valid) return invalidRow(r, 6);
@@ -330,8 +333,9 @@ export function calcPile() {
       }).join('')}
     </table></div>`;
 
+    html += introP(`Lateral, on the most loaded pile (direct H/n plus torsion): DCR<sub>l</sub> = √[(V<sub>x</sub>/(P<sub>m,x</sub>·H<sub>all</sub>))² + (V<sub>z</sub>/(P<sub>m,z</sub>·H<sub>all</sub>))²], with H<sub>all</sub> = ${fmt(Ql, 1)} kN.${latGov ? ` Governing: ${escapeHtml(comboLabel(latGov.combo))}.` : ''}`);
     html += `<div class="overflow-x"><table class="calc-table">
-      <caption>Lateral per load combination — DCR<sub>l</sub> = √[(V<sub>x</sub>/(P<sub>m,x</sub>·H<sub>all</sub>))² + (V<sub>z</sub>/(P<sub>m,z</sub>·H<sub>all</sub>))²] on the most loaded pile (direct H/n plus torsion), H<sub>all</sub> = ${fmt(Ql, 1)} kN${latGov ? ` — governing ${escapeHtml(comboLabel(latGov.combo))}` : ''}</caption>
+      <caption>Lateral per load combination</caption>
       <tr><th>No.</th><th>L. Comb</th><th>P (kN)</th><th>V<sub>max</sub> (kN)</th><th>Pile</th><th>(x, z) m</th><th>DCR<sub>l</sub></th><th>Check</th></tr>
       ${results.map(r => {
         if (!r.valid) return invalidRow(r, 6);

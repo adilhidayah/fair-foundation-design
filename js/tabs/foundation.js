@@ -1,12 +1,12 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260927d';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927d';
-import { fmt } from '../core/format.js?v=20260927d';
-import { comboState, lastResults, state } from '../core/state.js?v=20260927d';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260927d';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20260927d';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927d';
+import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260927e';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927e';
+import { fmt } from '../core/format.js?v=20260927e';
+import { comboState, lastResults, state } from '../core/state.js?v=20260927e';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260927e';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20260927e';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927e';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -154,7 +154,7 @@ export function calcFoundation() {
     <tr class="governing"><td>Criterion</td><td class="clause">UC ≤ 1.0 → <strong>full contact</strong> (resultant inside the kern, q<sub>min</sub> ≥ 0) &nbsp;|&nbsp; UC &gt; 1.0 → <strong>partial uplift</strong> (base separates over part of the footing)</td></tr>
   </table></div>
   <div class="overflow-x"><table class="calc-table">
-    <caption>Kern check per load combination — B = ${fmt(B,2)} m, L = ${fmt(L,2)} m, allowable ratio 1/${ratioTxt}</caption>
+    <caption>Kern check per load combination</caption>
     <tr><th class="lc-no">No.</th><th>Combination</th><th>P (kN)</th><th>e<sub>x</sub> (m)</th><th>e<sub>z</sub> (m)</th><th>Contact</th><th>UC</th><th>Status</th></tr>
     ${results.map(r => {
       if (!r.valid) return invalidRow(r, 5);
@@ -164,7 +164,7 @@ export function calcFoundation() {
   html += sectionHeader('4.3', 'Bearing Pressure Check',
     `Maximum soil pressure under the footing against the allowable bearing capacity: UC = q<sub>max</sub> / q<sub>a</sub>, q<sub>a</sub> = ${fmt(qa,1)} kPa (Section 08). With partial uplift the effective contact width is used.`);
   html += `<div class="overflow-x"><table class="calc-table">
-    <caption>Bearing pressure check per load combination — q<sub>a</sub> = ${fmt(qa,1)} kPa</caption>
+    <caption>Bearing pressure check per load combination</caption>
     <tr><th class="lc-no">No.</th><th>Combination</th><th>P (kN)</th><th>e (m)</th><th>q<sub>max</sub> (kPa)</th><th>q<sub>min</sub> (kPa)</th><th>UC</th><th>Status</th></tr>
     ${results.map(r => {
       if (!r.valid) return invalidRow(r, 5);
