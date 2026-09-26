@@ -1,19 +1,19 @@
 // 01 — General Input Data: design standards register + general summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20260926m';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926m';
-import { fmt } from '../core/format.js?v=20260926m';
-import { designStandards } from '../core/state.js?v=20260926m';
-import { calcAnchor } from '../tabs/anchor.js?v=20260926m';
-import { calcBearing } from '../tabs/bearing.js?v=20260926m';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926m';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926m';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260926m';
-import { calcPile } from '../tabs/pile.js?v=20260926m';
-import { calcRebar } from '../tabs/rebar.js?v=20260926m';
-import { calcSettlement } from '../tabs/settlement.js?v=20260926m';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926m';
-import { renderWorkflowLive } from '../workflow/status.js?v=20260926m';
+import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20260926n';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926n';
+import { fmt } from '../core/format.js?v=20260926n';
+import { designStandards } from '../core/state.js?v=20260926n';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926n';
+import { calcBearing } from '../tabs/bearing.js?v=20260926n';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926n';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926n';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926n';
+import { calcPile } from '../tabs/pile.js?v=20260926n';
+import { calcRebar } from '../tabs/rebar.js?v=20260926n';
+import { calcSettlement } from '../tabs/settlement.js?v=20260926n';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926n';
+import { renderWorkflowLive } from '../workflow/status.js?v=20260926n';
 
 // Rows are editable in place (✎ -> Save/Cancel); the editing row index lives on window since this renders at startup.
 export function renderDesignStandardsTable() {

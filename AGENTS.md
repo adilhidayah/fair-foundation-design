@@ -33,7 +33,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - `lib/foundation/piperack/` — `loadingData` (L-dir/T-dir), `loadCombinations` (envelope max |Mbot|), `foundationSizing` (iteratif `sizePierFooting`).
 - `lib/foundation/skidMounted/` — `loadingData` (`sumBoltReactions`), `foundationSizing` (footprint + 2x edge).
 - `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan).
-- `lib/foundation/validation/` — 12 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 101 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 15 checks) + `VALIDATION_REPORT.md` (445 checks, 445 pass @ 26 Sep 2026).
+- `lib/foundation/validation/` — 12 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 101 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 18 checks) + `VALIDATION_REPORT.md` (461 checks, 461 pass @ 26 Sep 2026).
 
 ## 4. Kontrak Pure Function (harga mati di lib/)
 - `lib/` = no DOM, no `document`, no `window`, no `fmt()`, no Tesseract. Input plain numbers/objects, output plain objects.

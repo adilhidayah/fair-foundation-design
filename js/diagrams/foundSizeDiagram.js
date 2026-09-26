@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20260926m';
+import { fmt } from '../core/format.js?v=20260926n';
 
 // Foundation sizing plan + elevation. patch.js keeps its #fsize-arrow marker clean.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.
@@ -114,7 +114,7 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
   }
   const footElev = `<rect class="outline-footing" x="${footEx.toFixed(1)}" y="${footTopY.toFixed(1)}" width="${footEw.toFixed(1)}" height="${(footBotY-footTopY).toFixed(1)}"/>
     <line class="dim" x1="${(footEx+footEw+12).toFixed(1)}" y1="${footTopY.toFixed(1)}" x2="${(footEx+footEw+12).toFixed(1)}" y2="${footBotY.toFixed(1)}"/>
-    <text class="dim-text" x="${(footEx+footEw+16).toFixed(1)}" y="${((footTopY+footBotY)/2).toFixed(1)}">Hf=${fmt(Hf,3)}</text>
+    <text class="dim-text" style="${HALO}" x="${(footEx+footEw+16).toFixed(1)}" y="${((footTopY+footBotY)/2).toFixed(1)}">Hf=${fmt(Hf,3)}</text>
     ${isBlock && Gp > 0 ? `<line class="dim" x1="${(footEx-12).toFixed(1)}" y1="${footTopY.toFixed(1)}" x2="${(footEx-12).toFixed(1)}" y2="${groundY.toFixed(1)}"/>
     <text class="dim-text" x="${(footEx-16).toFixed(1)}" y="${((footTopY+groundY)/2).toFixed(1)}" text-anchor="end">Gp=${fmt(Gp,3)}</text>` : ''}
     <line class="dim" x1="${dfX.toFixed(1)}" y1="${groundY.toFixed(1)}" x2="${dfX.toFixed(1)}" y2="${footBotY.toFixed(1)}"/>
@@ -147,7 +147,7 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
   // Exclusion zone for the ground hatch/label: the footing width, widened to also clear the Gp/Dp (left) and Hp (right) dimension brackets and their text when there's a pedestal — using the pedestal's own (possibly OffX-shifted) center, not the footing's.
   const pedCxForZone = ecx + (hasPed ? OffX * eScale : 0);
   const hatchZoneL = Math.min(dfX - 16, hasPed ? Math.min(footEx, pedCxForZone - (Bp*eScale)/2 - 55) : footEx - 6);
-  const hatchZoneR = hasPed ? Math.max(footEx+footEw, pedCxForZone + (Bp*eScale)/2 + 85) : footEx + footEw + 6;
+  const hatchZoneR = hasPed ? Math.max(footEx+footEw, pedCxForZone + (Bp*eScale)/2 + 85) : footEx + footEw + 80; // clears the "Hf=" text (at grade when the footing projects)
   let groundHatch = '';
   for (let hx = eX0 + 6; hx < eX0 + eW - 2; hx += 9) {
     if (hx > hatchZoneL && hx < hatchZoneR) continue;

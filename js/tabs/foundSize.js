@@ -1,12 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926m';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926m';
-import { fmt } from '../core/format.js?v=20260926m';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926m';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926m';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926m';
-import { recalcAll } from '../workflow/recalc.js?v=20260926m';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926n';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926n';
+import { fmt } from '../core/format.js?v=20260926n';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926n';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926n';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926n';
+import { recalcAll } from '../workflow/recalc.js?v=20260926n';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -83,7 +83,7 @@ export function calcFoundSize() {
   if (!sizing.valid) {
     state.pedHp = 0; state.pedW = 0;
     lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df }).issues };
-    document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero, and D<sub>f</sub> ≥ H<sub>f</sub> (footing must fit within the total embedment depth).</div>`;
+    document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero and D<sub>f</sub> ≥ 0 (bottom not above ground). With a pedestal, D<sub>f</sub> ≥ H<sub>f</sub> as well (the footing must fit within the embedment depth); without a pedestal the footing / pile cap may project above ground.</div>`;
     return;
   }
   const { Hf, Af, Wf, Gp, Dp, Hp, Ap, Wp, Wg, Ws, hs, totalWeightTon, totalWeightKN, deltaH } = sizing;
@@ -120,6 +120,7 @@ export function calcFoundSize() {
     <tr><td>Depth of ${fWord}, D<sub>f</sub></td><td class="clause">input</td><td class="num">${fmt(Df,2)} m</td></tr>
     ${isBlock && hasGroutT ? `<tr><td>Grout thickness above ${fWord}, t<sub>G</sub></td><td class="clause">input</td><td class="num">${fmt(sizing.groutT,3)} m</td></tr>
     <tr><td>Total height of ${fWord}, H<sub>f,tot</sub></td><td class="clause">H<sub>f</sub> + t<sub>G</sub></td><td class="num">${fmt(HfTot,3)} m</td></tr>` : ''}
+    ${isBlock && Gp > 0 ? `<tr><td>Projection of ${fWord} above ground, G<sub>p</sub></td><td class="clause">H<sub>f</sub> - D<sub>f</sub></td><td class="num">${fmt(Gp,3)} m</td></tr>` : ''}
     <tr><td>Area of ${fWord}, A<sub>f</sub></td><td class="clause">B<sub>f</sub>·L<sub>f</sub></td><td class="num">${fmt(Af,2)} m²</td></tr>
   </table></div>`;
   if (hasPed) {
