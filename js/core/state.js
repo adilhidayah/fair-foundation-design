@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20260926b';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20260926c';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module

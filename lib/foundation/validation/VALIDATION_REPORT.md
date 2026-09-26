@@ -28,6 +28,10 @@ Total: 166 checks, 166 pass, 0 fail.
   excluded + reported as untyped. Default codes give the same vectors as before (+19 checks).
   Vertical kinds also take their own biaxial H/M: Hz -> Fz (dMx = -Hz·dh), Mx -> Mx; lateral kinds ignore
   Hz/Mx (+6 checks).
+- punching shear with unbalanced moment (26 Sep 2026, validation_shared_part11, 16 checks): eccentricPunchingStress —
+  ACI 318M-19 §8.4.4.2, interior: vu = Vu/(bo·d) + Σ γv·|Mu|·c_AB/Jc, γf = 1/(1 + (2/3)√(b1/b2)), Jc = d·b1³/6 + b1·d³/6 + d·b2·b1²/2.
+  500×500, d = 400: bo = 3600, Jc = 204.0e9 mm⁴, γv = 0.4; Vu = 500 kN, Mz = 100 kN·m → 0.3472 + 0.0882 = 0.4355 MPa;
+  biaxial equal moments add both terms; 600×400 rectangular γf 0.5729 / 0.6265, Jc 237.33e9 / 170.67e9; edge/corner → invalid.
 - pile cap flexure both axes, bottom + top (25 Sep 2026, validation_shared_part10, 25 checks, not yet in the total above):
   pileCapMomentAxis — net M per side = Σ F_i·(|c_i − c_p| − h_p), bottom = max(0, larger side), top = max(0, larger −side).
   6 piles ×100 kN, h_p = 0.4: outer piles arm 0.8 → 160 kN·m each side; uplift −40 kN on one column → +side −64 (top 64),

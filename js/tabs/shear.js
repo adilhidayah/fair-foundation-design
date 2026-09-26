@@ -1,11 +1,12 @@
 // Pile cap one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, twoWayShearCheck } from '../../lib/foundation/index.js?v=20260926b';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926b';
-import { fmt } from '../core/format.js?v=20260926b';
-import { lastResults, pileList } from '../core/state.js?v=20260926b';
-import { comboLabel, efficiencyBadge, verdictHTML } from '../core/worksheet.js?v=20260926b';
-import { pileComboLoads } from '../tabs/pile.js?v=20260926b';
+import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20260926c';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926c';
+import { fmt } from '../core/format.js?v=20260926c';
+import { lastResults, pileList } from '../core/state.js?v=20260926c';
+import { comboLabel, efficiencyBadge, verdictHTML } from '../core/worksheet.js?v=20260926c';
+import { pileComboLoads } from '../tabs/pile.js?v=20260926c';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926c';
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group
@@ -39,16 +40,28 @@ function oneWayVuFromPiles({ axis, h, cc, Dbar }) {
   if (!gov) return { valid: false, note: 'Pile force distribution invalid for every combination.' };
   return { valid: true, kind: 'one-way', axis, d, half, center, dp: base.dp, per, gov, Vu: gov.res.Vu, invalid: per.filter(p => p.invalid) };
 }
-function punchingVuFromPiles({ c1, c2, h, cc, Dbar }) {
+// Punching V_u per LRFD combination from the pile reactions, plus that combination's unbalanced moments at the base of the
+// pedestal (Section 03 table 3.3.4, incl. H·Hp) for the eccentric shear stress. The governing combination is the one with the
+// largest combined stress v_u = V_u/(b_o·d) + Σ γv·M_u·c/J_c (ACI 318M-19 §8.4.4.2), not simply the largest V_u.
+function punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) {
   const base = pileReactionsLrfd();
   if (!base.valid) return base;
   const d = (h - cc - Dbar) / 1000;
   if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
-  const per = base.evals.map(e => ({ combo: e.combo, invalid: e.ev.valid ? null : e.ev.note,
-    res: e.ev.valid ? punchingPileShear({ pileForces: e.ev.pileForces, cx: base.at.x, cy: base.at.y, c1: c1 / 1000, c2: c2 / 1000, d, dp: base.dp }) : null }));
-  const gov = governingOf(per);
-  if (!gov) return { valid: false, note: 'Pile force distribution invalid for every combination.' };
-  return { valid: true, kind: 'punching', d, c1: c1 / 1000, c2: c2 / 1000, center: base.at, dp: base.dp, per, gov, Vu: gov.res.Vu, invalid: per.filter(p => p.invalid) };
+  const pedBase = buildPedestalComboBase();
+  const per = base.evals.map(e => {
+    const res = e.ev.valid ? punchingPileShear({ pileForces: e.ev.pileForces, cx: base.at.x, cy: base.at.y, c1: c1 / 1000, c2: c2 / 1000, d, dp: base.dp }) : null;
+    const v = stdComboVector(e.combo.f, pedBase);
+    const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
+    const ecc = res && res.valid ? eccentricPunchingStress({ c1, c2, d: d * 1000, Vu: res.Vu, Mx, Mz, loc }) : null;
+    return { combo: e.combo, invalid: e.ev.valid ? null : e.ev.note, res, Mx, Mz, ecc };
+  });
+  const ok = per.filter(p => p.res && p.res.valid);
+  if (!ok.length) return { valid: false, note: 'Pile force distribution invalid for every combination.' };
+  const key = (p) => (p.ecc && p.ecc.valid ? p.ecc.vu : p.res.Vu);
+  const gov = ok.reduce((a, b) => (key(b) > key(a) ? b : a));
+  return { valid: true, kind: 'punching', d, c1: c1 / 1000, c2: c2 / 1000, center: base.at, dp: base.dp, per, gov, Vu: gov.res.Vu,
+    Mx: gov.Mx, Mz: gov.Mz, invalid: per.filter(p => p.invalid) };
 }
 // Preview of the pile-reaction shear: formula + governing-combination pile table + every combination's V_u.
 function pileShearHtml(pv) {
@@ -71,11 +84,11 @@ function pileShearHtml(pv) {
     ${g.res.perPile.map(p => `<tr class="${p.frac > 0 ? 'governing' : ''}"><td>${p.i}</td><td class="num">${fmt(p.x, 2)}</td><td class="num">${fmt(p.y, 2)}</td><td class="num">${fmt(p.F, 1)}</td><td class="num">${fmt(p.s, 3)}</td><td class="num">${fmt(p.frac, 2)}</td><td class="num">${fmt(p.F * p.frac, 1)}</td></tr>`).join('')}
   </table></div>`;
   html += `<div class="overflow-x"><table class="calc-table">
-    <caption>V<sub>u</sub> per LRFD combination</caption>
-    <tr><th>Combination</th>${one ? '<th>V<sub>+</sub> (kN)</th><th>V<sub>−</sub> (kN)</th>' : ''}<th>V<sub>u</sub> (kN)</th></tr>
+    <caption>V<sub>u</sub> per LRFD combination${one ? '' : ' — with the unbalanced moments at the base of the pedestal and the combined stress v<sub>u</sub> (§8.4.4.2); governing = largest v<sub>u</sub>'}</caption>
+    <tr><th>Combination</th>${one ? '<th>V<sub>+</sub> (kN)</th><th>V<sub>−</sub> (kN)</th>' : ''}<th>V<sub>u</sub> (kN)</th>${one ? '' : '<th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th><th>v<sub>u</sub> (MPa)</th>'}</tr>
     ${pv.per.map(p => p.invalid
-      ? `<tr><td>${escapeHtml(comboLabel(p.combo))}</td><td colspan="${one ? 3 : 1}">${escapeHtml(p.invalid)}</td></tr>`
-      : `<tr class="${p === g ? 'governing' : ''}"><td>${escapeHtml(comboLabel(p.combo))}</td>${one ? `<td class="num">${fmt(p.res.Vpos, 1)}</td><td class="num">${fmt(p.res.Vneg, 1)}</td>` : ''}<td class="num">${fmt(p.res.Vu, 1)}</td></tr>`).join('')}
+      ? `<tr><td>${escapeHtml(comboLabel(p.combo))}</td><td colspan="${one ? 3 : 4}">${escapeHtml(p.invalid)}</td></tr>`
+      : `<tr class="${p === g ? 'governing' : ''}"><td>${escapeHtml(comboLabel(p.combo))}</td>${one ? `<td class="num">${fmt(p.res.Vpos, 1)}</td><td class="num">${fmt(p.res.Vneg, 1)}</td>` : ''}<td class="num">${fmt(p.res.Vu, 1)}</td>${one ? '' : `<td class="num">${fmt(p.Mx, 1)}</td><td class="num">${fmt(p.Mz, 1)}</td><td class="num">${p.ecc && p.ecc.valid ? fmt(p.ecc.vu, 3) : '—'}</td>`}</tr>`).join('')}
   </table></div>`;
   if (pv.invalid.length) html += `<div class="warn-box"><strong>⚠  Pile force distribution invalid:</strong> ${pv.invalid.map(p => `${escapeHtml(comboLabel(p.combo))}: ${escapeHtml(p.invalid)}`).join('; ')} — not included above.</div>`;
   return html;
@@ -166,10 +179,18 @@ export function calcTwoWay() {
   const fromPiles = getRadioVal('tw-vu-src') === 'piles';
   document.getElementById('tw-vu').readOnly = fromPiles;
   document.getElementById('tw-vu-piles-fields').style.display = fromPiles ? 'block' : 'none';
-  const pv = fromPiles ? punchingVuFromPiles({ c1, c2, h, cc, Dbar }) : null;
-  if (pv && pv.valid) { vu = pv.Vu; document.getElementById('tw-vu').value = vu.toFixed(1); }
-  const lambda = parseFloat(getRadioVal('tw-lambda'));
   const loc = getRadioVal('tw-loc');
+  const pv = fromPiles ? punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) : null;
+  // Unbalanced moments for the eccentric shear stress: from the governing LRFD combination at the pedestal base (piles mode,
+  // written back into the fields) or typed in (manual mode).
+  let Mx = num('tw-mux'), Mz = num('tw-muz');
+  document.getElementById('tw-mux').readOnly = fromPiles; document.getElementById('tw-muz').readOnly = fromPiles;
+  if (pv && pv.valid) {
+    vu = pv.Vu; Mx = pv.Mx; Mz = pv.Mz;
+    document.getElementById('tw-vu').value = vu.toFixed(1);
+    document.getElementById('tw-mux').value = Mx.toFixed(1); document.getElementById('tw-muz').value = Mz.toFixed(1);
+  }
+  const lambda = parseFloat(getRadioVal('tw-lambda'));
   const r = twoWayShearCheck({ c1, c2, h, cc, Dbar, fc, vu, lambda, loc });
   document.getElementById('tw-d-out').textContent = fmt(r.d, 0);
   if (!r.valid) {
@@ -186,11 +207,22 @@ export function calcTwoWay() {
     lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: 'V_u from pile reactions not available: ' + pv.note };
     return;
   }
-  const { d, alphaS, bo, boFormula, beta, sqrtfc, vc_vals, vc_gov, Vc, phiVc, uc, pass, hMinRounded } = r;
+  const { d, alphaS, bo, boFormula, beta, sqrtfc, vc_vals, vc_gov, Vc, phiVc, hMinRounded, phi } = r;
+  // Combined stress with the unbalanced moments — ACI 318M-19 §8.4.4.2 (interior pedestal); UC = v_u / (φ·v_c).
+  const ecc = eccentricPunchingStress({ c1, c2, d, Vu: vu, Mx, Mz, loc });
+  if (!ecc.valid) {
+    document.getElementById('calc-twoway').innerHTML = `<div class="warn-box"><strong>⚠  Unbalanced-moment shear not available:</strong> ${escapeHtml(ecc.note)} Use "Interior" for a pedestal on a pile cap.</div>`;
+    document.getElementById('opt-twoway').innerHTML = '';
+    lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: ecc.note };
+    return;
+  }
+  const phiVcStress = phi * vc_gov;
+  const uc = ecc.vu / phiVcStress, pass = uc <= 1.0;
+  const hasMoment = ecc.terms.some(t => t.v > 0);
   lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: pass ? 'PASS' : 'FAIL', metric: `UC = ${fmt(uc,3)}`,
-    detail: `b_o=${fmt(bo,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN${pv ? ` (piles, ${comboLabel(pv.gov.combo)})` : ''}, ${loc}` };
+    detail: `b_o=${fmt(bo,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN, M_ux=${fmt(Mx,1)}, M_uz=${fmt(Mz,1)}kN·m, v_u=${fmt(ecc.vu,3)}MPa${pv ? ` (piles, ${comboLabel(pv.gov.combo)})` : ''}, ${loc}` };
   let suggestHtml = '';
-  if (pass && hMinRounded !== null && h - hMinRounded >= 50) {
+  if (pass && !hasMoment && hMinRounded !== null && h - hMinRounded >= 50) { // the depth search ignores the moment term
     suggestHtml = `<div class="suggest-box">
       <strong>Depth reduction potential:</strong> minimum h for UC ≤ 1.00, rounded up to the nearest 50 mm, is <strong>${fmt(hMinRounded,0)} mm</strong> (current h = ${fmt(h,0)} mm) — a potential reduction of <strong>${fmt(h - hMinRounded,0)} mm</strong>, holding c<sub>1</sub>, c<sub>2</sub>, cc, D, f'c and λ constant. This ignores unbalanced moment transfer (γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub>, §8.4.4.2) and the slab's flexural/deflection requirements — re-check those before reducing h.
     </div>`;
@@ -220,9 +252,26 @@ export function calcTwoWay() {
     <tr><td>π V<sub>c</sub></td><td class="clause">π  = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
     <tr><td>V<sub>u</sub></td><td class="clause">${pv ? 'from pile reactions, LRFD' : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
   </table></div>`;
+  const [tz, tx] = ecc.terms;
+  const termRows = (t, name, Mname) => `
+    <tr><td>${Mname}</td><td class="clause">${pv ? 'base of pedestal, same LRFD combination (03, Table 3.3.4)' : 'input'}</td><td class="num">${fmt(t.M,1)} kN·m</td></tr>
+    <tr><td>b<sub>1</sub>, b<sub>2</sub> (${name})</td><td class="clause">${name === 'M<sub>z</sub>' ? 'c<sub>1</sub> + d, c<sub>2</sub> + d' : 'c<sub>2</sub> + d, c<sub>1</sub> + d'}</td><td class="num">${fmt(t.b1,0)}, ${fmt(t.b2,0)} mm</td></tr>
+    <tr><td>γ<sub>v</sub> (${name})</td><td class="clause">1 − 1/(1 + (2/3)√(b<sub>1</sub>/b<sub>2</sub>)) — §8.4.2.2.2</td><td class="num">${fmt(t.gv,3)}</td></tr>
+    <tr><td>J<sub>c</sub> (${name})</td><td class="clause">d·b<sub>1</sub>³/6 + b<sub>1</sub>·d³/6 + d·b<sub>2</sub>·b<sub>1</sub>²/2</td><td class="num">${fmt(t.Jc/1e9,3)} ×10⁹ mm⁴</td></tr>
+    <tr><td>γ<sub>v</sub>·M<sub>u</sub>·c<sub>AB</sub>/J<sub>c</sub> (${name})</td><td class="clause">c<sub>AB</sub> = b<sub>1</sub>/2 = ${fmt(t.c,0)} mm</td><td class="num">${fmt(t.v,3)} MPa</td></tr>`;
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Combined shear stress with unbalanced moment — ACI 318M-19 §8.4.4.2 (interior pedestal, both directions added at the corner)</caption>
+    <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
+    <tr><td>Direct shear stress</td><td class="clause">V<sub>u</sub>/(b<sub>o</sub>·d) = ${fmt(vu,1)}·10³/(${fmt(bo,0)}·${fmt(d,0)})</td><td class="num">${fmt(ecc.vDirect,3)} MPa</td></tr>
+    ${termRows(tz, 'M<sub>z</sub>', 'M<sub>uz</sub> (bending along x)')}
+    ${termRows(tx, 'M<sub>x</sub>', 'M<sub>ux</sub> (bending along y)')}
+    <tr class="governing"><td>Combined stress, v<sub>u</sub></td><td class="clause">V<sub>u</sub>/(b<sub>o</sub>d) + Σ γ<sub>v</sub>M<sub>u</sub>c<sub>AB</sub>/J<sub>c</sub></td><td class="num">${fmt(ecc.vu,3)} MPa</td></tr>
+    <tr><td>φ·v<sub>c</sub></td><td class="clause">0.75 × ${fmt(vc_gov,3)}</td><td class="num">${fmt(phiVcStress,3)} MPa</td></tr>
+    <tr class="governing"><td>UC</td><td class="clause">v<sub>u</sub> / (φ·v<sub>c</sub>)</td><td class="num">${fmt(uc,3)}</td></tr>
+  </table></div>`;
   if (pv) html += pileShearHtml(pv);
   html += `<div class="limits-box">
-    <strong>Limitation:</strong> This check covers direct (concentric) shear transfer only. Where the column/pile transfers unbalanced moment into the slab or footing, add the eccentric shear stress component γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub> per §8.4.4.2 / R22.6.4.3 — governing combined stress will exceed the value shown here.
+    <strong>Limitation:</strong> The unbalanced-moment shear (eccentric shear stress model, §8.4.4.2) is included for an interior pedestal, with the terms of both directions added at the most stressed corner (conservative). Edge and corner pedestal geometries are not implemented. With V<sub>u</sub> from the pile reactions, V<sub>u</sub> and the moments are taken from the same LRFD combination (moments at the base of the pedestal, incl. H·H<sub>p</sub>), and the governing combination is the one with the largest combined stress.
   </div>`;
   const effHtml = efficiencyBadge(uc, pass);
   document.getElementById('opt-twoway').innerHTML = (effHtml || suggestHtml)

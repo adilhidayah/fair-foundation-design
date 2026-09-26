@@ -749,9 +749,17 @@
           <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         <div class="field">
+          <label for="tw-muz"><span>Unbalanced moment M<sub>uz</sub> (bending along x)</span> <span class="unit">kN·m</span></label>
+          <input type="number" id="tw-muz" value="0" step="10">
+        </div>
+        <div class="field">
+          <label for="tw-mux"><span>Unbalanced moment M<sub>ux</sub> (bending along y)</span> <span class="unit">kN·m</span></label>
+          <input type="number" id="tw-mux" value="0" step="10">
+        </div>
+        <div class="field">
           <label for="tw-vu"><span>Factored shear, V<sub>u</sub></span> <span class="unit">kN</span></label>
           <input type="number" id="tw-vu" value="850" min="0">
-          <div class="note">Direct (concentric) shear only — see limitation note.</div>
+          <div class="note">The moments add the eccentric shear stress γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub> (§8.4.4.2). With "From pile reactions" they are filled from the same LRFD combination (base of pedestal).</div>
         </div>
         <div id="opt-twoway"></div>
       </div>
@@ -1687,6 +1695,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260926b"></script>
+<script type="module" src="js/app.js?v=20260926c"></script>
 </body>
 </html>
