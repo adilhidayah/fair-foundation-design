@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260925zf';
-import { fmt } from '../core/format.js?v=20260925zf';
-import { comboState, lastResults, state } from '../core/state.js?v=20260925zf';
-import { calcAnchor } from '../tabs/anchor.js?v=20260925zf';
-import { calcBearing } from '../tabs/bearing.js?v=20260925zf';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260925zf';
-import { calcFoundation } from '../tabs/foundation.js?v=20260925zf';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260925zf';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260925zf';
-import { calcPile } from '../tabs/pile.js?v=20260925zf';
-import { calcRebar } from '../tabs/rebar.js?v=20260925zf';
-import { calcSettlement } from '../tabs/settlement.js?v=20260925zf';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260925zf';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926a';
+import { fmt } from '../core/format.js?v=20260926a';
+import { comboState, lastResults, state } from '../core/state.js?v=20260926a';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926a';
+import { calcBearing } from '../tabs/bearing.js?v=20260926a';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926a';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926a';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926a';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926a';
+import { calcPile } from '../tabs/pile.js?v=20260926a';
+import { calcRebar } from '../tabs/rebar.js?v=20260926a';
+import { calcSettlement } from '../tabs/settlement.js?v=20260926a';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926a';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');

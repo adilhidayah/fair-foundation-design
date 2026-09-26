@@ -148,6 +148,7 @@ Mau ubah apa → buka file mana: lihat `PROJECT_MAP.md`. Aturan edit UI (modul h
 - **OCR load combination**: baris yang isinya hanya angka (mis. `201 1.2 1.6 1.2 0.5`) kehilangan nomor LC-nya; faktor tetap benar. Paste dari Excel tidak terpengaruh.
 - **Bersih-bersih**: `dlWorksheetTotal()` tidak terpakai; 239 atribut `style=""` inline di HTML bisa dipindah ke class CSS.
 - **Belum diuji manual setelah refactor**: OCR dengan gambar asli dan upload logo di report builder.
+- ✅ **Bug satuan baut angkur (Tab 09) diperbaiki (26 Sep 2026, persetujuan user)**: koordinat baut diinput dalam mm, tetapi `evaluateAnchorCombo()` membagi momen dengan koordinat dalam m (F = P/n + M·dx/Σdx²) → suku momen 1000× terlalu kecil, tarik baut akibat momen praktis diabaikan. Sekarang `anchor.js` mengonversi mm → m sebelum memanggil library dan mengembalikan posisi ke mm untuk tabel/gambar. Hand-calc: 4 baut ±150 mm, M = 54 kN·m → T = 90 kN (sebelumnya 0,09). Data bawaan: UC 0,090 (geser) → **0,681 (tarik)**. Vector baru di validation part3. **Hasil Tab 09 lama tidak valid, hitung ulang.** Tab 09 masih memakai beban ASD (belum LRFD).
 - ✅ Git aktif sejak 26 Sep 2026 (branch `main`, commit awal `44b81b7`). Git for Windows di `C:\Program Files\Git`; `.claude/` diabaikan lewat `.gitignore`.
 
 ## 12. Catatan Sesi 25 Sep 2026 — keputusan & langkah berikutnya

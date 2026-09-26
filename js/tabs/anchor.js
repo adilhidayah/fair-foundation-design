@@ -1,12 +1,12 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo } from '../../lib/foundation/index.js?v=20260925zf';
-import { getRadioVal, num } from '../core/dom.js?v=20260925zf';
-import { fmt } from '../core/format.js?v=20260925zf';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20260925zf';
-import { comboLabel, verdictHTML } from '../core/worksheet.js?v=20260925zf';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260925zf';
-import { comboTopBottom, getLcLoads } from '../tabs/combos.js?v=20260925zf';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo } from '../../lib/foundation/index.js?v=20260926a';
+import { getRadioVal, num } from '../core/dom.js?v=20260926a';
+import { fmt } from '../core/format.js?v=20260926a';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20260926a';
+import { comboLabel, verdictHTML } from '../core/worksheet.js?v=20260926a';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926a';
+import { comboTopBottom, getLcLoads } from '../tabs/combos.js?v=20260926a';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -46,9 +46,15 @@ export function calcAnchor() {
     phiVsa: num('ab-phi-Vsa'), phiVcb: num('ab-phi-Vcb'), phiVcp: num('ab-phi-Vcp')
   });
   const loads = getLcLoads();
+  // Bolt coordinates are entered in mm, but evaluateAnchorCombo() distributes M (kN·m) with the coordinates in m
+  // (F = P/n + M·dx/Σdx²). Passing mm made the moment term 1000× too small — convert here, and convert the returned
+  // bolt positions back to mm for the table and the drawing.
+  const boltsM = boltList.map(b => ({ x: b.x / 1000, y: b.y / 1000 }));
   const results = comboState.lc.map(combo => {
     const { Ptop, Htop, Mtop } = comboTopBottom(combo, loads);
-    return { combo, P: Ptop, H: Htop, M: Mtop, ...evaluateAnchorCombo(boltList, Ptop, Htop, Mtop, cap) };
+    const r = evaluateAnchorCombo(boltsM, Ptop, Htop, Mtop, cap);
+    if (r.boltForces) r.boltForces = r.boltForces.map(bf => ({ ...bf, x: bf.x * 1000, y: bf.y * 1000 }));
+    return { combo, P: Ptop, H: Htop, M: Mtop, ...r };
   });
   const governing = results.reduce((a, b) => b.governingUC > a.governingUC ? b : a);
   lastResults.anchor = {

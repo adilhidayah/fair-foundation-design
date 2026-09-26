@@ -1,7 +1,7 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { lastResults } from '../core/state.js?v=20260925zf';
-import { generateReport } from '../report/builder.js?v=20260925zf';
+import { lastResults } from '../core/state.js?v=20260926a';
+import { generateReport } from '../report/builder.js?v=20260926a';
 
 export function buildQuickStatusHtml() {
   const order = ['oneway', 'twoway', 'foundation', 'pile', 'bearing', 'settlement', 'anchor', 'pedestalRebar', 'pileCapRebar'];
