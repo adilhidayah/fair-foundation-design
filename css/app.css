@@ -1448,3 +1448,13 @@
 
   /* Radio groups whose value is derived from another tab (e.g. Tab 08 footing shape from Tab 02) */
   .radio-row button:disabled { cursor: not-allowed; opacity: 0.6; }
+
+  /* Report preview (calc panels, incl. the Summary Report): sub-chapter titles and table captions in normal case,
+     as written ("2.1 Foundation Layout", "Table 2.2.1. Pile Cap Size") — not all capitals. Input-panel labels unchanged. */
+  .calc-panel .section-label,
+  .calc-panel table.calc-table caption,
+  .calc-panel table.dl-worksheet caption {
+    text-transform: none;
+    letter-spacing: 0.01em;
+  }
+  .calc-panel .section-label { font-size: 12px; }
