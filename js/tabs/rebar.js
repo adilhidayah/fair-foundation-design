@@ -1,14 +1,14 @@
 // 5A pedestal P-M reinforcement + 5B pile cap flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20260926c';
-import { num } from '../core/dom.js?v=20260926c';
-import { fmt } from '../core/format.js?v=20260926c';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20260926c';
-import { comboLabel } from '../core/worksheet.js?v=20260926c';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20260926c';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20260926c';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926c';
-import { pileComboLoads } from '../tabs/pile.js?v=20260926c';
+import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20260926e';
+import { num } from '../core/dom.js?v=20260926e';
+import { fmt } from '../core/format.js?v=20260926e';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20260926e';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926e';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20260926e';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20260926e';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926e';
+import { pileComboLoads } from '../tabs/pile.js?v=20260926e';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -17,8 +17,8 @@ export function calcRebar() {
   lastResults.pileCapRebar = { label: 'Pile Cap Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   if (comboState.lc.length === 0) {
     const noCombo = `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
-    document.getElementById('calc-rebar').innerHTML = noCombo;
-    document.getElementById('calc-rebarcap').innerHTML = noCombo;
+    document.getElementById('calc-rebar').innerHTML = chapterHeader('5A. Pedestal Check') + noCombo;
+    document.getElementById('calc-rebarcap').innerHTML = sectionHeader('5B.3', 'Pile Cap Flexure', '', true) + noCombo;
     lastResults.pedestalRebar.detail = 'No load combinations defined.';
     lastResults.pileCapRebar.detail = 'No load combinations defined.';
     return;
@@ -33,7 +33,7 @@ export function calcRebar() {
     const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
     return { combo, Ptop: v.P + v.dP, Mtop: Math.hypot(Mx, Mz), Mx, Mz };
   });
-  let html = '<div class="section-label">Pedestal Reinforcement — π P-M Interaction</div>';
+  let html = chapterHeader('5A. Pedestal Check', 'This chapter designs the longitudinal reinforcement of the pedestal for axial load and bending (P-M interaction) under the factored LRFD combinations (LC201+) of Section 03, at the base of the pedestal. The status of the check is shown in the Design Status panel.');
   if (combosTop.length === 0) {
     html += `<div class="warn-box"><strong>⚠  No factored (LRFD) combinations:</strong> load the standard set with "Edit LRFD Combinations" in the 5B input panel — the pedestal is designed for factored loads.</div>`;
   }
@@ -64,9 +64,7 @@ export function calcRebar() {
       const pedMinClear = Math.max(1.5 * barDia, 40);
       const pedClearOk = pedClear === null || pedClear >= pedMinClear - 1e-9;
       lastResults.pedestalRebar.notices = pedClearOk ? [] : [{ title: 'Pedestal bar spacing', text: `Clear spacing ${fmt(pedClear, 0)} mm < ${fmt(pedMinClear, 0)} mm = max(1.5·d_b, 40) (ACI 318M-19 §25.2.3) with ${search.n} × D${fmt(barDia, 0)} per face — increase the pedestal size in Tab 02 or use a smaller bar.` }];
-      html += pmDiagramSVG(search.curve, search.perCombo);
-      html += pedestalSectionSVG({ Bp, Lp, dPrime, barDia, n: search.n, Ast: search.Ast, rho: search.rho });
-      html += `<div class="overflow-x"><table class="calc-table">
+      const reinfTable = `<div class="overflow-x"><table class="calc-table">
         <caption>Recommended pedestal reinforcement</caption>
         <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
         <tr class="governing"><td>Bars per face</td><td class="clause">2 faces, symmetric</td><td class="num">${search.n} — D${fmt(barDia,0)}</td></tr>
@@ -75,6 +73,8 @@ export function calcRebar() {
         ${pedSpacing === null ? '' : `<tr><td>Bar spacing along the face</td><td class="clause">s = (L<sub>p</sub> − 2d′)/(n − 1); clear = s − d<sub>b</sub> ≥ max(1.5d<sub>b</sub>, 40 mm) — §25.2.3</td><td class="num">s = ${fmt(pedSpacing,0)} mm, clear = ${fmt(pedClear,0)} mm ${pedClearOk ? '(OK)' : '(TOO SMALL)'}</td></tr>`}
         <tr class="governing"><td>Governing combination</td><td class="clause">${comboLabel(search.worstCombo)}</td><td class="num">UC = ${fmt(search.maxUC,3)}</td></tr>
       </table></div>`;
+      // 5A.1 design loads -> 5A.2 P-M interaction -> 5A.3 reinforcement
+      html += sectionHeader('5A.1', 'Design Loads', 'Factored axial load and moment at the base of the pedestal (critical section) for every LRFD combination, and the resulting utilisation from the P-M interaction.', true);
       html += `<div class="lc-formula">
         <div class="lc-formula-title">Design section and loads</div>
         Critical section = base of the pedestal (top of footing): pedestal height H<sub>p</sub> = ${fmt(state.pedHp, 3)} m, pedestal self-weight W<sub>ped</sub> = ${fmt(state.pedW, 1)} kN (concrete + grout)${state.pedHp > 0 ? '' : ' — no pedestal in Tab 02, so the loads are those at the top (H·H<sub>p</sub> = 0)'}.<br>
@@ -86,13 +86,18 @@ export function calcRebar() {
         <tr><th>Combination</th><th>P<sub>u</sub> (kN)</th><th>M<sub>u</sub> (kN·m)</th><th>π M<sub>n</sub> at P<sub>u</sub> (kN·m)</th><th>UC</th><th>Status</th></tr>
         ${search.perCombo.map(r => `<tr class="${r.combo === search.worstCombo ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.Pu,1)}</td><td class="num">${fmt(r.Mu,1)}</td><td class="num">${r.outOfRange ? '—' : fmt(r.phiMn,1)}</td><td class="num">${isFinite(r.uc) ? fmt(r.uc,3) : '—'}</td><td>${r.outOfRange ? 'P OUT OF RANGE' : (r.uc<=1.0?'OK':'EXCEEDS')}</td></tr>`).join('')}
       </table></div>`;
+      html += sectionHeader('5A.2', 'P-M Interaction', 'Design interaction diagram (φP<sub>n</sub>, φM<sub>n</sub>) of the selected reinforcement, with every combination plotted as a point.');
+      html += pmDiagramSVG(search.curve, search.perCombo);
+      html += sectionHeader('5A.3', 'Reinforcement', 'Smallest symmetric bar arrangement with UC ≤ 1.0 and ρ ≥ 1 %, and its cross-section.');
+      html += pedestalSectionSVG({ Bp, Lp, dPrime, barDia, n: search.n, Ast: search.Ast, rho: search.rho });
+      html += reinfTable;
     }
   }
   html += `<div class="limits-box">
     <strong>Limitation:</strong> Simplified 2-layer symmetric section (bars lumped at d′ from the two faces perpendicular to bending) rather than a full 4-side bar distribution — reasonably common for preliminary design but verify with a proper section tool for final design. Uniaxial bending only (no biaxial P-M-M check): the design moment is the resultant of M<sub>x</sub> and M<sub>z</sub> at the pedestal base, taken about the B<sub>p</sub> direction. Loads are the factored LRFD combinations at the pedestal base, including H × pedestal height and the pedestal self-weight; shear and ties of the pedestal are not designed here. Slenderness/second-order (P-Δ) effects are not evaluated — check per ACI 318-19 §6.2.5/§6.6.4 if the pedestal is slender.
   </div>`;
   // Pedestal part -> 5A Pedestal Check (#calc-rebar); pile cap part -> 5B Pile Cap Check (#calc-rebarcap).
-  document.getElementById('calc-rebar').innerHTML = html;
+  document.getElementById('calc-rebar').innerHTML = numberTables(html, '5A');
   calcPileCapFlexure({ fc, fy, Bp, Lp });
 }
 
@@ -105,7 +110,7 @@ export function calcRebar() {
 // pileCapMomentAxis() then returns kN·m directly. Bars: x-direction bars are taken as the outer layer (d), y-direction
 // bars as the inner layer (d − d_b), for both faces.
 function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
-  let html = '<div class="section-label">Pile Cap Reinforcement — Flexure at the Pedestal Faces (factored, both directions)</div>';
+  let html = sectionHeader('5B.3', 'Pile Cap Flexure', 'Bottom and top reinforcement in both directions from the factored pile reactions beyond the pedestal faces — ACI 318M-19 Ch.13 (footings).', true);
   const Lcap = num('rb-Lcap'), Bcap = num('rb-Bcap'), t = num('rb-t'), cc = num('rb-cc'), capBar = num('rb-capbar');
   const d = t - cc - capBar;
   const fail = (box, detail) => {
@@ -214,5 +219,5 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   html += `<div class="limits-box">
     <strong>Limitation:</strong> Critical sections are taken at the pedestal faces (simplified — does not shift the section per §13.2.7.2 for non-square pedestals or consider two-way action toward all four faces). One-way and punching shear for the pile cap are checked separately in this tab (5B), with the pile cap's own b<sub>w</sub>/d and factored shear. Pile reactions come from the 4B group model (biaxial, including the moment of an off-centroid load point) evaluated for the separate factored LRFD combinations (ASCE 7-22 §2.3, LC201+). Both directions are designed with x-direction bars as the outer layer and y-direction bars as the inner layer (d − d<sub>b</sub>) — swap them in the detailing if the opposite layering is used. Top steel is designed only where the combinations produce hogging from uplift piles; minimum top steel for crack control / detailing is not added. Cap self-weight and soil over the cap are not deducted. The bar count assumes one layer across the full cap width — check spacing, development length and the cap-edge cover in the detailing.
   </div>`;
-  document.getElementById('calc-rebarcap').innerHTML = html;
+  document.getElementById('calc-rebarcap').innerHTML = numberTables(html, '5B');
 }

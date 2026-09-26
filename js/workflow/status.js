@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926c';
-import { fmt } from '../core/format.js?v=20260926c';
-import { comboState, lastResults, state } from '../core/state.js?v=20260926c';
-import { calcAnchor } from '../tabs/anchor.js?v=20260926c';
-import { calcBearing } from '../tabs/bearing.js?v=20260926c';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926c';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926c';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260926c';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926c';
-import { calcPile } from '../tabs/pile.js?v=20260926c';
-import { calcRebar } from '../tabs/rebar.js?v=20260926c';
-import { calcSettlement } from '../tabs/settlement.js?v=20260926c';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926c';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926e';
+import { fmt } from '../core/format.js?v=20260926e';
+import { comboState, lastResults, state } from '../core/state.js?v=20260926e';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926e';
+import { calcBearing } from '../tabs/bearing.js?v=20260926e';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926e';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926e';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926e';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926e';
+import { calcPile } from '../tabs/pile.js?v=20260926e';
+import { calcRebar } from '../tabs/rebar.js?v=20260926e';
+import { calcSettlement } from '../tabs/settlement.js?v=20260926e';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926e';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -168,7 +168,9 @@ export function renderLiveBar() {
     const list = [];
     checks.forEach(([label, , id]) => {
       // 4B -> the pile check; 10 "Pedestal & Rebar" -> the 5A pedestal reinforcement and the 5B pile cap reinforcement
-      const sources = id === '4B' ? [lastResults.pile] : (id === '10' ? [lastResults.pedestalRebar, lastResults.pileCapRebar] : []);
+      const SRC = { '4B': [lastResults.pile], '5A': [lastResults.oneway], '5B': [lastResults.twoway], '09': [lastResults.anchor],
+        '10': [lastResults.pedestalRebar, lastResults.pileCapRebar] };
+      const sources = SRC[id] || [];
       sources.forEach((r) => (r && r.notices ? r.notices : []).forEach((n) => list.push({ from: label, ...n })));
     });
     if (!list.length) return '';

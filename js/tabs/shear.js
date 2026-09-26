@@ -1,12 +1,12 @@
 // Pile cap one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20260926c';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926c';
-import { fmt } from '../core/format.js?v=20260926c';
-import { lastResults, pileList } from '../core/state.js?v=20260926c';
-import { comboLabel, efficiencyBadge, verdictHTML } from '../core/worksheet.js?v=20260926c';
-import { pileComboLoads } from '../tabs/pile.js?v=20260926c';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926c';
+import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20260926e';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926e';
+import { fmt } from '../core/format.js?v=20260926e';
+import { lastResults, pileList } from '../core/state.js?v=20260926e';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926e';
+import { pileComboLoads } from '../tabs/pile.js?v=20260926e';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20260926e';
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group
@@ -94,6 +94,11 @@ function pileShearHtml(pv) {
   return html;
 }
 
+// Preview structure of chapter 5B (shared by the three 5B panels: one-way, punching, flexure — see rebar.js for 5B.3).
+const OW_HEAD = () => chapterHeader('5B. Pile Cap Check', 'This chapter checks the pile cap for one-way shear, punching shear and flexure under the factored LRFD combinations (LC201+) of Section 03, with the shear from the pile reactions where selected. The status of each check is shown in the Design Status panel.')
+  + sectionHeader('5B.1', 'One-Way Shear', 'Shear at a distance d from the pedestal face — ACI 318M-19 §22.5.', true);
+const TW_HEAD = () => sectionHeader('5B.2', 'Punching Shear', 'Two-way shear on the critical perimeter at d/2 from the pedestal faces, including the unbalanced-moment shear stress — ACI 318M-19 §22.6 and §8.4.4.2.', true);
+
 // oneWayShearCheck() and its bisectMinX() helper now live in lib/foundation/shared/footingCheck.js.
 export function calcOneWay() {
   const bw = num('ow-bw'), h = num('ow-h'), cc = num('ow-cc'), Dbar = num('ow-D'), fc = num('gen-fc');
@@ -114,7 +119,7 @@ export function calcOneWay() {
   const r = oneWayShearCheck({ bw, h, cc, Dbar, fc, vu, rho, lambda, method, avOk });
   document.getElementById('ow-d-out').textContent = fmt(r.d, 0);
   if (!r.valid) {
-    document.getElementById('calc-oneway').innerHTML = `<div class="warn-box">
+    document.getElementById('calc-oneway').innerHTML = OW_HEAD() + `<div class="warn-box">
       <strong>⚠  Invalid geometry:</strong> effective depth d = h - cc - D = ${fmt(r.d,0)} mm is zero or negative. Increase h or reduce cover/bar diameter.
     </div>`;
     document.getElementById('opt-oneway').innerHTML = '';
@@ -122,7 +127,7 @@ export function calcOneWay() {
     return;
   }
   if (pv && !pv.valid) {
-    document.getElementById('calc-oneway').innerHTML = `<div class="warn-box"><strong>⚠  V<sub>u</sub> from pile reactions not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
+    document.getElementById('calc-oneway').innerHTML = OW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from pile reactions not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
     document.getElementById('opt-oneway').innerHTML = '';
     lastResults.oneway = { label: 'One-Way Shear', status: 'ERROR', metric: '—', detail: 'V_u from pile reactions not available: ' + pv.note };
     return;
@@ -136,16 +141,16 @@ export function calcOneWay() {
       <strong>Depth reduction potential:</strong> minimum h for UC ≤ 1.00, rounded up to the nearest 50 mm, is <strong>${fmt(hMinRounded,0)} mm</strong> (current h = ${fmt(h,0)} mm) — a potential reduction of <strong>${fmt(h - hMinRounded,0)} mm</strong>, holding b<sub>w</sub>, cc, D, f'c, λ and ρ<sub>w</sub> constant. This rounded value still has some margin above the exact zero-margin limit; re-verify flexure, deflection, crack control, and bar/stirrup detailing before finalizing — those usually govern h before shear does.
     </div>`;
   }
-  let html = '';
+  // Notices go to the Design Status panel (renderLiveBar reads lastResults.oneway.notices), not into the preview.
+  const notices = [];
   if (method === 'simplified' && !simplifiedAllowed) {
-    html += `<div class="warn-box">
-      <strong>⚠  Method not permitted:</strong> Table 22.5.5.1 allows the simplified expression (V<sub>c</sub> = 0.17λ↓f'c·b<sub>w</sub>·d) only when A<sub>v</sub> ≥ A<sub>v,min</sub> is provided, or when overall height h ≤ 250 mm. Neither condition is satisfied by the current inputs — the result below may be non-conservative. Switch to the Detailed method, or confirm A<sub>v</sub> ≥ A<sub>v,min</sub> above.
-    </div>`;
+    notices.push({ title: 'One-way shear: method not permitted', text: 'Table 22.5.5.1 allows the simplified Vc = 0.17λ√f\'c·bw·d only with Av ≥ Av,min or h ≤ 250 mm — neither is met, so the result may be non-conservative. Use the Detailed method or confirm Av ≥ Av,min.' });
   }
   if (pv && Math.abs(bw - capW) > 1) {
-    html += `<div class="caution-box"><strong>⚠  Warning:</strong> b<sub>w</sub> = ${fmt(bw,0)} mm differs from the pile cap width perpendicular to the section (${fmt(capW,0)} mm, from Tab 02) — the capacity below is for b<sub>w</sub>, while V<sub>u</sub> is the whole-cap shear.</div>`;
+    notices.push({ title: 'One-way shear: web width', text: `bw = ${fmt(bw,0)} mm differs from the pile cap width perpendicular to the section (${fmt(capW,0)} mm, Tab 02) — the capacity is for bw while Vu is the whole-cap shear.` });
   }
-  html += verdictHTML(uc, pass, 'ONE-WAY SHEAR');
+  lastResults.oneway.notices = notices;
+  let html = OW_HEAD();
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Calculation — §22.5.5</caption>
     <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
@@ -170,7 +175,7 @@ export function calcOneWay() {
   document.getElementById('opt-oneway').innerHTML = (effHtml || suggestHtml)
     ? `<div class="section-label">Optimization Notes</div>${effHtml}${suggestHtml}`
     : '';
-  document.getElementById('calc-oneway').innerHTML = html;
+  document.getElementById('calc-oneway').innerHTML = numberTables(html, '5B');
 }
 // twoWayShearCheck() lives in lib/foundation/shared/footingCheck.js.
 export function calcTwoWay() {
@@ -194,7 +199,7 @@ export function calcTwoWay() {
   const r = twoWayShearCheck({ c1, c2, h, cc, Dbar, fc, vu, lambda, loc });
   document.getElementById('tw-d-out').textContent = fmt(r.d, 0);
   if (!r.valid) {
-    document.getElementById('calc-twoway').innerHTML = `<div class="warn-box">
+    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box">
       <strong>⚠  Invalid geometry:</strong> effective depth d = h - cc - D = ${fmt(r.d,0)} mm is zero or negative. Increase h or reduce cover/bar diameter.
     </div>`;
     document.getElementById('opt-twoway').innerHTML = '';
@@ -202,7 +207,7 @@ export function calcTwoWay() {
     return;
   }
   if (pv && !pv.valid) {
-    document.getElementById('calc-twoway').innerHTML = `<div class="warn-box"><strong>⚠  V<sub>u</sub> from pile reactions not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
+    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from pile reactions not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
     document.getElementById('opt-twoway').innerHTML = '';
     lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: 'V_u from pile reactions not available: ' + pv.note };
     return;
@@ -211,7 +216,7 @@ export function calcTwoWay() {
   // Combined stress with the unbalanced moments — ACI 318M-19 §8.4.4.2 (interior pedestal); UC = v_u / (φ·v_c).
   const ecc = eccentricPunchingStress({ c1, c2, d, Vu: vu, Mx, Mz, loc });
   if (!ecc.valid) {
-    document.getElementById('calc-twoway').innerHTML = `<div class="warn-box"><strong>⚠  Unbalanced-moment shear not available:</strong> ${escapeHtml(ecc.note)} Use "Interior" for a pedestal on a pile cap.</div>`;
+    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  Unbalanced-moment shear not available:</strong> ${escapeHtml(ecc.note)} Use "Interior" for a pedestal on a pile cap.</div>`;
     document.getElementById('opt-twoway').innerHTML = '';
     lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: ecc.note };
     return;
@@ -227,8 +232,8 @@ export function calcTwoWay() {
       <strong>Depth reduction potential:</strong> minimum h for UC ≤ 1.00, rounded up to the nearest 50 mm, is <strong>${fmt(hMinRounded,0)} mm</strong> (current h = ${fmt(h,0)} mm) — a potential reduction of <strong>${fmt(h - hMinRounded,0)} mm</strong>, holding c<sub>1</sub>, c<sub>2</sub>, cc, D, f'c and λ constant. This ignores unbalanced moment transfer (γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub>, §8.4.4.2) and the slab's flexural/deflection requirements — re-check those before reducing h.
     </div>`;
   }
-  let html = '';
-  html += verdictHTML(uc, pass, 'TWO-WAY SHEAR');
+  lastResults.twoway.notices = [];
+  let html = TW_HEAD();
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Critical section geometry — §22.6.4</caption>
     <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
@@ -277,5 +282,5 @@ export function calcTwoWay() {
   document.getElementById('opt-twoway').innerHTML = (effHtml || suggestHtml)
     ? `<div class="section-label">Optimization Notes</div>${effHtml}${suggestHtml}`
     : '';
-  document.getElementById('calc-twoway').innerHTML = html;
+  document.getElementById('calc-twoway').innerHTML = numberTables(html, '5B');
 }

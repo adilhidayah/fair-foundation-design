@@ -1,11 +1,11 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationSizing } from '../../lib/foundation/index.js?v=20260926c';
-import { getRadioVal, num } from '../core/dom.js?v=20260926c';
-import { fmt } from '../core/format.js?v=20260926c';
-import { pileList, state } from '../core/state.js?v=20260926c';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926c';
-import { recalcAll } from '../workflow/recalc.js?v=20260926c';
+import { foundationSizing } from '../../lib/foundation/index.js?v=20260926e';
+import { getRadioVal, num } from '../core/dom.js?v=20260926e';
+import { fmt } from '../core/format.js?v=20260926e';
+import { pileList, state } from '../core/state.js?v=20260926e';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926e';
+import { recalcAll } from '../workflow/recalc.js?v=20260926e';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
