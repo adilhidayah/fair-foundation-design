@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926n';
-import { fmt } from '../core/format.js?v=20260926n';
-import { comboState, lastResults, state } from '../core/state.js?v=20260926n';
-import { calcAnchor } from '../tabs/anchor.js?v=20260926n';
-import { calcBearing } from '../tabs/bearing.js?v=20260926n';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926n';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926n';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260926n';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926n';
-import { calcPile } from '../tabs/pile.js?v=20260926n';
-import { calcRebar } from '../tabs/rebar.js?v=20260926n';
-import { calcSettlement } from '../tabs/settlement.js?v=20260926n';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926n';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926p';
+import { fmt } from '../core/format.js?v=20260926p';
+import { comboState, lastResults, state } from '../core/state.js?v=20260926p';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926p';
+import { calcBearing } from '../tabs/bearing.js?v=20260926p';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926p';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926p';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926p';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926p';
+import { calcPile } from '../tabs/pile.js?v=20260926p';
+import { calcRebar } from '../tabs/rebar.js?v=20260926p';
+import { calcSettlement } from '../tabs/settlement.js?v=20260926p';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926p';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -43,7 +43,8 @@ export function getWorkflowStepStatus(stepId) {
     const Bp = hasPed ? num('fs-Bp') : 1, Lp = hasPed ? num('fs-Lp') : 1;
     // Geometry issues found by foundationGeometryCheck() in calcFoundSize() (pedestal outside the footing, pile embedment, ...)
     const issues = lastResults.foundsize && lastResults.foundsize.issues ? lastResults.foundsize.issues : [];
-    const ok = Bf > 0 && Lf > 0 && Hf > 0 && Df >= Hf && Bp > 0 && Lp > 0 && issues.length === 0;
+    // Same depth rule as foundationSizing(): Df >= Hf with a pedestal; without one the footing may project (Df >= 0).
+    const ok = Bf > 0 && Lf > 0 && Hf > 0 && (hasPed ? Df >= Hf : Df >= 0) && Bp > 0 && Lp > 0 && issues.length === 0;
     return { status: ok ? 'PASS' : 'FAIL', metric: ok ? (fmt(Bf,2) + 'x' + fmt(Lf,2) + 'x' + fmt(Hf,2) + 'm') : 'FAIL',
       note: ok ? ('Type: ' + type + ', Df=' + fmt(Df,2) + 'm') : (issues.length ? issues.map(i => i.text).join(' ') : 'Bf,Lf,Hf>0 & Df>=Hf wajib') };
   }
