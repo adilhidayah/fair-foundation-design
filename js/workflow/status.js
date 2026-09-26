@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926p';
-import { fmt } from '../core/format.js?v=20260926p';
-import { comboState, lastResults, state } from '../core/state.js?v=20260926p';
-import { calcAnchor } from '../tabs/anchor.js?v=20260926p';
-import { calcBearing } from '../tabs/bearing.js?v=20260926p';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926p';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926p';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260926p';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926p';
-import { calcPile } from '../tabs/pile.js?v=20260926p';
-import { calcRebar } from '../tabs/rebar.js?v=20260926p';
-import { calcSettlement } from '../tabs/settlement.js?v=20260926p';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926p';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926q';
+import { fmt } from '../core/format.js?v=20260926q';
+import { comboState, lastResults, state } from '../core/state.js?v=20260926q';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926q';
+import { calcBearing } from '../tabs/bearing.js?v=20260926q';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926q';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926q';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926q';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926q';
+import { calcPile } from '../tabs/pile.js?v=20260926q';
+import { calcRebar } from '../tabs/rebar.js?v=20260926q';
+import { calcSettlement } from '../tabs/settlement.js?v=20260926q';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926q';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -170,6 +170,9 @@ export function renderLiveBar() {
   // Only for checks that are currently shown (4B is hidden in shallow mode). Text is escaped; nothing is recomputed.
   const noticesHtml = () => {
     const list = [];
+    // 02 is an input step (not in `checks`) but can raise warnings of its own (foundationGeometryCheck().warnings).
+    (lastResults.foundsize && lastResults.foundsize.notices ? lastResults.foundsize.notices : [])
+      .forEach((n) => list.push({ from: 'Foundation Dimension', ...n }));
     checks.forEach(([label, , id]) => {
       // 4B -> the pile check; 10 "Pedestal & Rebar" -> the 5A pedestal reinforcement and the 5B pile cap reinforcement
       const SRC = { '4B': [lastResults.pile], '5A': [lastResults.oneway], '5B': [lastResults.twoway], '09': [lastResults.anchor],

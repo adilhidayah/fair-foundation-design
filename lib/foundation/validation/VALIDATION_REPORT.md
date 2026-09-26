@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 461 checks, 461 pass, 0 fail** (12 files, run 26 Sep 2026).
+**Total: 466 checks, 466 pass, 0 fail** (12 files, run 26 Sep 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -15,8 +15,8 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part9.mjs | LRFD combination set, pile cap shear from pile reactions | 58 |
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
-| validation_static_part12.mjs | foundation geometry consistency | 18 |
-| **Total** | | **461** |
+| validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
+| **Total** | | **466** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 

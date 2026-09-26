@@ -1,12 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926p';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926p';
-import { fmt } from '../core/format.js?v=20260926p';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926p';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926p';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926p';
-import { recalcAll } from '../workflow/recalc.js?v=20260926p';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926q';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926q';
+import { fmt } from '../core/format.js?v=20260926q';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926q';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926q';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926q';
+import { recalcAll } from '../workflow/recalc.js?v=20260926q';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -100,7 +100,8 @@ export function calcFoundSize() {
   html += chapterHeader('02. Foundation Dimension', 'This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.');
   // Geometry consistency (lib) — shown here, and the result drives the status of step 02 in the Design Status panel.
   const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile });
-  lastResults.foundsize = { issues: geom.issues };
+  // Non-blocking warnings (e.g. a cap-only top not above the ground) go to the Design Status panel as notices.
+  lastResults.foundsize = { issues: geom.issues, notices: geom.warnings.map(w => ({ title: `${isPile ? 'Pile cap' : 'Footing'} top not above ground`, text: w.text })) };
   if (!geom.overallPass) {
     html += `<div class="warn-box"><strong>⚠  Foundation geometry is not consistent:</strong><ul style="margin:4px 0 0 18px;padding:0;">${geom.issues.map(i => `<li>${escapeHtml(i.text)}</li>`).join('')}</ul>Correct the dimensions in the input panel — the checks that use this geometry are not reliable until then.</div>`;
   }

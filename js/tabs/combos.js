@@ -1,10 +1,10 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260926p';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926p';
-import { fmt } from '../core/format.js?v=20260926p';
-import { comboState, state } from '../core/state.js?v=20260926p';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260926p';
+import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260926q';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926q';
+import { fmt } from '../core/format.js?v=20260926q';
+import { comboState, state } from '../core/state.js?v=20260926q';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260926q';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
