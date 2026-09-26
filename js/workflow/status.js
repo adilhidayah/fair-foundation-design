@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927c';
-import { fmt } from '../core/format.js?v=20260927c';
-import { comboState, lastResults, state } from '../core/state.js?v=20260927c';
-import { calcAnchor } from '../tabs/anchor.js?v=20260927c';
-import { calcBearing } from '../tabs/bearing.js?v=20260927c';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260927c';
-import { calcFoundation } from '../tabs/foundation.js?v=20260927c';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260927c';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260927c';
-import { calcPile } from '../tabs/pile.js?v=20260927c';
-import { calcRebar } from '../tabs/rebar.js?v=20260927c';
-import { calcSettlement } from '../tabs/settlement.js?v=20260927c';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260927c';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927d';
+import { fmt } from '../core/format.js?v=20260927d';
+import { comboState, lastResults, state } from '../core/state.js?v=20260927d';
+import { calcAnchor } from '../tabs/anchor.js?v=20260927d';
+import { calcBearing } from '../tabs/bearing.js?v=20260927d';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260927d';
+import { calcFoundation } from '../tabs/foundation.js?v=20260927d';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260927d';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260927d';
+import { calcPile } from '../tabs/pile.js?v=20260927d';
+import { calcRebar } from '../tabs/rebar.js?v=20260927d';
+import { calcSettlement } from '../tabs/settlement.js?v=20260927d';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260927d';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');

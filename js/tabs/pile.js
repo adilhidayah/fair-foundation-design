@@ -2,13 +2,13 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927c';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927c';
-import { fmt as fmtRaw } from '../core/format.js?v=20260927c';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260927c';
-import { comboLabel } from '../core/worksheet.js?v=20260927c';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927c';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927c';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927d';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927d';
+import { fmt as fmtRaw } from '../core/format.js?v=20260927d';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260927d';
+import { comboLabel } from '../core/worksheet.js?v=20260927d';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927d';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927d';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -288,35 +288,9 @@ export function calcPile() {
   }
 
   if (governing) {
-    // 4) Governing combination detail
-    const g = governing, L = g.load;
-    const ax = g.at.x - g.xbar, ay = g.at.y - g.ybar;
-    html += section('Design Loads and Pile Forces', `Loads at the underside of the pile cap for the governing combination (${escapeHtml(comboLabel(g.combo))}), transferred to the centroid of the pile group, and the resulting axial and lateral force on each pile. The eccentricity of the load point from the centroid produces the moments M<sub>z,c</sub>, M<sub>x,c</sub> and the torsion T.`);
-    html += `<div class="overflow-x"><table class="calc-table">
-      <caption>Governing combination: ${escapeHtml(comboLabel(g.combo))} — loads at pile cap underside and transfer to the pile-group centroid</caption>
-      <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
-      <tr><td>Vertical load, P (incl. ΔW)</td><td class="clause">Tab 03</td><td class="num">${fmt(L.P, 1)} kN</td></tr>
-      <tr><td>Lateral, H<sub>x</sub> / H<sub>z</sub></td><td class="clause">Tab 03</td><td class="num">${fmt(L.Hx, 1)} / ${fmt(L.Hz, 1)} kN</td></tr>
-      <tr><td>Moments, M<sub>x</sub> / M<sub>z</sub> (incl. H·Δh)</td><td class="clause">Tab 03</td><td class="num">${fmt(L.Mx, 1)} / ${fmt(L.Mz, 1)} kN·m</td></tr>
-      <tr><td>Load point (pedestal centre)</td><td class="clause">(Off<sub>X</sub>, Off<sub>Z</sub>) from the cap centre</td><td class="num">(${fmt(g.at.x, 3)}, ${fmt(g.at.y, 3)}) m</td></tr>
-      <tr><td>Pile-group centroid (centre of rigidity)</td><td class="clause">x̅ = Σx/n, z̅ = Σz/n</td><td class="num">(${fmt(g.xbar, 3)}, ${fmt(g.ybar, 3)}) m</td></tr>
-      <tr><td>Eccentricity of load point, a</td><td class="clause">a = load point − centroid</td><td class="num">(${fmt(ax, 3)}, ${fmt(ay, 3)}) m</td></tr>
-      <tr><td>Moments about the centroid</td><td class="clause">M<sub>z,c</sub> = M<sub>z</sub> + P·a<sub>x</sub>;  M<sub>x,c</sub> = M<sub>x</sub> − P·a<sub>z</sub></td><td class="num">${fmt(g.Mzc, 1)} / ${fmt(g.Mxc, 1)} kN·m</td></tr>
-      <tr><td>Torsion about the vertical axis, T</td><td class="clause">T = a<sub>z</sub>·H<sub>x</sub> − a<sub>x</sub>·H<sub>z</sub></td><td class="num">${fmt(g.T, 1)} kN·m</td></tr>
-      <tr><td>Polar moment of the pile group, J</td><td class="clause">Σ[(x−x̅)² + (z−z̅)²] = ${fmt(g.Sxx, 3)} + ${fmt(g.Syy, 3)}</td><td class="num">${fmt(g.J, 3)} m²</td></tr>
-    </table></div>`;
-    html += `<div class="overflow-x"><table class="calc-table">
-      <caption>Governing combination: ${escapeHtml(comboLabel(g.combo))} — force on each pile</caption>
-      <tr><th>Pile</th><th>x (m)</th><th>z (m)</th><th>Axial F (kN)</th><th>Axial check</th><th>V<sub>x</sub> (kN)</th><th>V<sub>z</sub> (kN)</th><th>V (kN)</th><th>UC<sub>l</sub></th></tr>
-      ${g.pileForces.map((pf, k) => {
-        const lp = g.latPiles[k];
-        const cap = pf.F < 0 ? g.QtG : g.QcG;
-        const ucA = cap > 0 ? Math.abs(pf.F) / cap : Infinity;
-        const axial = pf.F < 0 ? (ucA <= 1 ? 'OK (tension)' : 'EXCEEDS (tension)') : (ucA <= 1 ? 'OK' : 'EXCEEDS');
-        const isGov = pf.i === g.FmaxPile.i || pf.i === g.FminPile.i || pf.i === g.VmaxPile.i;
-        return `<tr class="${isGov ? 'governing' : ''}"><td>${pf.i}</td><td class="num">${fmt(pf.x, 2)}</td><td class="num">${fmt(pf.y, 2)}</td><td class="num">${fmt(pf.F, 1)}</td><td>${axial}</td><td class="num">${fmt(lp.Vx, 1)}</td><td class="num">${fmt(lp.Vz, 1)}</td><td class="num">${fmt(lp.V, 1)}</td><td class="num">${fmt(lp.uc, 3)}</td></tr>`;
-      }).join('')}
-    </table></div>`;
+    // No separate "design loads and pile forces" section for one combination (user request): each check has its own
+    // governing combination, shown in the DCR tables and in the formulas below.
+    const g = governing;
 
     // 5) DCR per check. Compression, tension and lateral are governed by different combinations (and different piles), so each
     //    check has its own summary row, its own table, and its own governing row — never one combined "governing" row.
