@@ -1,17 +1,20 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20260926q';
-import { calcBearing } from '../tabs/bearing.js?v=20260926q';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926q';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926q';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926q';
-import { renderLoadSummary } from '../tabs/loading.js?v=20260926q';
-import { calcPile } from '../tabs/pile.js?v=20260926q';
-import { calcRebar } from '../tabs/rebar.js?v=20260926q';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926q';
-import { renderWorkflowLive } from '../workflow/status.js?v=20260926q';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926r';
+import { calcBearing } from '../tabs/bearing.js?v=20260926r';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926r';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926r';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926r';
+import { renderLoadSummary } from '../tabs/loading.js?v=20260926r';
+import { calcPile } from '../tabs/pile.js?v=20260926r';
+import { calcRebar } from '../tabs/rebar.js?v=20260926r';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926r';
+import { renderWorkflowLive } from '../workflow/status.js?v=20260926r';
 
 export function recalcAll() {
+  // Tab 08 reads its footing size / depth from Tab 02 (mirrored in calcFoundSize()), so q_a, the Table 1.3.1 summary
+  // and 4A must follow every geometry change — calcBearing() first, calcFoundation() reads the same q_a.
+  calcBearing();
   calcFoundation();
   calcPile();
   // Pile cap flexure / shear (5B) read the pile reactions of the factored combinations, so they follow every change
@@ -19,6 +22,7 @@ export function recalcAll() {
   // (each guarded: a failure in one of these must not stop the summaries and status below from refreshing)
   [calcRebar, calcOneWay, calcTwoWay, calcAnchor].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
   renderLcSummary();
+  renderGeneralSummary();
   if (typeof renderStdComboTables === 'function') renderStdComboTables();
   if (typeof renderLoadSummary === 'function') renderLoadSummary();
   if (typeof renderWorkflowLive === 'function') renderWorkflowLive();

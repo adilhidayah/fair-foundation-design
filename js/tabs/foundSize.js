@@ -1,12 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926q';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926q';
-import { fmt } from '../core/format.js?v=20260926q';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926q';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926q';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926q';
-import { recalcAll } from '../workflow/recalc.js?v=20260926q';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926r';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926r';
+import { fmt } from '../core/format.js?v=20260926r';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926r';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926r';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926r';
+import { recalcAll } from '../workflow/recalc.js?v=20260926r';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -75,6 +75,14 @@ export function calcFoundSize() {
   const pedNote = hasPed ? 'From the pedestal in "02 — FOUNDATION DIMENSION" (B<sub>p</sub> along x, L<sub>p</sub> along z) — edit it there.'
     : 'No pedestal in Tab 02 (cap only) — enter the column / base-plate size the load is applied through.';
   ['rb-ped-src', 'tw-ped-src'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = pedNote; });
+  // Tab 08 bearing capacity (also used by 4A and Table 1.3.1): footing plan size and depth from Tab 02, read-only.
+  // B = shorter side, L = longer side; shape follows the plan (square when Bf = Lf, otherwise rectangular).
+  const bcShape = Math.abs(Bf - Lf) < 1e-9 ? 'square' : 'rectangular';
+  [['bc-B', Math.min(Bf, Lf)], ['bc-L', Math.max(Bf, Lf)], ['bc-Df', Df]].forEach(([id, v]) => {
+    const el = document.getElementById(id);
+    if (el) { el.readOnly = true; el.value = String(+v.toFixed(3)); }
+  });
+  document.querySelectorAll('#bc-shape button').forEach(b => { b.classList.toggle('sel', b.dataset.val === bcShape); b.disabled = true; });
   const blockGp = 0; // unused by foundationSizing() since the "Only" mode uses input Hf (kept for signature)
   // Lean concrete is no longer part of the foundation dead load (replaced by the grouting row, Wg) — the hidden
   // fs-lean-* inputs are left in place but not passed, so foundationSizing() returns Wl = 0.

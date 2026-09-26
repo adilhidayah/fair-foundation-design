@@ -1445,3 +1445,6 @@
   .fs-ai-table { table-layout: fixed; width: 100%; font-size: 12px; }
   .fs-ai-table th, .fs-ai-table td { padding: 4px 5px; overflow-wrap: anywhere; }
   .fs-ai-table td.num { overflow-wrap: normal; white-space: nowrap; }
+
+  /* Radio groups whose value is derived from another tab (e.g. Tab 08 footing shape from Tab 02) */
+  .radio-row button:disabled { cursor: not-allowed; opacity: 0.6; }
