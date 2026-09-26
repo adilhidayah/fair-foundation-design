@@ -1,15 +1,15 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20260926j';
-import { calcBearing } from '../tabs/bearing.js?v=20260926j';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926j';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926j';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926j';
-import { renderLoadSummary } from '../tabs/loading.js?v=20260926j';
-import { calcPile } from '../tabs/pile.js?v=20260926j';
-import { calcRebar } from '../tabs/rebar.js?v=20260926j';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926j';
-import { renderWorkflowLive } from '../workflow/status.js?v=20260926j';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926k';
+import { calcBearing } from '../tabs/bearing.js?v=20260926k';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926k';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926k';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926k';
+import { renderLoadSummary } from '../tabs/loading.js?v=20260926k';
+import { calcPile } from '../tabs/pile.js?v=20260926k';
+import { calcRebar } from '../tabs/rebar.js?v=20260926k';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926k';
+import { renderWorkflowLive } from '../workflow/status.js?v=20260926k';
 
 export function recalcAll() {
   calcFoundation();

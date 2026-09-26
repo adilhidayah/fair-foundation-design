@@ -1,11 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926j';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926j';
-import { fmt } from '../core/format.js?v=20260926j';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926j';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926j';
-import { recalcAll } from '../workflow/recalc.js?v=20260926j';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926k';
+import { fmt } from '../core/format.js?v=20260926k';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926k';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926k';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926k';
+import { recalcAll } from '../workflow/recalc.js?v=20260926k';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -100,8 +101,7 @@ export function calcFoundSize() {
   // field locked by an earlier version of this code is editable again.
   document.getElementById('fs-Hf').readOnly = false;
   let html = '';
-  html += `<div class="report-header"><h2>02. Foundation Dimension</h2></div>`;
-  html += `<p style="margin:0 0 14px; font-size:13px; color:var(--ink-soft); line-height:1.5;">This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.</p>`;
+  html += chapterHeader('02. Foundation Dimension', 'This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.');
   // Geometry consistency (lib) — shown here, and the result drives the status of step 02 in the Design Status panel.
   const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile });
   lastResults.foundsize = { issues: geom.issues };
@@ -111,8 +111,10 @@ export function calcFoundSize() {
   if (isPile && piles.length === 0) {
     html += `<div class="warn-box"><strong>⚠  Pile Foundation selected but no piles defined:</strong> add piles in "4B — PILE FOUNDATION STABILITY", or switch Foundation Type to "Shallow Foundation" in "01 — GENERAL INPUT DATA".</div>`;
   }
-  html += foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT);
+  html += sectionHeader('2.1', 'Foundation Layout', `Plan (x, z) and elevation (x, y); origin at the ${isPile ? 'pile cap' : 'footing'} centre.${isPile && piles.length ? ' Piles are shown dashed (below the cap), numbered as in 4B.' : ''}`, true);
+  html += foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0);
   const fWord = isPile ? 'pile cap' : 'footing';
+  html += sectionHeader('2.2', isPile ? 'Pile Cap' : 'Footing');
   html += `<div class="overflow-x"><table class="calc-table" style="table-layout:fixed;">
     <caption>${isPile ? 'Pile Cap Size' : 'Footing Size'}</caption>
     <tr><th style="width:46%;">Parameter</th><th style="width:24%;">Expression</th><th style="width:30%;">Value</th></tr>
@@ -125,6 +127,7 @@ export function calcFoundSize() {
     <tr><td>Area of ${fWord}, A<sub>f</sub></td><td class="clause">B<sub>f</sub>·L<sub>f</sub></td><td class="num">${fmt(Af,2)} m²</td></tr>
   </table></div>`;
   if (hasPed) {
+    html += sectionHeader('2.3', 'Pedestal');
     html += `<div class="overflow-x"><table class="calc-table" style="table-layout:fixed;">
       <caption>Pedestal Size</caption>
       <tr><th style="width:46%;">Parameter</th><th style="width:24%;">Expression</th><th style="width:30%;">Value</th></tr>
@@ -199,7 +202,7 @@ export function calcFoundSize() {
       </table></div>`;
     }
   }
-  document.getElementById('calc-foundsize').innerHTML = html;
+  document.getElementById('calc-foundsize').innerHTML = numberTables(html, '2');
   document.getElementById('lc-dW').value = totalWeightKN.toFixed(1);
   document.getElementById('lc-dh').value = deltaH.toFixed(3);
   recalcAll(); // also re-runs calcPile() — pile coordinates stay fixed when Bf/Lf change; 4B re-checks spacing/edge against the new cap size
