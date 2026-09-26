@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20260927b">
+<link rel="stylesheet" href="css/app.css?v=20260927c">
 </head>
 <body>
 <div class="sheet">
@@ -890,6 +890,9 @@
         <summary>Group Efficiency (axial)</summary>
         <div class="gt-body">
         <div class="field">
+          <label class="pf-check"><input type="checkbox" id="pf-eff-on" checked> Apply group efficiency</label>
+        </div>
+        <div class="field">
           <label for="pf-eff-type">Pile behaviour</label>
           <select id="pf-eff-type"><option value="friction" selected>Friction (reduce)</option><option value="end">End-bearing (Eg = 1)</option></select>
         </div>
@@ -1689,6 +1692,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260927b"></script>
+<script type="module" src="js/app.js?v=20260927c"></script>
 </body>
 </html>

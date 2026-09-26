@@ -2,13 +2,13 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927b';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927b';
-import { fmt as fmtRaw } from '../core/format.js?v=20260927b';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260927b';
-import { comboLabel } from '../core/worksheet.js?v=20260927b';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927b';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927b';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927c';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927c';
+import { fmt as fmtRaw } from '../core/format.js?v=20260927c';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260927c';
+import { comboLabel } from '../core/worksheet.js?v=20260927c';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927c';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927c';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -131,10 +131,14 @@ export function calcPile() {
   const limSource = document.getElementById('pf-lim-src').value.trim();
 
   // ---- axial group efficiency ----
+  // "Apply group efficiency" off -> Eg = 1 (full single-pile capacity); the other efficiency inputs then have no effect,
+  // so they are disabled.
+  const effOn = document.getElementById('pf-eff-on').checked;
+  ['pf-eff-type', 'pf-eff-thr', 'pf-eff-thr-u', 'pf-eff-manual'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = !effOn; });
   const effType = document.getElementById('pf-eff-type').value;
   const manualEg = parseFloat(document.getElementById('pf-eff-manual').value);
   const eff = pileGroupEfficiency({ piles: pileList, D, type: effType, sNoReduction: limitToM('pf-eff-thr', D),
-    manualEg: isFinite(manualEg) ? manualEg : null });
+    manualEg: isFinite(manualEg) ? manualEg : null, apply: effOn });
   const EgOk = eff.valid && Number.isFinite(eff.Eg);
 
   // ---- lateral p-multipliers ----
@@ -320,7 +324,8 @@ export function calcPile() {
     const okTxt = (uc) => (uc <= 1.0 + 1e-9 ? 'OK' : stTxt('FAIL'));
     const invalidRow = (r, cols) => `<tr><td>${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td colspan="${cols}" class="num">${escapeHtml(r.note || 'INVALID')}</td><td>INVALID</td></tr>`;
     const tensDemand = (r) => Math.max(-r.Fmin, 0), compDemand = (r) => Math.max(r.Fmax, 0);
-    html += section('Demand / Capacity Ratio (DCR)', 'Compression, tension and lateral are checked separately for every load combination; each check is governed by its own combination and pile, highlighted in its table. DCR = demand / capacity, and the check is satisfied when DCR ≤ 1.0.');
+    html += section('Demand / Capacity Ratio (DCR)', 'Compression, tension and lateral are checked separately for every load combination; each check is governed by its own combination and pile, highlighted in its table. DCR = demand / capacity, and the check is satisfied when DCR ≤ 1.0.'
+      + (eff.method === 'off' ? ' Group efficiency is not applied (project choice): E<sub>g</sub> = 1.0, the full single-pile capacities P<sub>all</sub> and T<sub>all</sub> are used.' : ''));
     const summaryRows = [];
     if (compGov) summaryRows.push({ name: 'Compression (max pile)', demand: `${fmt(compDemand(compGov), 1)} kN`, cap: `P<sub>all,g</sub> = ${fmt(g.QcG, 1)} kN`, uc: compGov.checks[0].uc, combo: compGov.combo, pile: compDemand(compGov) > 0 ? compGov.FmaxPile : null });
     if (tensGov) summaryRows.push({ name: 'Tension / uplift (min pile)', demand: `${fmt(tensDemand(tensGov), 1)} kN`, cap: `T<sub>all,g</sub> = ${fmt(g.QtG, 1)} kN`, uc: tensGov.checks[1].uc, combo: tensGov.combo, pile: tensDemand(tensGov) > 0 ? tensGov.FminPile : null });
