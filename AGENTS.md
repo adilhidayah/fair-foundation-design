@@ -33,7 +33,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - `lib/foundation/piperack/` — `loadingData` (L-dir/T-dir), `loadCombinations` (envelope max |Mbot|), `foundationSizing` (iteratif `sizePierFooting`).
 - `lib/foundation/skidMounted/` — `loadingData` (`sumBoltReactions`), `foundationSizing` (footprint + 2x edge).
 - `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan).
-- `lib/foundation/validation/` — 11 file `.mjs` (part7 = import parsers, 34 checks; part8 = pile group, 101 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks) + `VALIDATION_REPORT.md` (402 checks, 402 pass @ 26 Sep 2026).
+- `lib/foundation/validation/` — 12 file `.mjs` (part7 = import parsers, 34 checks; part8 = pile group, 101 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 15 checks) + `VALIDATION_REPORT.md` (417 checks, 417 pass @ 26 Sep 2026).
 
 ## 4. Kontrak Pure Function (harga mati di lib/)
 - `lib/` = no DOM, no `document`, no `window`, no `fmt()`, no Tesseract. Input plain numbers/objects, output plain objects.
@@ -64,6 +64,7 @@ node lib/foundation/validation/validation_shared_part8.mjs
 node lib/foundation/validation/validation_shared_part9.mjs
 node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
+node lib/foundation/validation/validation_static_part12.mjs
 ```
 - Exit 0 = pass, 1 = ada fail. Toleransi: integer 1e-9, textbook 0.05-0.08. Jangan tambah jest/vitest tanpa izin.
 

@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926g';
-import { fmt } from '../core/format.js?v=20260926g';
-import { comboState, lastResults, state } from '../core/state.js?v=20260926g';
-import { calcAnchor } from '../tabs/anchor.js?v=20260926g';
-import { calcBearing } from '../tabs/bearing.js?v=20260926g';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926g';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926g';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260926g';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926g';
-import { calcPile } from '../tabs/pile.js?v=20260926g';
-import { calcRebar } from '../tabs/rebar.js?v=20260926g';
-import { calcSettlement } from '../tabs/settlement.js?v=20260926g';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926g';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926h';
+import { fmt } from '../core/format.js?v=20260926h';
+import { comboState, lastResults, state } from '../core/state.js?v=20260926h';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926h';
+import { calcBearing } from '../tabs/bearing.js?v=20260926h';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926h';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926h';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260926h';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926h';
+import { calcPile } from '../tabs/pile.js?v=20260926h';
+import { calcRebar } from '../tabs/rebar.js?v=20260926h';
+import { calcSettlement } from '../tabs/settlement.js?v=20260926h';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926h';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -41,8 +41,11 @@ export function getWorkflowStepStatus(stepId) {
     const Bf = num('fs-Bf'), Lf = num('fs-Lf'), Hf = num('fs-Hf'), Df = num('fs-Df');
     const type = getRadioVal('fs-type'); const hasPed = type === 'pedestal';
     const Bp = hasPed ? num('fs-Bp') : 1, Lp = hasPed ? num('fs-Lp') : 1;
-    const ok = Bf > 0 && Lf > 0 && Hf > 0 && Df >= Hf && Bp > 0 && Lp > 0;
-    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? (fmt(Bf,2) + 'x' + fmt(Lf,2) + 'x' + fmt(Hf,2) + 'm') : 'FAIL', note: ok ? ('Type: ' + type + ', Df=' + fmt(Df,2) + 'm') : 'Bf,Lf,Hf>0 & Df>=Hf wajib' };
+    // Geometry issues found by foundationGeometryCheck() in calcFoundSize() (pedestal outside the footing, pile embedment, ...)
+    const issues = lastResults.foundsize && lastResults.foundsize.issues ? lastResults.foundsize.issues : [];
+    const ok = Bf > 0 && Lf > 0 && Hf > 0 && Df >= Hf && Bp > 0 && Lp > 0 && issues.length === 0;
+    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? (fmt(Bf,2) + 'x' + fmt(Lf,2) + 'x' + fmt(Hf,2) + 'm') : 'FAIL',
+      note: ok ? ('Type: ' + type + ', Df=' + fmt(Df,2) + 'm') : (issues.length ? issues.map(i => i.text).join(' ') : 'Bf,Lf,Hf>0 & Df>=Hf wajib') };
   }
   if (stepId === '03') {
     const nt = Array.isArray(state.lcLoadTypes) ? state.lcLoadTypes.length : 0;

@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 402 checks, 402 pass, 0 fail** (11 files, run 26 Sep 2026).
+**Total: 417 checks, 417 pass, 0 fail** (12 files, run 26 Sep 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -15,7 +15,8 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part9.mjs | LRFD combination set, pile cap shear from pile reactions | 58 |
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
-| **Total** | | **402** |
+| validation_static_part12.mjs | foundation geometry consistency | 15 |
+| **Total** | | **417** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -80,6 +81,11 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
   500×500, d = 400: bo = 3600, Jc = 204.0e9 mm⁴, γv = 0.4; Vu = 500 kN, Mz = 100 kN·m → 0.3472 + 0.0882 = 0.4355 MPa;
   equal biaxial moments add both terms; 600×400: γf 0.5729 / 0.6265, Jc 237.33e9 / 170.67e9; edge / corner → invalid.
 
+### part12 — foundation geometry consistency (26 Sep 2026)
+- foundationGeometryCheck: Bf, Lf, Hf > 0; Df ≥ Hf; pedestal inside the footing, |OffX| + Bp/2 ≤ Bf/2 and |OffZ| + Lp/2 ≤ Lf/2
+  (flush edge allowed; 2.4 m footing, Bp 1.25, OffX −0.6 → 0.025 m out); pile embedment h < Hf (h = Hf fails);
+  pedestal / pile checks skipped when not applicable.
+
 ## How to re-run
 ```
 node lib/foundation/validation/validation_shared_part1.mjs
@@ -93,6 +99,7 @@ node lib/foundation/validation/validation_shared_part8.mjs
 node lib/foundation/validation/validation_shared_part9.mjs
 node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
+node lib/foundation/validation/validation_static_part12.mjs
 ```
 
 ## Notes

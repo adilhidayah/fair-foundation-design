@@ -1,11 +1,11 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationSizing } from '../../lib/foundation/index.js?v=20260926g';
-import { getRadioVal, num } from '../core/dom.js?v=20260926g';
-import { fmt } from '../core/format.js?v=20260926g';
-import { pileList, state } from '../core/state.js?v=20260926g';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926g';
-import { recalcAll } from '../workflow/recalc.js?v=20260926g';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926h';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926h';
+import { fmt } from '../core/format.js?v=20260926h';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926h';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926h';
+import { recalcAll } from '../workflow/recalc.js?v=20260926h';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -85,6 +85,7 @@ export function calcFoundSize() {
     groutT: hasGrout ? groutT / 1000 : 0 }); // grout input in mm -> m
   if (!sizing.valid) {
     state.pedHp = 0; state.pedW = 0;
+    lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df }).issues };
     document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero, and D<sub>f</sub> ≥ H<sub>f</sub> (footing must fit within the total embedment depth).</div>`;
     return;
   }
@@ -101,6 +102,12 @@ export function calcFoundSize() {
   let html = '';
   html += `<div class="report-header"><h2>02. Foundation Dimension</h2></div>`;
   html += `<p style="margin:0 0 14px; font-size:13px; color:var(--ink-soft); line-height:1.5;">This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.</p>`;
+  // Geometry consistency (lib) — shown here, and the result drives the status of step 02 in the Design Status panel.
+  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile });
+  lastResults.foundsize = { issues: geom.issues };
+  if (!geom.overallPass) {
+    html += `<div class="warn-box"><strong>⚠  Foundation geometry is not consistent:</strong><ul style="margin:4px 0 0 18px;padding:0;">${geom.issues.map(i => `<li>${escapeHtml(i.text)}</li>`).join('')}</ul>Correct the dimensions in the input panel — the checks that use this geometry are not reliable until then.</div>`;
+  }
   if (isPile && piles.length === 0) {
     html += `<div class="warn-box"><strong>⚠  Pile Foundation selected but no piles defined:</strong> add piles in "4B — PILE FOUNDATION STABILITY", or switch Foundation Type to "Shallow Foundation" in "01 — GENERAL INPUT DATA".</div>`;
   }
