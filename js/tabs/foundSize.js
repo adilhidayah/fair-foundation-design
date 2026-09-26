@@ -1,12 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926l';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926l';
-import { fmt } from '../core/format.js?v=20260926l';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926l';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926l';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926l';
-import { recalcAll } from '../workflow/recalc.js?v=20260926l';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926m';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926m';
+import { fmt } from '../core/format.js?v=20260926m';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926m';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926m';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926m';
+import { recalcAll } from '../workflow/recalc.js?v=20260926m';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -15,8 +15,6 @@ export function calcFoundSize() {
   const isBlock = type === 'block';
   document.getElementById('fs-pedestal-fields').style.display = hasPed ? 'block' : 'none';
   document.getElementById('fs-pedestal-group').style.display = hasPed ? '' : 'none'; // whole group, incl. its header
-  // Block projection (Gp above ground) no longer applies — "Only" mode uses input Hf with backfill above.
-  document.getElementById('fs-block-fields').style.display = 'none';
   const support = getRadioVal('fs-support');
   const isPile = support === 'pile';
   // Grouting sits on the top concrete surface: the pedestal (Footing + Pedestal) or the footing / pile cap itself
