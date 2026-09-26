@@ -148,7 +148,7 @@ Mau ubah apa → buka file mana: lihat `PROJECT_MAP.md`. Aturan edit UI (modul h
 - **OCR load combination**: baris yang isinya hanya angka (mis. `201 1.2 1.6 1.2 0.5`) kehilangan nomor LC-nya; faktor tetap benar. Paste dari Excel tidak terpengaruh.
 - **Bersih-bersih**: `dlWorksheetTotal()` tidak terpakai; 239 atribut `style=""` inline di HTML bisa dipindah ke class CSS.
 - **Belum diuji manual setelah refactor**: OCR dengan gambar asli dan upload logo di report builder.
-- Proyek belum memakai git — disarankan `git init` supaya perubahan bisa dilacak/di-undo.
+- ✅ Git aktif sejak 26 Sep 2026 (branch `main`, commit awal `44b81b7`). Git for Windows di `C:\Program Files\Git`; `.claude/` diabaikan lewat `.gitignore`.
 
 ## 12. Catatan Sesi 25 Sep 2026 — keputusan & langkah berikutnya
 **Keputusan user (jangan diulang tanya):**
