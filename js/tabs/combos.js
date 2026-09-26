@@ -1,10 +1,10 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260926r';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926r';
-import { fmt } from '../core/format.js?v=20260926r';
-import { comboState, state } from '../core/state.js?v=20260926r';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260926r';
+import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260926v';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926v';
+import { fmt } from '../core/format.js?v=20260926v';
+import { comboState, state } from '../core/state.js?v=20260926v';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260926v';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
@@ -77,11 +77,11 @@ export function renderLcSummary() {
     const rows = comboState[set].map(combo => ({ lc: combo.lc || '', name: combo.name, v: stdComboVector(combo.f, base) }));
     return `<table class="calc-table load-summary-table">
     <caption>${caption}</caption>
-    <colgroup><col style="width:5%"><col style="width:50%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"><col style="width:9%"></colgroup>
-    <tr><th>No.</th><th>${colHeader}</th><th>F<sub>x</sub> <span class="unit">kN</span></th><th>F<sub>z</sub> <span class="unit">kN</span></th><th>P <span class="unit">kN</span></th><th>M<sub>x</sub> <span class="unit">kN·m</span></th><th>M<sub>z</sub> <span class="unit">kN·m</span></th></tr>
+    <colgroup><col class="lc-no-col"><col><col class="lc-val-col"><col class="lc-val-col"><col class="lc-val-col"><col class="lc-val-col"><col class="lc-val-col"></colgroup>
+    <tr><th class="lc-no">No.</th><th>${colHeader}</th><th>F<sub>x</sub> <span class="unit">kN</span></th><th>F<sub>z</sub> <span class="unit">kN</span></th><th>P <span class="unit">kN</span></th><th>M<sub>x</sub> <span class="unit">kN·m</span></th><th>M<sub>z</sub> <span class="unit">kN·m</span></th></tr>
     ${rows.map(r => {
       const P = r.v.P + (withTransfer ? r.v.dP : 0), Mx = r.v.Mx + (withTransfer ? r.v.dMx : 0), Mz = r.v.Mz + (withTransfer ? r.v.dMz : 0);
-      return `<tr><td>${escapeHtml(r.lc)}</td><td>${escapeHtml(r.name)}</td><td class="num">${fmt(r.v.Fx,2)}</td><td class="num">${fmt(r.v.Fz,2)}</td><td class="num">${fmt(P,2)}</td><td class="num">${fmt(Mx,2)}</td><td class="num">${fmt(Mz,2)}</td></tr>`;
+      return `<tr><td class="lc-no">${escapeHtml(r.lc)}</td><td>${escapeHtml(r.name)}</td><td class="num">${fmt(r.v.Fx,2)}</td><td class="num">${fmt(r.v.Fz,2)}</td><td class="num">${fmt(P,2)}</td><td class="num">${fmt(Mx,2)}</td><td class="num">${fmt(Mz,2)}</td></tr>`;
     }).join('')}
   </table>`;
   };
@@ -112,10 +112,11 @@ export function renderComboPrintTable() {
   if (!container) return;
   // No. + combination formula only — the per-load-type factor columns are left out of the preview (the factors
   // stay editable in the Load Combinations popup and are what 3.3 is computed from).
-  const rows = comboState.lc.map(c => `<tr><td>${escapeHtml(c.lc || '')}</td><td>${escapeHtml(c.name)}</td></tr>`).join('');
+  const rows = comboState.lc.map(c => `<tr><td class="lc-no">${escapeHtml(c.lc || '')}</td><td>${escapeHtml(c.name)}</td></tr>`).join('');
   container.innerHTML = `<div class="overflow-x"><table class="calc-table" style="table-layout:fixed;">
     <caption>Table 3.2.1. ASD Load Combinations (allowable stress design — stability, pile capacity, anchor bolts)</caption>
-    <tr><th style="width:10%;">No.</th><th style="width:90%;">Combination</th></tr>
+    <colgroup><col class="lc-no-col"><col></colgroup>
+    <tr><th class="lc-no">No.</th><th>Combination</th></tr>
     ${rows}
   </table></div>${sdsFactorBlock()}`;
 }
@@ -126,7 +127,7 @@ export function renderLrfdPrintTable() {
   const container = document.getElementById('lrfd-combo-print-container');
   if (!container) return;
   if (comboState.lrfd.length === 0) { container.innerHTML = '<div class="note">No LRFD combinations — load them with "Edit Load Combinations (LRFD)".</div>'; return; }
-  const rows = comboState.lrfd.map(c => `<tr><td>${escapeHtml(c.lc || '')}</td><td>${escapeHtml(c.name)}</td></tr>`).join('');
+  const rows = comboState.lrfd.map(c => `<tr><td class="lc-no">${escapeHtml(c.lc || '')}</td><td>${escapeHtml(c.name)}</td></tr>`).join('');
   const sds = getStdComboSDS();
   const std = buildLrfdCombos(sds);
   const kOf = lc => (std.find(c => c.lc === lc) || { f: {} }).f.D;
@@ -140,7 +141,8 @@ export function renderLrfdPrintTable() {
   const stale = terms.flatMap(t => t.stale);
   container.innerHTML = `<div class="overflow-x"><table class="calc-table" style="table-layout:fixed;">
     <caption>Table 3.2.2. LRFD Load Combinations (strength design — pedestal 5A, pile cap 5B) — ASCE 7-22 §2.3.1 / §2.3.6</caption>
-    <tr><th style="width:10%;">No.</th><th style="width:90%;">Combination</th></tr>
+    <colgroup><col class="lc-no-col"><col></colgroup>
+    <tr><th class="lc-no">No.</th><th>Combination</th></tr>
     ${rows}
   </table></div>
   <div class="lc-formula">
