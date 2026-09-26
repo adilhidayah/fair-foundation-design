@@ -1,12 +1,12 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260926y';
-import { getRadioVal, num } from '../core/dom.js?v=20260926y';
-import { fmt } from '../core/format.js?v=20260926y';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20260926y';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926y';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926y';
-import { buildStdComboBase } from '../tabs/combos.js?v=20260926y';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260926z';
+import { getRadioVal, num } from '../core/dom.js?v=20260926z';
+import { fmt } from '../core/format.js?v=20260926z';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20260926z';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926z';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926z';
+import { buildStdComboBase } from '../tabs/combos.js?v=20260926z';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `

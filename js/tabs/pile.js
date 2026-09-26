@@ -2,13 +2,13 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260926y';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926y';
-import { fmt as fmtRaw } from '../core/format.js?v=20260926y';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260926y';
-import { comboLabel } from '../core/worksheet.js?v=20260926y';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260926y';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260926y';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260926z';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926z';
+import { fmt as fmtRaw } from '../core/format.js?v=20260926z';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260926z';
+import { comboLabel } from '../core/worksheet.js?v=20260926z';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260926z';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260926z';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -225,15 +225,17 @@ export function calcPile() {
 
   // 1) Layout check
   const sp = layout.spacing, ed = layout.edge;
-  const spActual = sp.actual === null ? '—' : inD(sp.actual, D) + (sp.pair ? ` (piles ${sp.pair[0]}–${sp.pair[1]})` : '');
+  // Actual value in its own columns: metres, multiple of D, and the governing pile(s).
+  const actCells = (v, piles) => v === null ? '<td class="num">—</td><td class="num">—</td><td class="num">—</td>'
+    : `<td class="num">${fmt(v, 3)}</td><td class="num">${fmt(v / D, 2)}D</td><td class="num">${piles}</td>`;
   // The recommended spacing (warning) and "pile centres inside the cap" are not separate rows (user request): the lib already
   // turns them into the status of the spacing row (WARNING) and of the edge row (FAIL when a centre lies outside the cap).
   const spLimit = (sp.limit === null ? 'not set' : '≥ ' + inD(sp.limit, D)) + (sp.warnLimit === null ? '' : `; warning below ${inD(sp.warnLimit, D)}`);
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Pile layout check — spacing and edge distance (limits are project-specific inputs${limSource ? ` — per ${escapeHtml(limSource)}` : ''})</caption>
-    <tr><th>Check</th><th>Expression</th><th>Actual</th><th>Limit</th><th>UC</th><th>Status</th></tr>
-    <tr><td>Minimum spacing, s<sub>min</sub></td><td class="clause">min √(Δx² + Δy²), all pairs; UC = s<sub>lim</sub> / s</td><td class="num">${spActual}</td><td class="num">${spLimit}</td><td class="num">${sp.uc === null ? '—' : fmt(sp.uc, 3)}</td><td>${stTxt(sp.status)}</td></tr>
-    <tr><td>Minimum edge distance, e<sub>min</sub></td><td class="clause">min[B<sub>f</sub>/2 − |x|, L<sub>f</sub>/2 − |z|], pile centre to cap edge (e<sub>min</sub> &lt; 0 = outside the cap → FAIL)</td><td class="num">${ed.actual === null ? '—' : inD(ed.actual, D) + ` (pile ${ed.pile})`}</td><td class="num">${ed.warnLimit === null ? 'not set' : '≥ ' + inD(ed.warnLimit, D) + ' (warning only)'}</td><td class="num">—</td><td>${stTxt(ed.status)}</td></tr>
+    <tr><th>Check</th><th>Expression</th><th>Actual (m)</th><th>Actual / D</th><th>Pile</th><th>Limit</th><th>UC</th><th>Status</th></tr>
+    <tr><td>Minimum spacing, s<sub>min</sub></td><td class="clause">min √(Δx² + Δz²), all pairs; UC = s<sub>lim</sub> / s</td>${actCells(sp.actual, sp.pair ? `${sp.pair[0]}–${sp.pair[1]}` : '—')}<td class="num">${spLimit}</td><td class="num">${sp.uc === null ? '—' : fmt(sp.uc, 3)}</td><td>${stTxt(sp.status)}</td></tr>
+    <tr><td>Minimum edge distance, e<sub>min</sub></td><td class="clause">min[B<sub>f</sub>/2 − |x|, L<sub>f</sub>/2 − |z|], pile centre to cap edge (e<sub>min</sub> &lt; 0 = outside the cap → FAIL)</td>${actCells(ed.actual, ed.pile)}<td class="num">${ed.warnLimit === null ? 'not set' : '≥ ' + inD(ed.warnLimit, D) + ' (warning only)'}</td><td class="num">—</td><td>${stTxt(ed.status)}</td></tr>
   </table></div>`;
 
   // 2) Axial group efficiency — shown only when a reduction is actually applied (spacing below the project's "no
