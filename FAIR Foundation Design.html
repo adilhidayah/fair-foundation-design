@@ -1114,12 +1114,13 @@
         <div class="section-label">Pedestal Geometry</div>
         <div class="field">
           <label for="ab-Bp"><span>Pedestal width, B<sub>p</sub> (shear/moment direction, x)</span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-Bp" value="800" min="0" step="10">
+          <input type="number" id="ab-Bp" value="1250" min="0" step="10" readonly>
         </div>
         <div class="field">
           <label for="ab-Lp"><span>Pedestal length, L<sub>p</sub> (perpendicular, y)</span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-Lp" value="800" min="0" step="10">
+          <input type="number" id="ab-Lp" value="1250" min="0" step="10" readonly>
         </div>
+        <div class="note" id="ab-ped-src"></div>
         <div class="note">Pedestal is assumed centered on the bolt group centroid. Edge distance c<sub>a1</sub> for concrete shear breakout is computed automatically per bolt (governing = smallest value in the group) instead of being entered manually.</div>
         <div class="section-label">Bolt Properties</div>
         <div class="field">
@@ -1695,6 +1696,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260926e"></script>
+<script type="module" src="js/app.js?v=20260926g"></script>
 </body>
 </html>

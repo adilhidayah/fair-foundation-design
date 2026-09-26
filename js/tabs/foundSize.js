@@ -1,11 +1,11 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationSizing } from '../../lib/foundation/index.js?v=20260926e';
-import { getRadioVal, num } from '../core/dom.js?v=20260926e';
-import { fmt } from '../core/format.js?v=20260926e';
-import { pileList, state } from '../core/state.js?v=20260926e';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926e';
-import { recalcAll } from '../workflow/recalc.js?v=20260926e';
+import { foundationSizing } from '../../lib/foundation/index.js?v=20260926g';
+import { getRadioVal, num } from '../core/dom.js?v=20260926g';
+import { fmt } from '../core/format.js?v=20260926g';
+import { pileList, state } from '../core/state.js?v=20260926g';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926g';
+import { recalcAll } from '../workflow/recalc.js?v=20260926g';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -67,6 +67,14 @@ export function calcFoundSize() {
   if (pft) { pft.readOnly = true; pft.value = Hf0.toFixed(2); }
   ['rb-Bp', 'tw-c1'].forEach(id => mirror(id, hasPed ? num('fs-Bp') : 0, hasPed));
   ['rb-Lp', 'tw-c2'].forEach(id => mirror(id, hasPed ? num('fs-Lp') : 0, hasPed));
+  // Tab 09: the concrete member the anchor bolts sit in (its size sets the edge distance c_a1) — the pedestal, or the
+  // footing / pile cap itself when there is no pedestal. Always from Tab 02, never typed separately.
+  mirror('ab-Bp', hasPed ? num('fs-Bp') : Bf, true);
+  mirror('ab-Lp', hasPed ? num('fs-Lp') : Lf, true);
+  const abNote = document.getElementById('ab-ped-src');
+  if (abNote) abNote.innerHTML = hasPed
+    ? 'From the pedestal in "02 — FOUNDATION DIMENSION" — edit it there.'
+    : `No pedestal in Tab 02: the bolts sit in the ${isPile ? 'pile cap' : 'footing'} itself, so its plan size B<sub>f</sub> × L<sub>f</sub> is used — edit it in "02 — FOUNDATION DIMENSION". Bolt group assumed centred on it.`;
   const pedNote = hasPed ? 'From the pedestal in "02 — FOUNDATION DIMENSION" (B<sub>p</sub> along x, L<sub>p</sub> along y) — edit it there.'
     : 'No pedestal in Tab 02 (cap only) — enter the column / base-plate size the load is applied through.';
   ['rb-ped-src', 'tw-ped-src'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = pedNote; });
