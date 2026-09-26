@@ -1,0 +1,13 @@
+# Editor / OS clutter
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Node (none used by the app, kept out in case a tool is run here)
+node_modules/
+
+# Local Claude Code session files
+.claude/

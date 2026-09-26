@@ -1,0 +1,97 @@
+// 09 — Anchor bolt design.
+// Moved from app.js — function/const declarations only; event wiring stays in app.js.
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo } from '../../lib/foundation/index.js?v=20260925zf';
+import { getRadioVal, num } from '../core/dom.js?v=20260925zf';
+import { fmt } from '../core/format.js?v=20260925zf';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20260925zf';
+import { comboLabel, verdictHTML } from '../core/worksheet.js?v=20260925zf';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260925zf';
+import { comboTopBottom, getLcLoads } from '../tabs/combos.js?v=20260925zf';
+
+export function renderBoltTable() {
+  document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td><input type="number" step="10" class="bolt-input" data-i="${i}" data-f="x" value="${b.x}"></td>
+      <td><input type="number" step="10" class="bolt-input" data-i="${i}" data-f="y" value="${b.y}"></td>
+      <td><button type="button" class="combo-remove" data-i="${i}" title="Remove bolt">•</button></td>
+    </tr>`).join('');
+}
+// computeGoverningCa1(), computeAnchorCapacity() and evaluateAnchorCombo() live in lib/foundation/shared/pedestalCheck.js.
+export function calcAnchor() {
+  lastResults.anchor = { label: 'Anchor Bolt Design', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
+  if (boltList.length === 0) {
+    document.getElementById('calc-anchor').innerHTML = `<div class="warn-box"><strong>⚠  No bolts defined:</strong> add at least one bolt.</div>`;
+    lastResults.anchor.detail = 'No bolts defined.';
+    return;
+  }
+  if (comboState.lc.length === 0) {
+    document.getElementById('calc-anchor').innerHTML = `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
+    lastResults.anchor.detail = 'No load combinations defined.';
+    return;
+  }
+  const Bp = num('ab-Bp'), Lp = num('ab-Lp');
+  const ca1 = computeGoverningCa1(boltList, Bp);
+  if (!isFinite(ca1) || ca1 <= 0) {
+    document.getElementById('calc-anchor').innerHTML = `<div class="warn-box"><strong>⚠  Invalid layout:</strong> one or more bolts fall outside the pedestal width B<sub>p</sub> (computed edge distance c<sub>a1</sub> ≤ 0). Increase B<sub>p</sub> or move the bolts inward.</div>`;
+    lastResults.anchor.detail = 'Invalid layout (bolt outside pedestal width).';
+    return;
+  }
+  const cap = computeAnchorCapacity({
+    ca1,
+    da: num('ab-da'), Ase: num('ab-Ase'), futa: num('ab-futa'), hef: num('ab-hef'), Abrg: num('ab-Abrg'),
+    fc: num('gen-fc'), lambda: num('ab-lambda'),
+    anchorType: getRadioVal('ab-type'), cracked: getRadioVal('ab-crack') === 'cracked',
+    phiNsa: num('ab-phi-Nsa'), phiNcb: num('ab-phi-Ncb'), phiNpn: num('ab-phi-Npn'),
+    phiVsa: num('ab-phi-Vsa'), phiVcb: num('ab-phi-Vcb'), phiVcp: num('ab-phi-Vcp')
+  });
+  const loads = getLcLoads();
+  const results = comboState.lc.map(combo => {
+    const { Ptop, Htop, Mtop } = comboTopBottom(combo, loads);
+    return { combo, P: Ptop, H: Htop, M: Mtop, ...evaluateAnchorCombo(boltList, Ptop, Htop, Mtop, cap) };
+  });
+  const governing = results.reduce((a, b) => b.governingUC > a.governingUC ? b : a);
+  lastResults.anchor = {
+    label: 'Anchor Bolt Design',
+    status: !governing.valid ? 'ERROR' : (governing.overallPass ? 'PASS' : 'FAIL'),
+    metric: governing.valid ? `UC = ${fmt(governing.governingUC,3)}` : '—',
+    detail: governing.valid ? `Governing: ${comboLabel(governing.combo)} — ${governing.governingCheck.name}, n=${boltList.length} bolts` : `${governing.note}`
+  };
+  let html = '';
+  if (!governing.valid) {
+    html += `<div class="warn-box"><strong>⚠  Invalid:</strong> ${governing.note}</div>`;
+  }
+  html += verdictHTML(governing.governingUC, governing.valid && governing.overallPass, 'ANCHOR BOLT DESIGN',
+    governing.valid ? `GOVERNING: ${comboLabel(governing.combo).toUpperCase()} — ${governing.governingCheck.name.toUpperCase()}` : `GOVERNING: ${comboLabel(governing.combo).toUpperCase()} — INVALID`);
+  if (governing.valid) {
+    html += anchorDiagramSVG(boltList, governing.boltForces, Bp, Lp);
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Per-anchor capacity (single anchor, ACI 318-19 Ch. 17)</caption>
+      <tr><th>Mode</th><th>Nominal</th><th>π </th><th>π ·Nominal</th></tr>
+      <tr><td>Governing edge distance, c<sub>a1</sub> (computed)</td><td class="clause">B<sub>p</sub>/2 - |x - x̅|, min over bolts</td><td class="num" colspan="2">${fmt(ca1,1)} mm</td></tr>
+      ${cap.modesN.map(m => `<tr class="${m.name === cap.govNMode ? 'governing' : ''}"><td>${m.name}</td><td class="num">${fmt(m.val/1000,2)} kN</td><td class="num">${fmt(m.phi,2)}</td><td class="num">${fmt(m.phi*m.val/1000,2)} kN</td></tr>`).join('')}
+      ${cap.modesV.map(m => `<tr class="${m.name === cap.govVMode ? 'governing' : ''}"><td>${m.name}</td><td class="num">${fmt(m.val/1000,2)} kN</td><td class="num">${fmt(m.phi,2)}</td><td class="num">${fmt(m.phi*m.val/1000,2)} kN</td></tr>`).join('')}
+    </table></div>`;
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Governing combination: ${comboLabel(governing.combo)} — per-bolt tension</caption>
+      <tr><th>Bolt</th><th>x (mm)</th><th>y (mm)</th><th>Tension (kN)</th></tr>
+      ${governing.boltForces.map(bf => `<tr class="${bf.tension === governing.Tmax && bf.tension > 0 ? 'governing' : ''}"><td>${bf.i}</td><td class="num">${fmt(bf.x,0)}</td><td class="num">${fmt(bf.y,0)}</td><td class="num">${fmt(bf.tension,2)}</td></tr>`).join('')}
+    </table></div>`;
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Stability checks</caption>
+      <tr><th>Check</th><th>Demand</th><th>Capacity</th><th>UC</th><th>Status</th></tr>
+      <tr class="${governing.governingCheck.name === 'Bolt tension' ? 'governing' : ''}"><td>Max bolt tension</td><td class="num">${fmt(governing.Tmax,2)} kN</td><td class="num">${fmt(cap.phiNn/1000,2)} kN</td><td class="num">${fmt(governing.checks[0].uc,3)}</td><td>${governing.checks[0].uc<=1.0?'OK':'EXCEEDS'}</td></tr>
+      <tr class="${governing.governingCheck.name === 'Bolt shear' ? 'governing' : ''}"><td>Bolt shear (H/n)</td><td class="num">${fmt(governing.Hi,2)} kN</td><td class="num">${fmt(cap.phiVn/1000,2)} kN</td><td class="num">${fmt(governing.checks[1].uc,3)}</td><td>${governing.checks[1].uc<=1.0?'OK':'EXCEEDS'}</td></tr>
+      <tr class="${governing.governingCheck.name === 'Tension-shear interaction' ? 'governing' : ''}"><td>Combined interaction</td><td class="clause">§17.8</td><td class="clause">linear ≤ 1.2</td><td class="num">${fmt(governing.checks[2].uc,3)}</td><td>${governing.checks[2].uc<=1.0?'OK':'EXCEEDS'}</td></tr>
+    </table></div>`;
+  }
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Load combination summary (loads at top of footing/pedestal) — governing row highlighted</caption>
+    <tr><th>Combination</th><th>P (kN)</th><th>H (kN)</th><th>M (kN·m)</th><th>Governing UC</th><th>Status</th></tr>
+    ${results.map(r => `<tr class="${r === governing ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.P,1)}</td><td class="num">${fmt(r.H,1)}</td><td class="num">${fmt(r.M,1)}</td><td class="num">${r.valid ? fmt(r.governingUC,3) : '—'}</td><td>${r.valid ? (r.overallPass ? 'OK' : 'EXCEEDS') : (r.note || 'INVALID')}</td></tr>`).join('')}
+  </table></div>`;
+  html += `<div class="limits-box">
+    <strong>Limitation:</strong> Single-anchor simplification per ACI 318-19 Chapter 17 — no anchor-group projected-area effects (A<sub>nc</sub>/A<sub>nco</sub>, A<sub>vc</sub>/A<sub>vco</sub>), no side-face blowout check, and headed cast-in pullout formula only (not hooked bolts or post-installed adhesive bond strength). Edge distance c<sub>a1</sub> is computed only toward the pedestal edge in the shear/moment direction (x, using B<sub>p</sub>) — the perpendicular edge (L<sub>p</sub>) and corner/two-edge interaction effects are not checked; verify the governing bolt's edge condition against the actual pedestal drawing. Base plate bearing/grout capacity on the compression side is not checked. This chapter is complex and error-prone by hand — verify independently against the full ACI 318-19 Chapter 17 or dedicated anchor design software before final design.
+  </div>`;
+  document.getElementById('calc-anchor').innerHTML = html;
+}

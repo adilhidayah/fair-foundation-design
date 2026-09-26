@@ -1,0 +1,31 @@
+// Recalculate-everything entry points.
+// Moved from app.js — function/const declarations only; event wiring stays in app.js.
+import { calcBearing } from '../tabs/bearing.js?v=20260925zf';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260925zf';
+import { calcFoundation } from '../tabs/foundation.js?v=20260925zf';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260925zf';
+import { renderLoadSummary } from '../tabs/loading.js?v=20260925zf';
+import { calcPile } from '../tabs/pile.js?v=20260925zf';
+import { calcRebar } from '../tabs/rebar.js?v=20260925zf';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260925zf';
+import { renderWorkflowLive } from '../workflow/status.js?v=20260925zf';
+
+export function recalcAll() {
+  calcFoundation();
+  calcPile();
+  // Pile cap flexure / shear (5B) read the pile reactions of the factored combinations, so they follow every change
+  // in loads, pile layout or cap geometry — not only edits of their own inputs.
+  // (each guarded: a failure in one of these must not stop the summaries and status below from refreshing)
+  [calcRebar, calcOneWay, calcTwoWay].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
+  renderLcSummary();
+  if (typeof renderStdComboTables === 'function') renderStdComboTables();
+  if (typeof renderLoadSummary === 'function') renderLoadSummary();
+  if (typeof renderWorkflowLive === 'function') renderWorkflowLive();
+}
+// fd-ecc/fd-mu/fd-fsSlide-perm/fd-fsSlide-temp/fd-fsOT-perm/fd-fsOT-temp and bc-* also feed the read-only
+// "1.3 Geotechnical Parameters" section of
+// "01 — General Input Data" (renderGeneralSummary()), so both must refresh it too, not just their own tab.
+export function calcFoundationAndGeneral() { calcFoundation(); renderGeneralSummary(); }
+// calcFoundation() reads q_a fresh from the Bearing Capacity inputs (no separate field/copy button any more), so
+// any bc-* change must also re-run calcFoundation(), not just calcBearing().
+export function calcBearingAndFoundation() { calcBearing(); calcFoundation(); renderGeneralSummary(); }
