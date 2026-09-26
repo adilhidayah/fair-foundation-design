@@ -1,28 +1,28 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20260926a'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20260926a';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260926a';
-import { dlWorksheetItem } from './core/worksheet.js?v=20260926a';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260926a';
-import { renderComboImportReview, renderEqOcrReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260926a';
-import { loadTesseract } from './ocr/tesseract.js?v=20260926a';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260926a';
-import { renderSummaryReport } from './report/summary.js?v=20260926a';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260926a';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260926a';
-import { calcFoundation } from './tabs/foundation.js?v=20260926a';
-import { calcFoundSize } from './tabs/foundSize.js?v=20260926a';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260926a';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260926a';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260926a';
-import { calcRebar } from './tabs/rebar.js?v=20260926a';
-import { calcSettlement } from './tabs/settlement.js?v=20260926a';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260926a';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260926a';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260926a';
-import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260926a';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260926a';
+} from '../lib/foundation/index.js?v=20260926b'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20260926b';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260926b';
+import { dlWorksheetItem } from './core/worksheet.js?v=20260926b';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260926b';
+import { renderComboImportReview, renderEqOcrReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260926b';
+import { loadTesseract } from './ocr/tesseract.js?v=20260926b';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260926b';
+import { renderSummaryReport } from './report/summary.js?v=20260926b';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260926b';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260926b';
+import { calcFoundation } from './tabs/foundation.js?v=20260926b';
+import { calcFoundSize } from './tabs/foundSize.js?v=20260926b';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260926b';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260926b';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260926b';
+import { calcRebar } from './tabs/rebar.js?v=20260926b';
+import { calcSettlement } from './tabs/settlement.js?v=20260926b';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260926b';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260926b';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260926b';
+import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260926b';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260926b';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -613,7 +613,7 @@ toggleLoadInputMode();
 // wire up the shared load combination table
 wireComboTable('lc', recalcAll);
 // Separate factored (LRFD) combination table — used only by the pile cap flexure / shear (5B), so a change re-runs those.
-const recalcPileCap = () => { calcRebar(); calcOneWay(); calcTwoWay(); renderLcSummary(); }; // + the LRFD tables in Section 03
+const recalcPileCap = () => { calcRebar(); calcOneWay(); calcTwoWay(); calcAnchor(); renderLcSummary(); }; // LRFD users (5A, 5B, 09) + the LRFD tables in Section 03
 wireComboTable('lrfd', recalcPileCap);
 document.getElementById('lrfd-reload-combos').addEventListener('click', () => { loadLrfdCombos(); recalcPileCap(); });
 document.querySelectorAll('.lrfd-open-btn').forEach(btn => btn.addEventListener('click', () => openModal('combos-lrfd-modal')));

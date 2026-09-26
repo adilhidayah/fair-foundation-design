@@ -1,8 +1,8 @@
 // Printable report builder (sections, logos, document header).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml } from '../core/dom.js?v=20260926a';
-import { reportBlocks, state } from '../core/state.js?v=20260926a';
-import { buildQuickStatusHtml } from '../report/summary.js?v=20260926a';
+import { escapeHtml } from '../core/dom.js?v=20260926b';
+import { reportBlocks, state } from '../core/state.js?v=20260926b';
+import { buildQuickStatusHtml } from '../report/summary.js?v=20260926b';
 
 export function renderBlockList() {
   document.getElementById('rpt-block-body').innerHTML = reportBlocks.map((b, i) => `
@@ -79,6 +79,8 @@ export function generateReport() {
         + (botEl ? `<div class="section-label" style="margin-top:16px;">Load at bottom of footing</div>${botEl.innerHTML}` : '');
       // LRFD results (pedestal base for 5A, footing bottom for 5B)
       const lrfdPedEl = document.getElementById('lrfd-summary-ped'), lrfdBotEl = document.getElementById('lrfd-summary-bottom');
+      const lrfdTopEl = document.getElementById('lrfd-summary-top');
+      content += (lrfdTopEl ? `<div class="section-label" style="margin-top:16px;">Load at top of pedestal (LRFD)</div>${lrfdTopEl.innerHTML}` : '');
       content += (lrfdPedEl ? `<div class="section-label" style="margin-top:16px;">Load at base of pedestal (LRFD)</div>${lrfdPedEl.innerHTML}` : '')
         + (lrfdBotEl ? `<div class="section-label" style="margin-top:16px;">Load at bottom of footing (LRFD)</div>${lrfdBotEl.innerHTML}` : '');
     } else {

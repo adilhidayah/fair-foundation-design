@@ -1,14 +1,15 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcBearing } from '../tabs/bearing.js?v=20260926a';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926a';
-import { calcFoundation } from '../tabs/foundation.js?v=20260926a';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260926a';
-import { renderLoadSummary } from '../tabs/loading.js?v=20260926a';
-import { calcPile } from '../tabs/pile.js?v=20260926a';
-import { calcRebar } from '../tabs/rebar.js?v=20260926a';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926a';
-import { renderWorkflowLive } from '../workflow/status.js?v=20260926a';
+import { calcAnchor } from '../tabs/anchor.js?v=20260926b';
+import { calcBearing } from '../tabs/bearing.js?v=20260926b';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260926b';
+import { calcFoundation } from '../tabs/foundation.js?v=20260926b';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260926b';
+import { renderLoadSummary } from '../tabs/loading.js?v=20260926b';
+import { calcPile } from '../tabs/pile.js?v=20260926b';
+import { calcRebar } from '../tabs/rebar.js?v=20260926b';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260926b';
+import { renderWorkflowLive } from '../workflow/status.js?v=20260926b';
 
 export function recalcAll() {
   calcFoundation();
@@ -16,7 +17,7 @@ export function recalcAll() {
   // Pile cap flexure / shear (5B) read the pile reactions of the factored combinations, so they follow every change
   // in loads, pile layout or cap geometry — not only edits of their own inputs.
   // (each guarded: a failure in one of these must not stop the summaries and status below from refreshing)
-  [calcRebar, calcOneWay, calcTwoWay].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
+  [calcRebar, calcOneWay, calcTwoWay, calcAnchor].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
   renderLcSummary();
   if (typeof renderStdComboTables === 'function') renderStdComboTables();
   if (typeof renderLoadSummary === 'function') renderLoadSummary();

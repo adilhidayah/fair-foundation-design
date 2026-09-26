@@ -466,9 +466,11 @@
     <div class="overflow-x" id="lc-summary-top"></div>
     <div class="section-label" style="margin-top:20px;">3.3.2 Load at bottom of footing (ASD)</div>
     <div class="overflow-x" id="lc-summary-bottom"></div>
-    <div class="section-label" style="margin-top:20px;">3.3.3 Load at base of pedestal (LRFD)</div>
+    <div class="section-label" style="margin-top:20px;">3.3.3 Load at top of pedestal (LRFD)</div>
+    <div class="overflow-x" id="lrfd-summary-top"></div>
+    <div class="section-label" style="margin-top:20px;">3.3.4 Load at base of pedestal (LRFD)</div>
     <div class="overflow-x" id="lrfd-summary-ped"></div>
-    <div class="section-label" style="margin-top:20px;">3.3.4 Load at bottom of footing (LRFD)</div>
+    <div class="section-label" style="margin-top:20px;">3.3.5 Load at bottom of footing (LRFD)</div>
     <div class="overflow-x" id="lrfd-summary-bottom"></div>
     </div>
     </div>
@@ -1100,7 +1102,7 @@
           </table>
         </div>
         <button type="button" id="ab-add-bolt" class="combo-add-btn">+ Add bolt</button>
-        <div class="note">x, y relative to any fixed origin — the group centroid is computed automatically. Loads used here are the <strong>top of footing/pedestal</strong> values (P, H, M) from the "03 — LOADING DATA" tab, consistent with the base plate interface.</div>
+        <div class="note">x, y relative to any fixed origin — the group centroid is computed automatically. Loads used here are the <strong>factored LRFD combinations (LC201+) at the top of the pedestal</strong> (base plate level) — see "03 — LOADING DATA", Table 3.3.3.</div>
         <div class="section-label">Pedestal Geometry</div>
         <div class="field">
           <label for="ab-Bp"><span>Pedestal width, B<sub>p</sub> (shear/moment direction, x)</span> <span class="unit">mm</span></label>
@@ -1685,6 +1687,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260926a"></script>
+<script type="module" src="js/app.js?v=20260926b"></script>
 </body>
 </html>

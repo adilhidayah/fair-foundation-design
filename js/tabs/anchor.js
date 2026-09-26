@@ -1,12 +1,12 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo } from '../../lib/foundation/index.js?v=20260926a';
-import { getRadioVal, num } from '../core/dom.js?v=20260926a';
-import { fmt } from '../core/format.js?v=20260926a';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20260926a';
-import { comboLabel, verdictHTML } from '../core/worksheet.js?v=20260926a';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926a';
-import { comboTopBottom, getLcLoads } from '../tabs/combos.js?v=20260926a';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260926b';
+import { getRadioVal, num } from '../core/dom.js?v=20260926b';
+import { fmt } from '../core/format.js?v=20260926b';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20260926b';
+import { comboLabel, verdictHTML } from '../core/worksheet.js?v=20260926b';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260926b';
+import { buildStdComboBase } from '../tabs/combos.js?v=20260926b';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -25,8 +25,8 @@ export function calcAnchor() {
     lastResults.anchor.detail = 'No bolts defined.';
     return;
   }
-  if (comboState.lc.length === 0) {
-    document.getElementById('calc-anchor').innerHTML = `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
+  if (comboState.lrfd.length === 0) {
+    document.getElementById('calc-anchor').innerHTML = `<div class="warn-box"><strong>⚠  No LRFD load combinations:</strong> load the standard set with "Edit Load Combinations (LRFD)" in "03 — LOADING DATA".</div>`;
     lastResults.anchor.detail = 'No load combinations defined.';
     return;
   }
@@ -45,13 +45,17 @@ export function calcAnchor() {
     phiNsa: num('ab-phi-Nsa'), phiNcb: num('ab-phi-Ncb'), phiNpn: num('ab-phi-Npn'),
     phiVsa: num('ab-phi-Vsa'), phiVcb: num('ab-phi-Vcb'), phiVcp: num('ab-phi-Vcp')
   });
-  const loads = getLcLoads();
+  // Anchor design loads: the factored LRFD combinations (LC201+, comboState.lrfd) at the TOP of the pedestal (base plate) —
+  // ACI 318M-19 Ch.17 compares φN_n / φV_n with factored actions. Same biaxial vectors as Section 03 table 3.3.3, without any
+  // top -> bottom transfer; the bolt group is checked about one axis with the resultants H = √(Fx² + Fz²), M = √(Mx² + Mz²).
+  const base = buildStdComboBase();
   // Bolt coordinates are entered in mm, but evaluateAnchorCombo() distributes M (kN·m) with the coordinates in m
   // (F = P/n + M·dx/Σdx²). Passing mm made the moment term 1000× too small — convert here, and convert the returned
   // bolt positions back to mm for the table and the drawing.
   const boltsM = boltList.map(b => ({ x: b.x / 1000, y: b.y / 1000 }));
-  const results = comboState.lc.map(combo => {
-    const { Ptop, Htop, Mtop } = comboTopBottom(combo, loads);
+  const results = comboState.lrfd.map(combo => {
+    const v = stdComboVector(combo.f, base);
+    const Ptop = v.P, Htop = Math.hypot(v.Fx, v.Fz), Mtop = Math.hypot(v.Mx, v.Mz);
     const r = evaluateAnchorCombo(boltsM, Ptop, Htop, Mtop, cap);
     if (r.boltForces) r.boltForces = r.boltForces.map(bf => ({ ...bf, x: bf.x * 1000, y: bf.y * 1000 }));
     return { combo, P: Ptop, H: Htop, M: Mtop, ...r };
@@ -92,7 +96,7 @@ export function calcAnchor() {
     </table></div>`;
   }
   html += `<div class="overflow-x"><table class="calc-table">
-    <caption>Load combination summary (loads at top of footing/pedestal) — governing row highlighted</caption>
+    <caption>Load combination summary — factored LRFD loads (LC201+) at top of pedestal, H = √(F<sub>x</sub>² + F<sub>z</sub>²), M = √(M<sub>x</sub>² + M<sub>z</sub>²) (see 03, Table 3.3.3) — governing row highlighted</caption>
     <tr><th>Combination</th><th>P (kN)</th><th>H (kN)</th><th>M (kN·m)</th><th>Governing UC</th><th>Status</th></tr>
     ${results.map(r => `<tr class="${r === governing ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.P,1)}</td><td class="num">${fmt(r.H,1)}</td><td class="num">${fmt(r.M,1)}</td><td class="num">${r.valid ? fmt(r.governingUC,3) : '—'}</td><td>${r.valid ? (r.overallPass ? 'OK' : 'EXCEEDS') : (r.note || 'INVALID')}</td></tr>`).join('')}
   </table></div>`;

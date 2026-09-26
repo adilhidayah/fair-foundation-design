@@ -1,10 +1,10 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260926a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926a';
-import { fmt } from '../core/format.js?v=20260926a';
-import { comboState, state } from '../core/state.js?v=20260926a';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260926a';
+import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260926b';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926b';
+import { fmt } from '../core/format.js?v=20260926b';
+import { comboState, state } from '../core/state.js?v=20260926b';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260926b';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
@@ -91,6 +91,10 @@ export function renderLcSummary() {
   // LRFD results (strength design): the pedestal base carries H × pedestal height and the pedestal weight (5A pedestal design);
   // the bottom of the footing carries the whole footing transfer (5B pile cap flexure / shear).
   const lrfdPedEl = document.getElementById('lrfd-summary-ped'), lrfdBotEl = document.getElementById('lrfd-summary-bottom');
+  const lrfdTopEl = document.getElementById('lrfd-summary-top');
+  if (lrfdTopEl) lrfdTopEl.innerHTML = comboState.lrfd.length
+    ? resultTable('lrfd', footBase, 'Load Combination Result at top of pedestal (LRFD) — For Anchor Bolt Design (09)', 'For Anchor Bolt Design', false)
+    : '<div class="note">No LRFD combinations — load them with "Edit Load Combinations (LRFD)".</div>';
   if (lrfdPedEl) lrfdPedEl.innerHTML = comboState.lrfd.length
     ? resultTable('lrfd', buildPedestalComboBase(), `Load Combination Result at base of pedestal (LRFD) — For Pedestal Design (5A); H·H<sub>p</sub> with H<sub>p</sub> = ${fmt(state.pedHp,3)} m and pedestal weight ${fmt(state.pedW,1)} kN included`, 'For Pedestal Design', true)
     : '<div class="note">No LRFD combinations — load them with "Edit Load Combinations (LRFD)".</div>';

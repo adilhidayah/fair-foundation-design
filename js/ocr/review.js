@@ -1,12 +1,12 @@
 // OCR / pasted-text review tables (parsers live in lib/foundation/import/textParsers.js).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { parseComboImport, parseEquipmentWeightText, parseLoadTypeText } from '../../lib/foundation/index.js?v=20260926a';
-import { escapeHtml } from '../core/dom.js?v=20260926a';
-import { fmt } from '../core/format.js?v=20260926a';
-import { comboState, state } from '../core/state.js?v=20260926a';
-import { renderComboTable } from '../tabs/combos.js?v=20260926a';
-import { renderEquipmentLoad, renderLoadTypesTable } from '../tabs/loading.js?v=20260926a';
-import { recalcAll } from '../workflow/recalc.js?v=20260926a';
+import { parseComboImport, parseEquipmentWeightText, parseLoadTypeText } from '../../lib/foundation/index.js?v=20260926b';
+import { escapeHtml } from '../core/dom.js?v=20260926b';
+import { fmt } from '../core/format.js?v=20260926b';
+import { comboState, state } from '../core/state.js?v=20260926b';
+import { renderComboTable } from '../tabs/combos.js?v=20260926b';
+import { renderEquipmentLoad, renderLoadTypesTable } from '../tabs/loading.js?v=20260926b';
+import { recalcAll } from '../workflow/recalc.js?v=20260926b';
 
 // parseLoadTypeText() lives in lib/foundation/import/textParsers.js.
 export function renderLtOcrReview(text) {
