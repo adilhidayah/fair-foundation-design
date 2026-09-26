@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 461 checks, 461 pass, 0 fail** (12 files, run 26 Sep 2026).
+**Total: 472 checks, 472 pass, 0 fail** (12 files, run 26 Sep 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -8,15 +8,15 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part2.mjs | pedestal P-M, soil correlations, settlement | 17 |
 | validation_shared_part3.mjs | anchor bolts, footing one-way / punching shear, pile cap moment, flexure | 16 |
 | validation_shared_part4.mjs | wind, seismic, settlement check | 15 |
-| validation_cat_part5.mjs | static / rotating / reciprocating / pipe rack categories, foundation sizing, load kinds | 91 |
+| validation_cat_part5.mjs | static / rotating / reciprocating / pipe rack categories, foundation sizing, load kinds | 99 |
 | validation_cat_part6.mjs | skid-mounted category | 23 |
 | validation_import_part7.mjs | text / OCR import parsers (incl. Tab 02 foundation dimensions) | 62 |
 | validation_shared_part8.mjs | pile group: layout, efficiency, p-multipliers, biaxial forces + torsion | 101 |
 | validation_shared_part9.mjs | LRFD combination set, pile cap shear from pile reactions | 58 |
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
-| validation_static_part12.mjs | foundation geometry consistency | 18 |
-| **Total** | | **461** |
+| validation_static_part12.mjs | foundation geometry consistency | 21 |
+| **Total** | | **472** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 

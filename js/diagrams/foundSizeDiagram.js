@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20260926n';
+import { fmt } from '../core/format.js?v=20260926o';
 
 // Foundation sizing plan + elevation. patch.js keeps its #fsize-arrow marker clean.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.
@@ -95,16 +95,18 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
     const pedEx = pedCxE - (Bp * eScale) / 2;
     const pedBracketX = pedCxE - (Bp*eScale)/2 - 12;
     const hpBracketX = pedCxE + (Bp*eScale)/2 + 12;
+    // Footing projecting above ground (Dp < 0): the Gp bracket would cross the footing, so it goes on the Df line outside it.
+    const gpX = Dp < 0 ? dfX : pedBracketX;
     // Grout (when used) is part of Hp = Gp + Dp + tG — the Hp bracket starts at the top of the grout.
     const groutOn = hasGrout && groutT > 0;
     const groutPx = groutOn ? Math.max(4, (groutT/1000) * eScale) : 0;
     const hpTopY = pedTopY - groutPx;
     const HpShown = Gp + Dp + (groutOn ? groutT/1000 : 0);
     pedElev = `<rect class="outline-pedestal" x="${pedEx.toFixed(1)}" y="${pedTopY.toFixed(1)}" width="${(Bp*eScale).toFixed(1)}" height="${(footTopY-pedTopY).toFixed(1)}"/>
-      <line class="dim" x1="${pedBracketX.toFixed(1)}" y1="${pedTopY.toFixed(1)}" x2="${pedBracketX.toFixed(1)}" y2="${groundY.toFixed(1)}"/>
-      <text class="dim-text" x="${(pedBracketX-4).toFixed(1)}" y="${((pedTopY+groundY)/2).toFixed(1)}" text-anchor="end">Gp=${fmt(Gp,3)}</text>
-      <line class="dim" x1="${pedBracketX.toFixed(1)}" y1="${groundY.toFixed(1)}" x2="${pedBracketX.toFixed(1)}" y2="${footTopY.toFixed(1)}"/>
-      <text class="dim-text" x="${(pedBracketX-4).toFixed(1)}" y="${((groundY+footTopY)/2).toFixed(1)}" text-anchor="end">Dp=${fmt(Dp,3)}</text>
+      <line class="dim" x1="${gpX.toFixed(1)}" y1="${pedTopY.toFixed(1)}" x2="${gpX.toFixed(1)}" y2="${groundY.toFixed(1)}"/>
+      <text class="dim-text" style="${HALO}" x="${(gpX-4).toFixed(1)}" y="${((pedTopY+groundY)/2).toFixed(1)}" text-anchor="end">Gp=${fmt(Gp,3)}</text>
+      ${Dp > 0 ? `<line class="dim" x1="${pedBracketX.toFixed(1)}" y1="${groundY.toFixed(1)}" x2="${pedBracketX.toFixed(1)}" y2="${footTopY.toFixed(1)}"/>
+      <text class="dim-text" x="${(pedBracketX-4).toFixed(1)}" y="${((groundY+footTopY)/2).toFixed(1)}" text-anchor="end">Dp=${fmt(Dp,3)}</text>` : ''}
       <line class="dim" x1="${hpBracketX.toFixed(1)}" y1="${hpTopY.toFixed(1)}" x2="${hpBracketX.toFixed(1)}" y2="${footTopY.toFixed(1)}"/>
       <text class="dim-text" x="${(hpBracketX+4).toFixed(1)}" y="${((hpTopY+footTopY)/2).toFixed(1)}">Hp=${fmt(HpShown,3)}</text>`;
     if (groutOn) {
@@ -147,7 +149,7 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
   // Exclusion zone for the ground hatch/label: the footing width, widened to also clear the Gp/Dp (left) and Hp (right) dimension brackets and their text when there's a pedestal — using the pedestal's own (possibly OffX-shifted) center, not the footing's.
   const pedCxForZone = ecx + (hasPed ? OffX * eScale : 0);
   const hatchZoneL = Math.min(dfX - 16, hasPed ? Math.min(footEx, pedCxForZone - (Bp*eScale)/2 - 55) : footEx - 6);
-  const hatchZoneR = hasPed ? Math.max(footEx+footEw, pedCxForZone + (Bp*eScale)/2 + 85) : footEx + footEw + 80; // clears the "Hf=" text (at grade when the footing projects)
+  const hatchZoneR = hasPed ? Math.max(footEx+footEw+80, pedCxForZone + (Bp*eScale)/2 + 85) : footEx + footEw + 80; // clears the "Hf=" text (at grade when the footing projects)
   let groundHatch = '';
   for (let hx = eX0 + 6; hx < eX0 + eW - 2; hx += 9) {
     if (hx > hatchZoneL && hx < hatchZoneR) continue;
@@ -159,7 +161,7 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
   // total height / wide footing can itself reach almost to the panel's right edge, so a naive "fall back to
   // the right" collides with it instead. Check both sides' real clearance and pick whichever is less crowded.
   // The label now sits ABOVE the ground line, so only the above-ground texts matter: Gp (left) and Hp (right).
-  const leftBracketEdge = hasPed ? pedBracketXg - 64 : (isBlock && Gp > 0 ? footEx - 76 : footEx);
+  const leftBracketEdge = hasPed ? (Dp < 0 ? dfX : pedBracketXg) - 64 : (isBlock && Gp > 0 ? footEx - 76 : footEx);
   const rightBracketEdge = hasPed ? pedBracketXg + 24 + Bp * eScale + 66 : footEx + footEw;
   const leftClearance = leftBracketEdge - (eX0 + 4);
   const rightClearance = (eX0 + eW) - rightBracketEdge;

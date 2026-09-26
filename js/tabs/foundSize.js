@@ -1,12 +1,12 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926n';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926n';
-import { fmt } from '../core/format.js?v=20260926n';
-import { lastResults, pileList, state } from '../core/state.js?v=20260926n';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926n';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926n';
-import { recalcAll } from '../workflow/recalc.js?v=20260926n';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260926o';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260926o';
+import { fmt } from '../core/format.js?v=20260926o';
+import { lastResults, pileList, state } from '../core/state.js?v=20260926o';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260926o';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260926o';
+import { recalcAll } from '../workflow/recalc.js?v=20260926o';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -82,8 +82,8 @@ export function calcFoundSize() {
     groutT: hasGrout ? groutT / 1000 : 0 }); // grout input in mm -> m
   if (!sizing.valid) {
     state.pedHp = 0; state.pedW = 0;
-    lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df }).issues };
-    document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero and D<sub>f</sub> ≥ 0 (bottom not above ground). With a pedestal, D<sub>f</sub> ≥ H<sub>f</sub> as well (the footing must fit within the embedment depth); without a pedestal the footing / pile cap may project above ground.</div>`;
+    lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df, hasPed, Bp, Lp, Gp: pedGp }).issues };
+    document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero and D<sub>f</sub> ≥ 0 (bottom not above ground). The footing / pile cap may project above ground; with a pedestal, its top G<sub>p</sub> must not be below the footing top (G<sub>p</sub> ≥ H<sub>f</sub> − D<sub>f</sub>).</div>`;
     return;
   }
   const { Hf, Af, Wf, Gp, Dp, Hp, Ap, Wp, Wg, Ws, hs, totalWeightTon, totalWeightKN, deltaH } = sizing;
@@ -99,7 +99,8 @@ export function calcFoundSize() {
   let html = '';
   html += chapterHeader('02. Foundation Dimension', 'This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.');
   // Geometry consistency (lib) — shown here, and the result drives the status of step 02 in the Design Status panel.
-  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile });
+  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, Gp: pedGp, OffX, OffZ, isPile, hEmbed: hpile });
+  const proj = Math.max(Hf - Df, 0); // footing / pile cap concrete above ground (both types)
   lastResults.foundsize = { issues: geom.issues };
   if (!geom.overallPass) {
     html += `<div class="warn-box"><strong>⚠  Foundation geometry is not consistent:</strong><ul style="margin:4px 0 0 18px;padding:0;">${geom.issues.map(i => `<li>${escapeHtml(i.text)}</li>`).join('')}</ul>Correct the dimensions in the input panel — the checks that use this geometry are not reliable until then.</div>`;
@@ -120,7 +121,7 @@ export function calcFoundSize() {
     <tr><td>Depth of ${fWord}, D<sub>f</sub></td><td class="clause">input</td><td class="num">${fmt(Df,2)} m</td></tr>
     ${isBlock && hasGroutT ? `<tr><td>Grout thickness above ${fWord}, t<sub>G</sub></td><td class="clause">input</td><td class="num">${fmt(sizing.groutT,3)} m</td></tr>
     <tr><td>Total height of ${fWord}, H<sub>f,tot</sub></td><td class="clause">H<sub>f</sub> + t<sub>G</sub></td><td class="num">${fmt(HfTot,3)} m</td></tr>` : ''}
-    ${isBlock && Gp > 0 ? `<tr><td>Projection of ${fWord} above ground, G<sub>p</sub></td><td class="clause">H<sub>f</sub> - D<sub>f</sub></td><td class="num">${fmt(Gp,3)} m</td></tr>` : ''}
+    ${proj > 0 ? `<tr><td>Projection of ${fWord} above ground${isBlock ? ', G<sub>p</sub>' : ''}</td><td class="clause">H<sub>f</sub> - D<sub>f</sub></td><td class="num">${fmt(proj,3)} m</td></tr>` : ''}
     <tr><td>Area of ${fWord}, A<sub>f</sub></td><td class="clause">B<sub>f</sub>·L<sub>f</sub></td><td class="num">${fmt(Af,2)} m²</td></tr>
   </table></div>`;
   if (hasPed) {
@@ -133,7 +134,7 @@ export function calcFoundSize() {
       <tr><td>Height of pedestal above ground, G<sub>p</sub></td><td class="clause">input</td><td class="num">${fmt(Gp,3)} m</td></tr>
       <tr><td>Pedestal offset X from ${fWord} center, Off<sub>X</sub></td><td class="clause">input</td><td class="num">${fmt(OffX,2)} m</td></tr>
       <tr><td>Pedestal offset Z from ${fWord} center, Off<sub>Z</sub></td><td class="clause">input</td><td class="num">${fmt(OffZ,2)} m</td></tr>
-      <tr><td>Depth of pedestal below ground, D<sub>p</sub></td><td class="clause">D<sub>f</sub> - H<sub>f</sub></td><td class="num">${fmt(Dp,3)} m</td></tr>
+      <tr><td>Depth of pedestal below ground, D<sub>p</sub>${Dp < 0 ? ' (negative: the pedestal starts on the ' + fWord + ' top, above ground)' : ''}</td><td class="clause">D<sub>f</sub> - H<sub>f</sub></td><td class="num">${fmt(Dp,3)} m</td></tr>
       ${hasGroutT ? `<tr><td>Grout thickness above pedestal, t<sub>G</sub></td><td class="clause">input</td><td class="num">${fmt(sizing.groutT,3)} m</td></tr>` : ''}
       <tr><td>Total height of pedestal, H<sub>p</sub></td><td class="clause">G<sub>p</sub> + D<sub>p</sub>${hasGroutT ? ' + t<sub>G</sub>' : ''}</td><td class="num">${fmt(Hp,3)} m</td></tr>
       <tr><td>Area of pedestal, A<sub>p</sub></td><td class="clause">B<sub>p</sub>·L<sub>p</sub></td><td class="num">${fmt(Ap,2)} m²</td></tr>
@@ -169,7 +170,7 @@ export function calcFoundSize() {
         exprSub: `(${fmt(Gp,3)}+${fmt(Dp,3)})*${fmt(Ap,4)}*${fmt(gcKN,3)}`,
         val: Wp * 9.80665, dec: 2
       });
-      dlItems.push({
+      if (Dp >= 0) dlItems.push({ // no backfill when the footing top is above ground
         desc: 'Weight of soil above footing,', sym: 'W<sub>soil</sub>',
         exprSym: '(A<sub>f</sub> - A<sub>p</sub>)·D<sub>p</sub>·γ<sub>S</sub>',
         exprSub: `(${fmt(Af,2)}-${fmt(Ap,4)})*${fmt(Dp,2)}*${fmt(gsKN,2)}`,
