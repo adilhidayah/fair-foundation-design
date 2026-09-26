@@ -894,10 +894,6 @@
     background: var(--accent-soft);
     font-weight: 600;
   }
-  table.calc-table tr.governing td:first-child::before {
-    content: "– ";
-    color: var(--accent);
-  }
   .clause {
     font-family: var(--mono);
     font-size: 10.5px;
