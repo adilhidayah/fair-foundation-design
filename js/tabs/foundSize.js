@@ -1,12 +1,13 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260927f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { lastResults, pileList, state } from '../core/state.js?v=20260927f';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260927f';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260927f';
-import { recalcAll } from '../workflow/recalc.js?v=20260927f';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20260930v';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { lastResults, pileList, state } from '../core/state.js?v=20260930v';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20260930v';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20260930v';
+import { recalcAll } from '../workflow/recalc.js?v=20260930v';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20260930v';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -92,6 +93,7 @@ export function calcFoundSize() {
     state.pedHp = 0; state.pedW = 0;
     lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df }).issues };
     document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero and D<sub>f</sub> ≥ 0 (bottom not above ground). With a pedestal, D<sub>f</sub> ≥ H<sub>f</sub> as well (the footing must fit within the embedment depth); without a pedestal the footing / pile cap may project above ground.</div>`;
+    document.getElementById('focus-foundsize').innerHTML = foundSizeFocusInvalidHTML();
     return;
   }
   const { Hf, Af, Wf, Gp, Dp, Hp, Ap, Wp, Wg, Ws, hs, totalWeightTon, totalWeightKN, deltaH } = sizing;
@@ -117,7 +119,8 @@ export function calcFoundSize() {
     html += `<div class="warn-box"><strong>⚠  Pile Foundation selected but no piles defined:</strong> add piles in "4B — PILE FOUNDATION STABILITY", or switch Foundation Type to "Shallow Foundation" in "01 — GENERAL INPUT DATA".</div>`;
   }
   html += sectionHeader('2.1', 'Foundation Layout', `Plan (x, z) and elevation (x, y); origin at the ${isPile ? 'pile cap' : 'footing'} centre.${isPile && piles.length ? ' Piles are shown dashed (below the cap), numbered as in 4B.' : ''}`, true);
-  html += foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0);
+  const diagramSvg = foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0);
+  html += diagramSvg;
   const fWord = isPile ? 'pile cap' : 'footing';
   html += sectionHeader('2.2', isPile ? 'Pile Cap' : 'Footing');
   html += `<div class="overflow-x"><table class="calc-table" style="table-layout:fixed;">
@@ -207,6 +210,15 @@ export function calcFoundSize() {
         ${dlRows}
       </table></div>`;
     }
+    // Focus Canvas view of the same results (js/tabs/foundSizeFocus.js) — shown instead of the report sheet in that mode.
+    document.getElementById('focus-foundsize').innerHTML = foundSizeFocusHTML({
+      typeLabel: hasPed ? (isPile ? 'Pile Cap + Pedestal' : 'Footing + Pedestal') : (isPile ? 'Pile Cap Only' : 'Footing Only'),
+      supportLabel: isPile ? 'Pile foundation' : 'Shallow foundation',
+      isPile, hasPed, isBlock, Bf, Lf, Hf, Df, Af, Bp, Lp, Gp, Dp, Hp, Ap, OffX, OffZ, groutT: hasGroutT ? sizing.groutT : 0, HfTot,
+      nPiles: piles.length, piles, D: isPile ? num('pf-dia') / 1000 : 0, hEmbed: hpile,
+      weights: dlItems.map((it) => ({ label: it.desc.replace(/,$/, ''), sym: it.sym, kN: it.val })),
+      totalKN: totalWeightKN, deltaH, geom, svg: diagramSvg
+    });
   }
   document.getElementById('calc-foundsize').innerHTML = numberTables(html, '2');
   document.getElementById('lc-dW').value = totalWeightKN.toFixed(1);

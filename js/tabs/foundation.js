@@ -1,12 +1,14 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260927f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { comboState, lastResults, state } from '../core/state.js?v=20260927f';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260927f';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20260927f';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927f';
+import { LOAD_KINDS, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260930v';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { comboState, lastResults, state } from '../core/state.js?v=20260930v';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260930v';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20260930v';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260930v';
+import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20260930v';
+import { allowableBearing } from '../tabs/bearing.js?v=20260930v';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -35,29 +37,36 @@ export function calcFoundation() {
   const t = num('fs-Hf');
   const Bp = hasPed ? num('fs-Bp') : 0, Lp = hasPed ? num('fs-Lp') : 0;
   const hp = hasPed ? (num('fs-Gp') + (num('fs-Df') - t)) : 0;
-  // Allowable bearing capacity is computed fresh from "08 — BEARING CAPACITY (SOIL)" inputs (same call
-  // calcBearing() makes) rather than read from a duplicate manual field or a stale one-time "Send q_a" copy —
-  // always current, and correct even before that tab has been opened this session.
-  const bcShape = getRadioVal('bc-shape');
-  const bcB = num('bc-B'), bcL = (bcShape === 'square' || bcShape === 'circular') ? bcB : num('bc-L');
-  const qa = bcB > 0 ? bearingCapacityCheck({
-    c: num('bc-c'), phiDeg: num('bc-phi'), gamma: num('gen-gs'), shape: bcShape, B: bcB, L: bcL, Df: num('bc-Df'),
-    method: getRadioVal('bc-method'), FS: num('bc-FS'), failure: getRadioVal('bc-failure'), beta: num('bc-beta')
-  }).qa : 0;
+  // Allowable bearing capacity is taken fresh from "08 — BEARING CAPACITY (SOIL)" (allowableBearing(): the same
+  // bearingCapacityCheck() call calcBearing() makes, or the geotechnical-report value when bearing is out of scope in
+  // Section 00) rather than a duplicate manual field or a stale one-time "Send q_a" copy — always current.
+  const qaSrc = allowableBearing();
+  const qa = qaSrc.qa ?? 0;
+  const qaRef = qaSrc.given ? 'given, geotechnical report' : 'Section 08';
   const mu = num('fd-mu');
   const eccRatioAllow = parseFloat(getRadioVal('fd-ecc'));
   const fsDistinguish = document.getElementById('fd-fsDistinguish').checked;
   const fsSlidePerm = num('fd-fsSlide-perm'), fsSlideTemp = fsDistinguish ? num('fd-fsSlide-temp') : fsSlidePerm;
   const fsOTPerm = num('fd-fsOT-perm'), fsOTTemp = fsDistinguish ? num('fd-fsOT-temp') : fsOTPerm;
   lastResults.foundation = { label: 'Foundation Stability', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
+  const focusAlert = (msg) => { document.getElementById('focus-foundation').innerHTML = stabilityAlertHTML('4A · Foundation Stability', 'Not computed', msg); };
   if (B <= 0 || L <= 0) {
     document.getElementById('calc-foundation').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub> and L<sub>f</sub> (footing width/length, set in "02 — FOUNDATION DIMENSION") must be greater than zero.</div>`;
     lastResults.foundation.detail = 'Invalid input (B, L must be > 0).';
+    focusAlert('B<sub>f</sub> and L<sub>f</sub> (set in "02 — FOUNDATION DIMENSION") must be greater than zero.');
     return;
   }
   if (comboState.lc.length === 0) {
     document.getElementById('calc-foundation').innerHTML = `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
     lastResults.foundation.detail = 'No load combinations defined.';
+    focusAlert('No load combinations — add at least one in "03 — LOADING DATA".');
+    return;
+  }
+  // A given q_a that was never entered is NOT SET — pending, not a bearing failure.
+  if (qaSrc.given && qaSrc.qa === null) {
+    document.getElementById('calc-foundation').innerHTML = `<div class="warn-box"><strong>⚠  q<sub>a</sub> NOT SET:</strong> soil bearing capacity is out of scope (Section 00 → Scope of Work) — enter the allowable bearing capacity from the geotechnical report in "08 — BEARING CAPACITY (SOIL)".</div>`;
+    lastResults.foundation.detail = 'Given q_a not set (Tab 08).';
+    focusAlert('q<sub>a</sub> NOT SET — enter the allowable bearing capacity from the geotechnical report in "08 — BEARING CAPACITY (SOIL)".');
     return;
   }
   // P/H/M per combination come from the same biaxial Fx/Fz/Mx/Mz vectors as the "Load at bottom of footing"
@@ -108,13 +117,15 @@ export function calcFoundation() {
   // Row for a combination that could not be evaluated: the reason spans the data columns, status NG.
   const invalidRow = (r, nData) => `<tr><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td colspan="${nData}" class="clause">${escapeHtml(r.note || 'Not evaluated.')}</td><td>NG</td></tr>`;
   let html = chapterHeader('04. Foundation Stability',
-    `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: eccentricity (kern), bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (Section 08), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh.`);
+    `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: eccentricity (kern), bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (${qaRef}), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh.`);
   html += untypedLoadTypesWarning();
   html += sectionHeader('4.1', 'Governing Load Combination', shown
     ? `Combination with the highest utilization${invalidResults.length ? ' among those that could be evaluated' : ''}: ${escapeHtml(comboLabel(shown.combo))}, governed by ${shown.governingCheck.name.toLowerCase()}.${invalidResults.length ? ` ${invalidResults.length} combination(s) could not be evaluated (${invalidResults.map(r => escapeHtml(r.combo.lc || r.combo.name)).join(', ')}) and fail the check — see the tables below and the Design Status panel.` : ''}`
     : 'No combination could be evaluated — see the tables below and the Design Status panel.', true);
+  let shownSvg = '';
   if (shown) {
-    html += foundationDiagramSVG(B, L, Bp, Lp, t, hp, shown.Habs, shown.Mabs, shown.e, shown.qmax, shown.qmin);
+    shownSvg = foundationDiagramSVG(B, L, Bp, Lp, t, hp, shown.Habs, shown.Mabs, shown.e, shown.qmax, shown.qmin);
+    html += shownSvg;
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>${escapeHtml(comboLabel(shown.combo))} — eccentricity and bearing pressure</caption>
       <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
@@ -125,7 +136,7 @@ export function calcFoundation() {
       <tr class="${shown.effWidthUsed ? 'governing' : ''}"><td>Bearing method</td><td class="clause">${shown.bearingNote}</td><td class="num">—</td></tr>
       <tr><td>q<sub>max</sub></td><td class="clause">—</td><td class="num">${fmt(shown.qmax,1)} kPa</td></tr>
       <tr><td>q<sub>min</sub></td><td class="clause">—</td><td class="num">${fmt(shown.qmin,1)} kPa</td></tr>
-      <tr><td>q<sub>a</sub> (allowable)</td><td class="clause">Section 08</td><td class="num">${fmt(qa,1)} kPa</td></tr>
+      <tr><td>q<sub>a</sub> (allowable)</td><td class="clause">${qaRef}</td><td class="num">${fmt(qa,1)} kPa</td></tr>
     </table></div>`;
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>${escapeHtml(comboLabel(shown.combo))} — utilization per check</caption>
@@ -162,7 +173,7 @@ export function calcFoundation() {
     }).join('')}
   </table></div>`;
   html += sectionHeader('4.3', 'Bearing Pressure Check',
-    `Maximum soil pressure under the footing against the allowable bearing capacity: UC = q<sub>max</sub> / q<sub>a</sub>, q<sub>a</sub> = ${fmt(qa,1)} kPa (Section 08). With partial uplift the effective contact width is used.`);
+    `Maximum soil pressure under the footing against the allowable bearing capacity: UC = q<sub>max</sub> / q<sub>a</sub>, q<sub>a</sub> = ${fmt(qa,1)} kPa (${qaRef}). With partial uplift the effective contact width is used.`);
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Bearing pressure check per load combination</caption>
     <tr><th class="lc-no">No.</th><th>Combination</th><th>P (kN)</th><th>e (m)</th><th>q<sub>max</sub> (kPa)</th><th>q<sub>min</sub> (kPa)</th><th>UC</th><th>Status</th></tr>
@@ -197,4 +208,26 @@ export function calcFoundation() {
     <strong>Limitation:</strong> The kern and overturning checks are biaxial (M<sub>x</sub> and M<sub>z</sub> separately); the bearing pressure and sliding checks use the resultant H = √(F<sub>x</sub>² + F<sub>z</sub>²) and M = √(M<sub>x</sub>² + M<sub>z</sub>²) as a uniaxial case. No passive soil resistance, no buoyancy / uplift from groundwater, and no seismic pseudo-static (k<sub>h</sub>/k<sub>v</sub>) reduction. P, H and M include the top → bottom transfer (ΔW, Δh) of Section 03. The Permanent / Temporary case of each combination is detected from its load types (wind / seismic kinds, or "wind" / "seismic" in the label) — verify it against the project design basis for custom load types.
   </div>`;
   document.getElementById('calc-foundation').innerHTML = numberTables(html, '4');
+  // Focus Canvas view of the same results (js/tabs/stabilityFocus.js) — shown instead of the report sheet in that mode.
+  const lcOf = (r) => (r ? (r.combo.lc || r.combo.name) : null);
+  const sfTxt = (v) => (Number.isFinite(v) ? fmt(v, 2) : '∞');
+  document.getElementById('focus-foundation').innerHTML = foundationFocusHTML({
+    B, L, status: lastResults.foundation.status, nCombos: results.length, qaText: `${fmt(qa, 1)} kPa`,
+    checks: [
+      { name: 'Eccentricity (kern)', uc: kernGov ? kernGov.ucKernBiaxial : null, lc: lcOf(kernGov),
+        sub: kernGov ? `<span class="fz-nb">e<sub>x</sub> = ${fmt(kernGov.ex, 3)} m</span> · <span class="fz-nb">e<sub>z</sub> = ${fmt(kernGov.ez, 3)} m</span>` : '' },
+      { name: 'Bearing pressure', uc: bearingGov ? ucOf(bearingGov, 'Bearing pressure') : null, lc: lcOf(bearingGov),
+        sub: bearingGov ? `<span class="fz-nb">q<sub>max</sub> = ${fmt(bearingGov.qmax, 1)}</span> / <span class="fz-nb">q<sub>a</sub> = ${fmt(qa, 1)} kPa</span>` : '' },
+      { name: 'Sliding', uc: slidingGov ? ucOf(slidingGov, 'Sliding') : null, lc: lcOf(slidingGov),
+        sub: slidingGov ? `<span class="fz-nb">SF = ${sfTxt(slidingGov.fsSliding)}</span> vs <span class="fz-nb">min ${fmt(slidingGov.fsSlideMin, 2)}</span>` : '' },
+      { name: 'Overturning', uc: otGov ? otGov.ucOTBiaxial : null, lc: lcOf(otGov),
+        sub: otGov ? `<span class="fz-nb">SF = ${sfTxt(Math.min(otGov.SF1, otGov.SF2))}</span> vs <span class="fz-nb">min ${fmt(otGov.fsOTMin, 2)}</span>` : '' }
+    ],
+    rows: results.map((r) => (r.valid
+      ? { lc: lcOf(r), name: r.combo.name, temporary: r.temporary, kern: r.ucKernBiaxial, bearing: ucOf(r, 'Bearing pressure'), sliding: ucOf(r, 'Sliding'),
+          ot: r.ucOTBiaxial, govKern: r === kernGov, govBearing: r === bearingGov, govSliding: r === slidingGov, govOt: r === otGov }
+      : { lc: lcOf(r), name: r.combo.name, invalid: r.note || 'Not evaluated.' })),
+    // Own marker ids: the report copy of this diagram is hidden in this mode (a marker in a hidden SVG does not render elsewhere).
+    svg: shownSvg.replaceAll('fdn-arrow', 'fz4a-arrow'), shownLc: lcOf(shown)
+  });
 }

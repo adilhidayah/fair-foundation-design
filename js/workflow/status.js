@@ -1,18 +1,21 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { comboState, lastResults, state } from '../core/state.js?v=20260927f';
-import { calcAnchor } from '../tabs/anchor.js?v=20260927f';
-import { calcBearing } from '../tabs/bearing.js?v=20260927f';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260927f';
-import { calcFoundation } from '../tabs/foundation.js?v=20260927f';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260927f';
-import { renderGeneralSummary } from '../tabs/general.js?v=20260927f';
-import { calcPile } from '../tabs/pile.js?v=20260927f';
-import { calcRebar } from '../tabs/rebar.js?v=20260927f';
-import { calcSettlement } from '../tabs/settlement.js?v=20260927f';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260927f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { comboState, lastResults, state } from '../core/state.js?v=20260930v';
+import { calcAnchor } from '../tabs/anchor.js?v=20260930v';
+import { calcBearing } from '../tabs/bearing.js?v=20260930v';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260930v';
+import { calcFoundation } from '../tabs/foundation.js?v=20260930v';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260930v';
+import { renderGeneralSummary } from '../tabs/general.js?v=20260930v';
+import { calcPile } from '../tabs/pile.js?v=20260930v';
+import { calcRebar } from '../tabs/rebar.js?v=20260930v';
+import { calcSettlement } from '../tabs/settlement.js?v=20260930v';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260930v';
+import { renderGoverningBadges } from '../ui/viewMode.js?v=20260930v';
+import { allowableBearing } from '../tabs/bearing.js?v=20260930v';
+import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20260930v';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -56,6 +59,7 @@ export function getWorkflowStepStatus(stepId) {
   }
   if (stepId === '4A') {
     if (support === 'pile') return { status: 'INFO', metric: 'N/A', note: 'Mode Pile aktif (cek tahap 4B)' };
+    if (!inScope('stability')) return { status: 'NA', metric: SCOPE_NA_LABEL.stability, note: 'Not in scope (Section 00 → Scope of Work)' };
     if (!hasCombos) return { status: 'FAIL', metric: '—', note: 'Butuh kombinasi beban di Tab 03' };
     const r = lastResults.foundation;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 4A)' };
@@ -63,38 +67,49 @@ export function getWorkflowStepStatus(stepId) {
   }
   if (stepId === '4B') {
     if (support !== 'pile') return { status: 'INFO', metric: 'N/A', note: 'Mode Shallow aktif (cek tahap 4A)' };
+    if (!inScope('stability')) return { status: 'NA', metric: SCOPE_NA_LABEL.stability, note: 'Not in scope (Section 00 → Scope of Work)' };
     if (!hasCombos) return { status: 'FAIL', metric: '—', note: 'Butuh kombinasi beban di Tab 03' };
     const r = lastResults.pile;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 4B)' };
     return { status: r.status === 'PASS' ? 'PASS' : (r.status === 'FAIL' ? 'FAIL' : '—'), metric: r.metric || '—', note: r.detail || 'Pile stability' };
   }
   if (stepId === '5A') {
+    if (!inScope('structural')) return { status: 'NA', metric: SCOPE_NA_LABEL.structural, note: 'Not in scope (Section 00 → Scope of Work)' };
     const r = lastResults.oneway;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 5B)' };
     return { status: r.status === 'PASS' ? 'PASS' : 'FAIL', metric: r.metric || '—', note: r.detail || 'One-Way Shear' };
   }
   if (stepId === '5B') {
+    if (!inScope('structural')) return { status: 'NA', metric: SCOPE_NA_LABEL.structural, note: 'Not in scope (Section 00 → Scope of Work)' };
     const r = lastResults.twoway;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 5B)' };
     return { status: r.status === 'PASS' ? 'PASS' : 'FAIL', metric: r.metric || '—', note: r.detail || 'Punching Shear' };
   }
   if (stepId === '08') {
+    // Out of scope (Section 00): q_a given by the geotechnical report — shown as GIVEN, not a check.
+    if (!inScope('bearing')) {
+      const { qa } = allowableBearing();
+      return { status: 'NA', metric: SCOPE_NA_LABEL.bearing, note: qa !== null ? 'q_a = ' + fmt(qa, 1) + ' kPa (geotechnical report)' : 'q_a NOT SET — enter it in Tab 08' };
+    }
     const r = lastResults.bearing;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 08)' };
     return { status: (r.status === 'INFO' || r.status === 'PASS') ? 'PASS' : 'FAIL', metric: r.metric || '—', note: r.detail || 'Daya dukung tanah' };
   }
   if (stepId === '08B') {
+    if (!inScope('settlement')) return { status: 'NA', metric: SCOPE_NA_LABEL.settlement, note: 'Not in scope (Section 00 → Scope of Work)' };
     const r = lastResults.settlement;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 08B)' };
     return { status: r.status === 'PASS' ? 'PASS' : 'FAIL', metric: r.metric || '—', note: r.detail || 'Penurunan tanah' };
   }
   if (stepId === '09') {
+    if (!inScope('anchor')) return { status: 'NA', metric: SCOPE_NA_LABEL.anchor, note: 'By mechanical vendor — not checked in this calculation' };
     if (!hasCombos) return { status: 'FAIL', metric: '—', note: 'Butuh kombinasi beban di Tab 03' };
     const r = lastResults.anchor;
     if (!r) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 09)' };
     return { status: r.status === 'PASS' ? 'PASS' : (r.status === 'FAIL' ? 'FAIL' : '—'), metric: r.metric || '—', note: r.detail || 'Anchor bolt design' };
   }
   if (stepId === '10') {
+    if (!inScope('structural')) return { status: 'NA', metric: SCOPE_NA_LABEL.structural, note: 'Not in scope (Section 00 → Scope of Work)' };
     if (!hasCombos) return { status: 'FAIL', metric: '—', note: 'Butuh kombinasi beban di Tab 03' };
     const p = lastResults.pedestalRebar, c = lastResults.pileCapRebar;
     if (!p && !c) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 5A/5B)' };
@@ -147,6 +162,36 @@ export function renderWorkflowLive() {
 // only ever say what that already-verified engine says — never a separate guess at the same numbers.
 // Limited to the actual structural checks (4A-10); "00-03"/"11" are data-entry/summary gates, not
 // checks, so they're left out of this specific card.
+// The structural checks shown in the Design Status panel (4A-10); 00-03 / 11 are data-entry/summary gates.
+const LIVE_CHECKS = [
+  ['4A', 'Foundation Stability'], ['4B', 'Pile Stability'],
+  ['5A', 'One-Way Shear'], ['5B', 'Punching Shear'],
+  ['08', 'Bearing Capacity'], ['08B', 'Settlement'],
+  ['09', 'Anchor Bolt'], ['10', 'Pedestal & Rebar']
+];
+// DCR = the "UC = x.xxx" (or "...UC=x.xxx") already sitting in that check's own metric/note text —
+// extracted, never recomputed, so this can only ever repeat what the check itself already reported.
+// null wherever no such value is exposed (e.g. bearing capacity is a reference q_a, not a UC).
+function ucTextOf(st) {
+  const m = /UC\s*=\s*([\d.]+)/i.exec(st.metric) || /UC\s*=\s*([\d.]+)/i.exec(st.note);
+  return m ? m[1] : null;
+}
+// Overall status for the Focus Canvas badge: FAIL if any active check fails, PASS once every active check
+// passes, INCOMPLETE while some are not computed, PENDING before any is. governing = the highest reported UC.
+// Out-of-scope checks (status 'NA', Section 00 → Scope of Work) are left out entirely.
+export function getGoverningStatus() {
+  const checks = LIVE_CHECKS.map(([id, label]) => ({ id, label, st: getWorkflowStepStatus(id) })).filter((c) => c.st.status !== 'INFO' && c.st.status !== 'NA');
+  let fails = 0, done = 0, governing = null;
+  checks.forEach((c) => {
+    if (c.st.status === 'FAIL') fails++;
+    if (c.st.status === 'PASS' || c.st.status === 'FAIL') done++;
+    const ucText = ucTextOf(c.st);
+    const uc = ucText === null ? NaN : parseFloat(ucText);
+    if (Number.isFinite(uc) && (!governing || uc > governing.uc)) governing = { id: c.id, label: c.label, uc, ucText };
+  });
+  const status = fails ? 'FAIL' : (done === 0 ? 'PENDING' : (done < checks.length ? 'INCOMPLETE' : 'PASS'));
+  return { status, fails, done, total: checks.length, governing };
+}
 export function renderLiveBar() {
   const bar = document.getElementById('live-status-bar');
   if (!bar) return;
@@ -155,12 +200,7 @@ export function renderLiveBar() {
   // a top-level const isn't accessible until its own declaration line actually runs (TDZ).
   const LIVE_BAR_ICON_CHECK = '<path d="M4 12l5 5L20 6"/>';
   const LIVE_BAR_ICON_X = '<path d="M6 6l12 12M18 6L6 18"/>';
-  const checks = [
-    ['4A', 'Foundation Stability'], ['4B', 'Pile Stability'],
-    ['5A', 'One-Way Shear'], ['5B', 'Punching Shear'],
-    ['08', 'Bearing Capacity'], ['08B', 'Settlement'],
-    ['09', 'Anchor Bolt'], ['10', 'Pedestal & Rebar']
-  ].map(([id, label]) => [label, getWorkflowStepStatus(id), id]).filter(([, st]) => st.status !== 'INFO');
+  const checks = LIVE_CHECKS.map(([id, label]) => [label, getWorkflowStepStatus(id), id]).filter(([, st]) => st.status !== 'INFO');
   // ---- Onboarding state: on the input tabs (01 General, 02 Foundation Dimension) during first-time entry, show readiness instead of
   // PASS/FAIL cards (every field has a default, so those cards would otherwise report results the user
   // never entered). A section counts as ready once its tab has been visited (defaults reviewed) and, where
@@ -173,7 +213,8 @@ export function renderLiveBar() {
     // 02 is an input step (not in `checks`) but can raise warnings of its own (foundationGeometryCheck().warnings).
     (lastResults.foundsize && lastResults.foundsize.notices ? lastResults.foundsize.notices : [])
       .forEach((n) => list.push({ from: 'Foundation Dimension', ...n }));
-    checks.forEach(([label, , id]) => {
+    checks.forEach(([label, st, id]) => {
+      if (st.status === 'NA') return; // out of scope — its warnings do not apply
       // 4B -> the pile check; 10 "Pedestal & Rebar" -> the 5A pedestal reinforcement and the 5B pile cap reinforcement
       const SRC = { '4A': [lastResults.foundation], '4B': [lastResults.pile], '5A': [lastResults.oneway], '5B': [lastResults.twoway], '09': [lastResults.anchor],
         '10': [lastResults.pedestalRebar, lastResults.pileCapRebar] };
@@ -188,6 +229,15 @@ export function renderLiveBar() {
   const visited = (window.__liveBarVisited = window.__liveBarVisited || new Set());
   const activeTab = document.querySelector('.sidebar-menu .tab.active')?.dataset.tab;
   if (activeTab) visited.add(activeTab);
+  // "00 — Equipment Setup": the right panel shows only the Scope of Work (static markup, #scope-panel).
+  const scopeEl = document.getElementById('scope-panel');
+  if (scopeEl) scopeEl.hidden = activeTab !== 'setup';
+  if (activeTab === 'setup') {
+    renderScopePanel();
+    renderGoverningBadges(false);
+    bar.innerHTML = '';
+    return;
+  }
   const tabShown = (t) => { const el = document.querySelector('.sidebar-menu .tab[data-tab="' + t + '"]'); return !!el && el.style.display !== 'none'; };
   const sections = [
     { key: 'general', label: 'General Input Data', tab: 'general', ok: () => getWorkflowStepStatus('01').status === 'PASS' },
@@ -199,6 +249,7 @@ export function renderLiveBar() {
   const nReady = sections.filter((s) => s.ready).length;
   const ONBOARD_TABS = ['general', 'foundsize', 'loadingdata', 'foundation', 'pile', 'pedcheck', 'capcheck']; // tabs that show the readiness panel during first-time entry
   if (ONBOARD_TABS.includes(activeTab) && nReady < sections.length) {
+    renderGoverningBadges(true);
     const secReady = (key) => { const s = sections.find((x) => x.key === key); return !s || s.ready; };
     const DEP = { '4A': ['load', 'loading'], '4B': ['load', 'loading'], '5A': ['dim', 'dimensions'], '5B': ['dim', 'dimensions'],
       '08': ['soil', 'soil data'], '08B': ['soil', 'soil data'], '09': ['load', 'loading'], '10': ['rebar', 'reinforcement'] };
@@ -211,7 +262,9 @@ export function renderLiveBar() {
           '<span class="lb-mark">' + (s.ready ? '✓' : '○') + '</span>' + escapeHtml(s.label) + '</button>').join('') +
         '<div class="lb-ready-count">' + nReady + ' / ' + sections.length + ' sections ready</div></div>' +
       '<div class="lb-sec"><div class="lb-title">Design Checks</div>' +
-        checks.map(([label, , id]) => {
+        checks.map(([label, st, id]) => {
+          if (st.status === 'NA') return '<div class="lb-check na"><span class="lb-check-dash">─</span><div><div class="lb-check-name">' + escapeHtml(label) + '</div>' +
+            '<div class="lb-check-wait na">' + escapeHtml(st.metric) + '</div></div></div>';
           const dep = DEP[id];
           const ok = !dep || secReady(dep[0]);
           return '<div class="lb-check"><span class="lb-check-dash">─</span><div><div class="lb-check-name">' + escapeHtml(label) + '</div>' +
@@ -219,15 +272,15 @@ export function renderLiveBar() {
         }).join('') + '</div>' + noticesHtml();
     return;
   }
+  renderGoverningBadges(false);
   if (!checks.length) { bar.innerHTML = ''; return; }
-  // DCR = the "UC = x.xxx" (or "...UC=x.xxx") already sitting in that check's own metric/note text —
-  // extracted, never recomputed, so this can only ever repeat what the check itself already reported.
-  // Left as "—" wherever no such value is exposed (e.g. bearing capacity is a reference q_a, not a UC).
-  const dcrOf = (st) => {
-    const m = /UC\s*=\s*([\d.]+)/i.exec(st.metric) || /UC\s*=\s*([\d.]+)/i.exec(st.note);
-    return m ? m[1] : null;
-  };
+  const dcrOf = ucTextOf; // "—" in the card when null
   bar.innerHTML = checks.map(([label, st]) => {
+    // Out of scope (Section 00): muted gray card with the scope label, no DCR.
+    if (st.status === 'NA') return '<div class="live-bar-card na">' +
+      '<div class="live-bar-card-top"><span class="live-bar-card-label">' + escapeHtml(label) + '</span></div>' +
+      '<div class="live-bar-card-row"><span class="live-bar-status-pill na">' + escapeHtml(st.metric) + '</span>' +
+      '<span class="live-bar-na-note">' + escapeHtml(st.note) + '</span></div></div>';
     const failed = st.status === 'FAIL';
     const cls = failed ? 'fail' : 'pass'; // pending ('—') reads as an unfilled/gray "PASS" shell until computed
     const txt = st.status === '—' ? 'PENDING' : st.status;

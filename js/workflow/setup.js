@@ -1,8 +1,9 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20260927f';
-import { getRadioVal } from '../core/dom.js?v=20260927f';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20260927f';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20260930v';
+import { getRadioVal } from '../core/dom.js?v=20260930v';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20260930v';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20260930v';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
@@ -94,23 +95,76 @@ export function updateEquipmentSetup() {
   } else {
     // Generic mode leaves foundation choice as is.
   }
-  let cat = 'static';
+  let cat = 'static', mapped = false;
   try {
     const c = getCategoryForEquipment(eqType);
-    if (c) cat = c;
+    if (c) { cat = c; mapped = true; }
   } catch (e) {}
   let checks = ['bearing', 'stability', 'settlement', 'pedestal', 'footing'];
   try {
     const rc = requiredChecksForCategory(cat);
     if (rc && rc.length) checks = rc;
   } catch (e) {}
-  const lbl = { bearing: 'bearing capacity', stability: 'stability (OT/slide)', settlement: 'settlement', pedestal: 'pedestal + anchor', footing: 'footing shear/flexure', vibration: 'vibration (resonance + amplitude)', dynamicForce: 'dynamic force (1x/2x + mass ratio)', twoDirectionStability: 'two-direction stability (L and T)', anchorConcentration: 'anchor concentration' };
-  const lis = checks.map(c => '<li><strong>' + (lbl[c] || c) + '</strong></li>').join('');
-  statusEl.innerHTML = `<div class="verdict">
-    <div class="stamp">${title}</div>
-    <div class="uc"><div class="lbl">${desc}</div></div>
-  </div>
-  <div class="limits-box"><strong>Library category:</strong> ${cat}<br><strong>Recommended foundation:</strong> ${foundRec}<br>${helperNote}</div>
-  <div class="section-label" style="margin-top:14px;">Relevant checks</div>
-  <ul class="eq-checks">${lis}</ul>`;
+  const base = requiredChecksForCategory('static');
+  const lis = checks.map((c) => {
+    const info = CHECK_INFO[c] || { label: c };
+    const code = info.tab ? checkTabCode(info.tab) : '—';
+    const extra = !base.includes(c);
+    const tag = info.pending ? '<span class="ep-tag pending">' + info.pending + '</span>' : (extra ? '<span class="ep-tag">+ ' + cat + '</span>' : '');
+    const attrs = info.tab ? ' data-check-tab="' + info.tab + '" title="Open ' + code + '"' : ' disabled title="' + (info.pending || '') + '"';
+    return '<li><button type="button" class="ep-check' + (extra ? ' extra' : '') + '"' + attrs + '>' +
+      '<span class="ep-code">' + code + '</span><span class="ep-name">' + info.label + '</span>' + tag + '</button></li>';
+  }).join('');
+  const pills = (EQ_CODES[eqType] || EQ_CODES.generic).map((c) => '<span class="ep-pill">' + c + '</span>').join('') +
+    (EQ_CRITERIA[eqType] ? '<span class="ep-pill crit">' + EQ_CRITERIA[eqType] + '</span>' : '');
+  statusEl.innerHTML = `<div class="eq-profile">
+    <div class="ep-head">
+      <div><div class="ep-kicker">Equipment profile</div><div class="ep-title">${title}</div><div class="ep-desc">${desc}</div></div>
+      <span class="ep-cat" title="${mapped ? 'Library category (dispatcher)' : 'Not mapped in the library dispatcher — static assumed'}">${cat}${mapped ? '' : ' (default)'}</span>
+    </div>
+    <div class="ep-body">
+      <div class="ep-diagram">${equipmentDiagramSVG(eqType)}</div>
+      <div class="ep-side">
+        <div class="ep-sub">Applicable codes</div>
+        <div class="ep-pills">${pills}</div>
+        <div class="ep-sub">Required engineering checks</div>
+        <ul class="ep-checks">${lis}</ul>
+      </div>
+    </div>
+    <div class="limits-box"><strong>Recommended foundation:</strong> ${foundRec}<br>${helperNote}</div>
+  </div>`;
+}
+// Shown on the 00 profile card only — display text, no check reads these.
+const EQ_CODES = {
+  generic: ['ACI 318M-19', 'ASCE 7-22'],
+  vertical_vessel: ['PIP STE02900', 'ACI 318M-19'],
+  horizontal_vessel: ['PIP STE02910', 'ACI 318M-19'],
+  tank: ['API 650', 'ACI 318M-19'],
+  piperack: ['PIP STC01015', 'ASCE 7-22'],
+  pump: ['ACI 351.3R', 'API 610'],
+  pistonCompressor: ['ACI 351.3R', 'API 618'],
+  skid: ['PIP STC01015', 'ACI 318M-19']
+};
+// Same minimum as the minMassRatio defaults of rotating/ and reciprocating/ foundationSizing().
+const EQ_CRITERIA = { pump: 'Mass ratio ≥ 3.0', pistonCompressor: 'Mass ratio ≥ 5.0' };
+// requiredChecksForCategory() keys -> label + the tab where the check is done ('stability' = 4A or 4B by Support).
+// pending: no UI for it yet (js/workflow/setup.js helperNote) — shown, not linked.
+const CHECK_INFO = {
+  bearing: { label: 'Bearing capacity', tab: 'bearing' },
+  stability: { label: 'Stability (overturning / sliding)', tab: 'stability' },
+  settlement: { label: 'Settlement', tab: 'settlement' },
+  pedestal: { label: 'Pedestal + anchor', tab: 'pedcheck' },
+  footing: { label: 'Footing / pile cap shear + flexure', tab: 'capcheck' },
+  vibration: { label: 'Vibration (resonance + amplitude)', pending: 'Helper UI pending' },
+  dynamicForce: { label: 'Dynamic force (1x / 2x rpm + mass ratio)', pending: 'Helper UI pending' },
+  twoDirectionStability: { label: 'Two-direction stability (L and T)', tab: 'loadingdata' },
+  anchorConcentration: { label: 'Anchor concentration', tab: 'anchor', pending: 'Bolt-map helper pending' }
+};
+export function resolveCheckTab(tab) {
+  return tab === 'stability' ? (getRadioVal('fs-support') === 'pile' ? 'pile' : 'foundation') : tab;
+}
+function checkTabCode(tab) {
+  if (tab === 'stability') return '4A/4B';
+  const el = document.querySelector('.sidebar-menu .tab[data-tab="' + tab + '"] .tab-code');
+  return el ? el.textContent.trim() : '—';
 }

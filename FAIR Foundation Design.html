@@ -6,8 +6,11 @@
 <title>FAIR Foundation Design — ACI 318M-19 / ASCE 7-22</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20260927f">
+<!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/app.css?v=20260930v">
+<!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
+<script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
 <div class="sheet">
@@ -16,6 +19,7 @@
       <h1>FAIR FOUNDATION DESIGN</h1>
       <p>Automated design for Vessel, Pipe Rack, Storage Tank &amp; General Structures</p>
     </div>
+    <button type="button" class="tb-theme-btn" id="theme-toggle" title="Switch to dark theme" aria-label="Switch to dark theme">☾</button>
     <button type="button" class="tb-ai-btn" id="ai-assistant-toggle" aria-expanded="false" aria-controls="right-panel" title="Open AI Assistant (Ctrl+J)">✦ AI Assistant <kbd>Ctrl+J</kbd></button>
   </div>
   <div class="sidebar-menu">
@@ -33,7 +37,7 @@
       <div class="tab" data-tab="anchor"><span class="tab-code">09</span><span class="tab-label">ANCHOR BOLT DESIGN</span></div>
       <div class="tab" data-tab="summary"><span class="tab-code">11</span><span class="tab-label">SUMMARY REPORT</span></div>
   </div>
-  <div class="layout-wrapper">
+  <div class="layout-wrapper" data-sidebar="expanded">
     <div class="main-content">
       <!-- EQUIPMENT SETUP INPUTS (UX Journey §9.1 — visual cards + dynamic adaptation) -->
       <div id="in-setup" style="display:block;">
@@ -43,16 +47,15 @@
             <div class="field">
               <label id="eq-type-label">Select Equipment Type</label>
               <div class="radio-row eq-stack" id="eq-type" role="radiogroup" aria-labelledby="eq-type-label">
-                <button data-val="generic" class="sel"><span class="eq-name">Generic Structure</span><span class="eq-cat">Static · DL/LL/W/E</span></button>
-                <button data-val="vertical_vessel"><span class="eq-name">Vertical Vessel / Tower</span><span class="eq-cat">Static · tall, OT governs</span></button>
-                <button data-val="horizontal_vessel"><span class="eq-name">Horizontal Vessel / Exchanger</span><span class="eq-cat">Static · saddle distance</span></button>
-                <button data-val="tank"><span class="eq-name">Storage Tank</span><span class="eq-cat">Static · API 650 ringwall</span></button>
-                <button data-val="piperack"><span class="eq-name">Pipe Rack</span><span class="eq-cat">Rack · thermal + 2-dir</span></button>
-                <button data-val="pump"><span class="eq-name">Pump / Compressor (Rotating)</span><span class="eq-cat">Rotating · + vibration</span></button>
-                <button data-val="pistonCompressor"><span class="eq-name">Reciprocating Compressor</span><span class="eq-cat">Reciprocating · block ≥ 5×</span></button>
-                <button data-val="skid"><span class="eq-name">Skid Package Unit</span><span class="eq-cat">Skid · bolt reactions</span></button>
+                <button data-val="generic" class="sel"><span class="eq-name">Generic Structure</span><span class="eq-cat">STATIC · DL/LL + WIND/EQ</span></button>
+                <button data-val="vertical_vessel"><span class="eq-name">Vertical Vessel / Tower</span><span class="eq-cat">STATIC · TALL, OVERTURNING</span></button>
+                <button data-val="horizontal_vessel"><span class="eq-name">Horizontal Vessel / Exchanger</span><span class="eq-cat">STATIC · DUAL SADDLE &amp; EXPANSION</span></button>
+                <button data-val="tank"><span class="eq-name">Storage Tank</span><span class="eq-cat">STATIC · API 650 RINGWALL / SLAB</span></button>
+                <button data-val="piperack"><span class="eq-name">Pipe Rack</span><span class="eq-cat">PIPERACK · THERMAL &amp; 2-DIR MOMENT</span></button>
+                <button data-val="pump"><span class="eq-name">Pump / Compressor (Rotating)</span><span class="eq-cat">ROTATING · MASS RATIO ≥ 3.0 &amp; VIB</span></button>
+                <button data-val="pistonCompressor"><span class="eq-name">Reciprocating Compressor</span><span class="eq-cat">RECIPROCATING · MASS RATIO ≥ 5.0 &amp; DYN</span></button>
+                <button data-val="skid"><span class="eq-name">Skid Package Unit</span><span class="eq-cat">SKIDMOUNTED · MULTI-POINT REACTIONS</span></button>
               </div>
-              <div class="note">Selecting an equipment type shows its base-reaction helper in “03 — LOADING DATA”, sets the recommended foundation, and lists the relevant checks on the right.</div>
             </div>
             <div class="field" id="eq-saddle-field" style="display:none;">
               <label for="eq-saddle">Saddle distance, Ls <span class="unit">m</span></label>
@@ -61,7 +64,6 @@
             </div>
           </div>
           <div class="results">
-             <div class="section-label">Setup Status</div>
              <div id="setup-status" class="calc-panel active">
                 <div class="verdict">
                   <div class="stamp">GENERIC MODE</div>
@@ -233,6 +235,44 @@
       <div id="in-loadcomb" class="combo-section">
     <div class="ld-grid">
     <div class="ld-inputs gen-tree">
+    <!-- AI Data Extractor (was "Auto Fill") — at the top of the panel so an import comes before the manual inputs; ids / handlers unchanged. -->
+    <details class="gt-group gt-extractor">
+    <summary>✨ AI Data Extractor<span class="gt-extractor-hint">Equipment datasheet · load combination table</span></summary>
+    <div class="gt-body">
+    <div class="gt-sub">Equipment Datasheet</div>
+    <div class="gt-ai">
+      <div class="gt-ai-desc">Upload a mechanical datasheet image, or paste its text → fills Equipment Load (E).</div>
+      <div class="gt-ai-compose">
+        <label for="eq-text-paste" class="sr-only">Paste datasheet text</label>
+        <textarea id="eq-text-paste" class="gt-ai-chat" rows="3" placeholder="Equipment empty weight: 0.96 ton&#10;Operating weight: 1.06 ton&#10;Test weight: 1.23 ton"></textarea>
+        <label class="gt-ai-attach" title="Upload datasheet image">
+          <input type="file" id="eq-ocr-file" accept="image/*" class="sr-only">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+          <span>IMG</span>
+        </label>
+      </div>
+      <div class="gt-ai-actions">
+        <button type="button" id="eq-ocr-run" class="gt-ai-send" disabled>Run OCR</button>
+        <button type="button" id="eq-text-parse" class="gt-ai-send">Parse Text</button>
+      </div>
+      <div class="note" id="eq-ocr-status">Upload an image, then click "Run OCR". Requires internet access the first time (downloads the OCR engine, a few MB).</div>
+      <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
+    </div>
+    <div class="gt-sub">Load Combination Table</div>
+    <div class="gt-ai">
+      <div class="gt-ai-desc">Import a load combination table from a photo/screenshot.</div>
+      <label class="gt-ai-upload">
+        <input type="file" id="lc-ocr-file" accept="image/*" class="sr-only">
+        ⇪ Upload Image
+      </label>
+      <div class="gt-ai-actions">
+        <button type="button" id="lc-ocr-run" class="gt-ai-send" disabled>Run OCR</button>
+      </div>
+      <div class="note" id="lc-ocr-status">Upload an image, then click "Run OCR". Requires internet access the first time (downloads the OCR engine, a few MB).</div>
+      <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
+    </div>
+    </div>
+    </details>
     <details class="gt-group" open>
     <summary>Load Input Method</summary>
     <div class="gt-body">
@@ -401,45 +441,10 @@
     <button type="button" id="lc-open-values" class="combo-add-btn" style="background:transparent;">⧉ Edit Load Values</button>
     </div>
     </details>
-    <details class="gt-group" open>
-    <summary>Auto Fill</summary>
-    <div class="gt-body">
-    <div class="gt-sub">Equipment Datasheet</div>
-    <div class="gt-ai">
-      <div class="gt-ai-desc">Upload a mechanical datasheet image, or paste its text → fills Equipment Load (E).</div>
-      <div class="gt-ai-compose">
-        <label for="eq-text-paste" class="sr-only">Paste datasheet text</label>
-        <textarea id="eq-text-paste" class="gt-ai-chat" rows="3" placeholder="Equipment empty weight: 0.96 ton&#10;Operating weight: 1.06 ton&#10;Test weight: 1.23 ton"></textarea>
-        <label class="gt-ai-attach" title="Upload datasheet image">
-          <input type="file" id="eq-ocr-file" accept="image/*" class="sr-only">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-          <span>IMG</span>
-        </label>
-      </div>
-      <div class="gt-ai-actions">
-        <button type="button" id="eq-ocr-run" class="gt-ai-send" disabled>Run OCR</button>
-        <button type="button" id="eq-text-parse" class="gt-ai-send">Parse Text</button>
-      </div>
-      <div class="note" id="eq-ocr-status">Upload an image, then click "Run OCR". Requires internet access the first time (downloads the OCR engine, a few MB).</div>
-      <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
-    </div>
-    <div class="gt-sub">Load Combination Table</div>
-    <div class="gt-ai">
-      <div class="gt-ai-desc">Import a load combination table from a photo/screenshot.</div>
-      <label class="gt-ai-upload">
-        <input type="file" id="lc-ocr-file" accept="image/*" class="sr-only">
-        ⇪ Upload Image
-      </label>
-      <div class="gt-ai-actions">
-        <button type="button" id="lc-ocr-run" class="gt-ai-send" disabled>Run OCR</button>
-      </div>
-      <div class="note" id="lc-ocr-status">Upload an image, then click "Run OCR". Requires internet access the first time (downloads the OCR engine, a few MB).</div>
-      <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
-    </div>
-    </div>
-    </details>
     </div>
     <div class="ld-results">
+    <!-- Focus Canvas view of 03 (js/tabs/loadingFocus.js) — replaces .ld-page only in that mode. -->
+    <div id="focus-loading" class="focus-panel"></div>
     <div class="ld-page">
     <div class="report-header"><h2>03. Loading Data</h2></div>
     <div class="section-label" style="margin-top:0;">3.1 Load Case and Summary</div>
@@ -482,6 +487,28 @@
     <div class="inputs">
       <!-- GENERAL INPUT DATA -->
       <div id="in-general" class="gen-tree" style="display:none;">
+        <!-- AI Data Extractor (was "Auto Fill") — at the top of the panel so an import comes before the manual inputs; ids / handlers unchanged. -->
+        <details class="gt-group gt-extractor">
+        <summary>✨ AI Data Extractor<span class="gt-extractor-hint">Project data from PDF / text — preview, not wired yet</span></summary>
+        <div class="gt-body">
+        <div class="gt-ai">
+          <div class="gt-ai-desc">Upload your calculation documents and let AI extract project parameters.</div>
+          <div class="gt-ai-compose">
+            <label for="gen-ai-chat" class="sr-only">Chat / paste project data</label>
+            <textarea id="gen-ai-chat" class="gt-ai-chat" rows="3" placeholder="Type project data, or upload a PDF → e.g. fc 30 MPa, fy 420 MPa, soil 18 kN/m3 ..."></textarea>
+            <label class="gt-ai-attach" title="Upload PDF">
+              <input type="file" id="gen-ai-file" accept="application/pdf,.pdf" class="sr-only">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              <span>PDF</span>
+            </label>
+          </div>
+          <div class="gt-ai-file" id="gen-ai-file-name"></div>
+          <button type="button" id="gen-ai-chat-apply" class="gt-ai-send" disabled title="Not wired yet">Apply to Form</button>
+          <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
+          <div class="note" style="margin-top:8px;">Preview only — PDF extraction and chat parsing are not wired yet; no values are filled.</div>
+        </div>
+        </div>
+        </details>
         <div class="gt-project">
           <div class="gt-head">Project</div>
           <div class="field" style="margin-bottom:0;"><label for="gen-proj" class="sr-only">Equipment Name</label><input type="text" id="gen-proj" value="Patimban Vessel" placeholder="Equipment name"></div>
@@ -584,27 +611,6 @@
         <div class="field">
           <label for="gen-gs"><span>Soil unit weight, γ<sub>s</sub></span> <span class="unit">kN/m³</span></label>
           <input type="number" id="gen-gs" value="18" min="0" step="0.5">
-        </div>
-        </div>
-        </details>
-        <details class="gt-group" open>
-        <summary>Auto Fill</summary>
-        <div class="gt-body">
-        <div class="gt-ai">
-          <div class="gt-ai-desc">Upload your calculation documents and let AI extract project parameters.</div>
-          <div class="gt-ai-compose">
-            <label for="gen-ai-chat" class="sr-only">Chat / paste project data</label>
-            <textarea id="gen-ai-chat" class="gt-ai-chat" rows="3" placeholder="Type project data, or upload a PDF → e.g. fc 30 MPa, fy 420 MPa, soil 18 kN/m3 ..."></textarea>
-            <label class="gt-ai-attach" title="Upload PDF">
-              <input type="file" id="gen-ai-file" accept="application/pdf,.pdf" class="sr-only">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-              <span>PDF</span>
-            </label>
-          </div>
-          <div class="gt-ai-file" id="gen-ai-file-name"></div>
-          <button type="button" id="gen-ai-chat-apply" class="gt-ai-send" disabled title="Not wired yet">Apply to Form</button>
-          <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
-          <div class="note" style="margin-top:8px;">Preview only — PDF extraction and chat parsing are not wired yet; no values are filled.</div>
         </div>
         </div>
         </details>
@@ -943,6 +949,20 @@
       </div>
       <!-- BEARING CAPACITY (SOIL) INPUTS -->
       <div id="in-bearing" style="display:none;">
+        <!-- Shown instead of the soil inputs when "Soil bearing capacity" is out of scope (Section 00 → Scope of Work). -->
+        <div id="bc-given-fields" style="display:none;">
+          <div class="section-label">Allowable Bearing Capacity (Given)</div>
+          <div class="field">
+            <label for="bc-qa-given">Allowable bearing capacity, q<sub>a</sub> <span class="unit">kPa</span></label>
+            <input type="number" id="bc-qa-given" value="" min="0" step="5" placeholder="NOT SET">
+          </div>
+          <div class="field">
+            <label for="bc-qa-ref">Source — geotechnical report</label>
+            <input type="text" id="bc-qa-ref" placeholder="Report no., borehole, depth">
+          </div>
+          <div class="note">Detailed bearing capacity is out of scope (Section 00 → Scope of Work). This q<sub>a</sub> is used directly by "4A — Foundation Stability".</div>
+        </div>
+        <div id="bc-calc-fields">
         <div class="section-label">Soil Parameters</div>
         <div class="field">
           <label for="bc-c">Cohesion, c <span class="unit">kPa</span></label>
@@ -1000,6 +1020,7 @@
         <div class="field">
           <label for="bc-FS">Factor of safety, FS</label>
           <input type="number" id="bc-FS" value="3.0" min="1" step="0.1">
+        </div>
         </div>
       </div>
       <!-- SETTLEMENT (SOIL) INPUTS -->
@@ -1298,6 +1319,29 @@
       </div>
       <!-- FOUNDATION SIZING INPUTS -->
       <div id="in-foundsize" class="gen-tree" style="display:none;">
+        <!-- AI Data Extractor (was "Auto Fill") — at the top of the panel so an import comes before the manual inputs; ids / handlers unchanged. -->
+        <details class="gt-group gt-extractor">
+        <summary>✨ AI Data Extractor<span class="gt-extractor-hint">Drawing, datasheet or text → dimensions</span></summary>
+        <div class="gt-body">
+        <div class="gt-ai">
+          <div class="gt-ai-desc" id="fs-ai-file-label">Upload a footing / pedestal drawing or datasheet, or type the dimensions.</div>
+          <div class="gt-ai-compose">
+            <label for="fs-ai-chat" id="fs-ai-chat-label" class="sr-only">Chat / paste spec text</label>
+            <textarea id="fs-ai-chat" class="gt-ai-chat" rows="3" placeholder="footing 2.4 x 2.4 x 0.8, Df 1.5, pedestal 1.25 x 1.25 Gp 0.275 ..."></textarea>
+            <label class="gt-ai-attach" title="Upload drawing (PDF / image)">
+              <input type="file" id="fs-ai-file" accept="application/pdf,.pdf,image/*" class="sr-only">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+              <span>FILE</span>
+            </label>
+          </div>
+          <div class="gt-ai-file" id="fs-ai-file-name"></div>
+          <button type="button" id="fs-ai-chat-apply" class="gt-ai-send" disabled>Read &amp; Review</button>
+          <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
+          <details style="margin-top:8px;"><summary class="note" style="cursor:pointer;">What can be read?</summary><div class="note" id="fs-ai-parser-note"></div></details>
+          <div id="fs-ai-review" style="margin-top:8px;"></div>
+        </div>
+        </div>
+        </details>
         <details class="gt-group" open>
         <summary>Foundation</summary>
         <div class="gt-body">
@@ -1379,37 +1423,19 @@
           </div>
         </div>
         </details>
-        <details class="gt-group" open>
-        <summary>Auto Fill</summary>
-        <div class="gt-body">
-        <div class="gt-ai">
-          <div class="gt-ai-desc" id="fs-ai-file-label">Upload a footing / pedestal drawing or datasheet, or type the dimensions.</div>
-          <div class="gt-ai-compose">
-            <label for="fs-ai-chat" id="fs-ai-chat-label" class="sr-only">Chat / paste spec text</label>
-            <textarea id="fs-ai-chat" class="gt-ai-chat" rows="3" placeholder="footing 2.4 x 2.4 x 0.8, Df 1.5, pedestal 1.25 x 1.25 Gp 0.275 ..."></textarea>
-            <label class="gt-ai-attach" title="Upload drawing (PDF / image)">
-              <input type="file" id="fs-ai-file" accept="application/pdf,.pdf,image/*" class="sr-only">
-              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M6 10l6-6 6 6"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-              <span>FILE</span>
-            </label>
-          </div>
-          <div class="gt-ai-file" id="fs-ai-file-name"></div>
-          <button type="button" id="fs-ai-chat-apply" class="gt-ai-send" disabled>Read &amp; Review</button>
-          <div class="gt-ai-warn"><span>⚠</span><span>Review extracted values before calculation.</span></div>
-          <details style="margin-top:8px;"><summary class="note" style="cursor:pointer;">What can be read?</summary><div class="note" id="fs-ai-parser-note"></div></details>
-          <div id="fs-ai-review" style="margin-top:8px;"></div>
-        </div>
-        </div>
-        </details>
       </div>
     </div>
     <!-- ============ RESULTS ============ -->
     <div class="results">
-      <div id="calc-general" class="calc-panel active"></div>
+      <div id="calc-general" class="calc-panel"></div>
+      <!-- Focus Canvas view of 01 (js/tabs/generalFocus.js) — replaces the report sheet above only in that mode. -->
+      <div id="focus-general" class="focus-panel"></div>
       <div id="calc-oneway" class="calc-panel"></div>
       <div id="calc-twoway" class="calc-panel"></div>
       <div id="calc-foundation" class="calc-panel"></div>
+      <div id="focus-foundation" class="focus-panel"></div> <!-- 4A Focus Canvas (js/tabs/stabilityFocus.js) -->
       <div id="calc-pile" class="calc-panel"></div>
+      <div id="focus-pile" class="focus-panel"></div> <!-- 4B Focus Canvas (js/tabs/stabilityFocus.js) -->
       <div id="calc-bearing" class="calc-panel"></div>
       <div id="calc-settlement" class="calc-panel"></div>
       <div id="calc-anchor" class="calc-panel"></div>
@@ -1417,16 +1443,53 @@
       <div id="calc-rebarcap" class="calc-panel"></div>
       <div id="calc-summary" class="calc-panel"></div>
       <div id="calc-foundsize" class="calc-panel"></div>
+      <!-- Focus Canvas view of 02 (js/tabs/foundSizeFocus.js) — replaces the report sheet above only in that mode. -->
+      <div id="focus-foundsize" class="focus-panel"></div>
     </div>
   </div>
     </div> <!-- End main-content -->
     <!-- ============ LIVE STATUS — sibling of .main-content, not nested in any per-tab "#in-*"
          section, so it stays visible no matter which tab is active (see "renderLiveBar()"). ============ -->
     <aside class="right-panel" id="right-panel" data-view="status" aria-label="Design status and assistant">
+      <div class="rp-inner"> <!-- sticky scroll box; the aside itself runs the full height (line + background) -->
+      <!-- Header row (level with the INPUTS header): ▶ hides the panel; "◀ Status" in the preview bar brings it back (js/ui/sidebar.js). -->
+      <div class="rp-head"><span class="rp-head-title">Status</span><button type="button" class="sr-btn rp-hide" data-rp-set="collapsed" title="Hide status panel" aria-label="Hide status panel">▶</button></div>
       <div class="rp-tabs" role="tablist">
         <button type="button" class="rp-tab" role="tab" data-view="status" aria-selected="false">DESIGN STATUS</button>
         <button type="button" class="rp-tab" role="tab" data-view="assistant" aria-selected="true">✦ ASSISTANT</button>
         <button type="button" class="rp-close" id="ai-assistant-close" title="Close assistant (Esc)" aria-label="Close assistant">✕</button>
+      </div>
+      <!-- Scope of Work — the right panel shows only this on "00 — Equipment Setup" (js/workflow/scope.js, renderLiveBar()). -->
+      <div class="scope-panel" id="scope-panel" hidden>
+        <div class="lb-sec">
+          <div class="lb-title">Scope of Work</div>
+          <label class="scope-item" for="scope-stability">
+            <input type="checkbox" id="scope-stability" checked>
+            <span class="scope-name">Stability check<span class="scope-tab">4A/4B</span></span>
+          </label>
+          <div class="scope-state" id="scope-stability-state"></div>
+          <label class="scope-item" for="scope-bearing">
+            <input type="checkbox" id="scope-bearing" checked>
+            <span class="scope-name">Soil bearing capacity<span class="scope-tab">08</span></span>
+          </label>
+          <div class="scope-state" id="scope-bearing-state"></div>
+          <label class="scope-item" for="scope-settlement">
+            <input type="checkbox" id="scope-settlement" checked>
+            <span class="scope-name">Settlement check<span class="scope-tab">08B</span></span>
+          </label>
+          <div class="scope-state" id="scope-settlement-state"></div>
+          <label class="scope-item" for="scope-structural">
+            <input type="checkbox" id="scope-structural" checked>
+            <span class="scope-name">Structural design check<span class="scope-tab">5A/5B</span></span>
+          </label>
+          <div class="scope-state" id="scope-structural-state"></div>
+          <label class="scope-item" for="scope-anchor">
+            <input type="checkbox" id="scope-anchor" checked>
+            <span class="scope-name">Anchor bolt design<span class="scope-tab">09</span></span>
+          </label>
+          <div class="scope-state" id="scope-anchor-state"></div>
+          <div class="scope-note">Unchecked items are not checked in this calculation and do not count toward the governing UC — their report pages are marked NOT IN SCOPE. Bearing: q<sub>a</sub> given by the geotechnical report, entered in "08 — Bearing Capacity". Anchor bolts: by mechanical vendor.</div>
+        </div>
       </div>
       <div class="live-status-bar" id="live-status-bar"></div>
       <!-- Assistant view: toggle/drawer only for now — no AI wired yet (plan: AI_ASSISTANT_PLAN.md). -->
@@ -1438,9 +1501,12 @@
         </div>
         <div class="as-note">The assistant is not connected yet. It will explain calculations, review inputs, and point to governing parameters for the tab you are on. It will not generate calculation results.</div>
       </div>
+      </div>
     </aside>
   </div> <!-- End layout-wrapper -->
 </div> <!-- End sheet -->
+<!-- App watermark under the sheet — screen only (hidden in print); year set by js/app.js. -->
+<footer class="app-footer" aria-label="Application">FAIR Foundation Design · <span id="app-year">2026</span></footer>
 <!-- WIND LOAD CALCULATOR (popup — opened from the Wind Load (W) section in "03 — LOADING DATA") -->
 <div class="modal-overlay" id="wind-modal">
   <div class="modal-box">
@@ -1692,6 +1758,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20260927f"></script>
+<script type="module" src="js/app.js?v=20260930v"></script>
 </body>
 </html>

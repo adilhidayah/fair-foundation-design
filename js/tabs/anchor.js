@@ -1,12 +1,13 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260927f';
-import { getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20260927f';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260927f';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260927f';
-import { buildStdComboBase } from '../tabs/combos.js?v=20260927f';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20260930v';
+import { getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20260930v';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20260930v';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20260930v';
+import { buildStdComboBase } from '../tabs/combos.js?v=20260930v';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20260930v';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -20,6 +21,15 @@ export function renderBoltTable() {
 // computeGoverningCa1(), computeAnchorCapacity() and evaluateAnchorCombo() live in lib/foundation/shared/pedestalCheck.js.
 const AB_HEAD = () => chapterHeader('09. Anchor Bolt Design', 'This chapter checks the anchor bolts at the base plate for tension, shear and their interaction under the factored LRFD combinations (LC201+) of Section 03, at the top of the pedestal — ACI 318M-19 Ch.17 (single-anchor simplification). The status of the check is shown in the Design Status panel.');
 export function calcAnchor() {
+  // Out of scope (Section 00 → Scope of Work): anchor bolts are designed and supplied by the mechanical vendor — no check here,
+  // and nothing from this tab counts toward the governing UC.
+  if (!inScope('anchor')) {
+    lastResults.anchor = { label: 'Anchor Bolt Design', status: 'NA', metric: SCOPE_NA_LABEL.anchor, detail: 'By mechanical vendor — not checked in this calculation.', notices: [] };
+    document.getElementById('calc-anchor').innerHTML = chapterHeader('09. Anchor Bolt Design', 'Anchor bolts are outside the scope of this calculation (Section 00 → Scope of Work).') +
+      `<div class="verdict na"><div class="stamp">BY MECHANICAL VENDOR</div><div class="uc"><div class="lbl">Not checked in this calculation</div></div></div>
+      <div class="note">Anchor bolt design (tension, shear and their interaction, ACI 318M-19 Ch.17) is by the mechanical vendor. The anchor bolt loads at the top of the pedestal are the factored combinations of Section 03.</div>`;
+    return;
+  }
   lastResults.anchor = { label: 'Anchor Bolt Design', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   if (boltList.length === 0) {
     document.getElementById('calc-anchor').innerHTML = AB_HEAD() + `<div class="warn-box"><strong>⚠  No bolts defined:</strong> add at least one bolt.</div>`;

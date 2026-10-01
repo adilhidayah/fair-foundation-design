@@ -1,12 +1,54 @@
 // 08 — Bearing capacity (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20260927f';
-import { getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { lastResults } from '../core/state.js?v=20260927f';
+import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20260930v';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { lastResults } from '../core/state.js?v=20260930v';
+import { inScope } from '../workflow/scope.js?v=20260930v';
+
+// q_a used by 4A and Table 1.3.1 — one source. In scope: computed from the Tab 08 soil inputs (same bearingCapacityCheck()
+// call as calcBearing()). Out of scope (Section 00 → Scope of Work): the geotechnical-report value bc-qa-given, as entered.
+// qa = null when it cannot be determined (B ≤ 0, or the given value is not set).
+export function allowableBearing() {
+  if (!inScope('bearing')) {
+    const v = num('bc-qa-given');
+    return { qa: v > 0 ? v : null, given: true, ref: document.getElementById('bc-qa-ref').value.trim() };
+  }
+  const shape = getRadioVal('bc-shape'), B = num('bc-B');
+  if (B <= 0) return { qa: null, given: false, ref: '' };
+  const L = (shape === 'square' || shape === 'circular') ? B : num('bc-L');
+  const { qa } = bearingCapacityCheck({ c: num('bc-c'), phiDeg: num('bc-phi'), gamma: num('gen-gs'), shape, B, L, Df: num('bc-Df'),
+    method: getRadioVal('bc-method'), FS: num('bc-FS'), failure: getRadioVal('bc-failure'), beta: num('bc-beta') });
+  return { qa, given: false, ref: '' };
+}
+// Out of scope: no soil calculation — Tab 08 shows the given q_a and its source only.
+function renderGivenBearing() {
+  const { qa, ref } = allowableBearing();
+  const label = 'Bearing Capacity (Soil)';
+  if (qa === null) {
+    lastResults.bearing = { label, status: 'ERROR', metric: 'q_a NOT SET', detail: 'Given by geotechnical report — value not entered.' };
+    document.getElementById('calc-bearing').innerHTML = `<div class="warn-box"><strong>⚠  q<sub>a</sub> NOT SET:</strong> detailed bearing capacity is out of scope (Section 00 → Scope of Work). Enter the allowable bearing capacity from the geotechnical report in the input panel — "4A — Foundation Stability" cannot check the bearing pressure until it is set.</div>`;
+    return;
+  }
+  lastResults.bearing = { label, status: 'INFO', metric: `q_a = ${fmt(qa,1)} kPa (given)`, detail: 'Given by geotechnical report' + (ref ? ` — ${ref}` : '') };
+  document.getElementById('calc-bearing').innerHTML = `<div class="verdict">
+    <div class="stamp">GIVEN — GEOTECHNICAL REPORT</div>
+    <div class="uc"><div class="val">${fmt(qa,1)}</div><div class="lbl">q<sub>a</sub>, allowable (kPa)</div></div>
+  </div>
+  <div class="overflow-x"><table class="calc-table">
+    <caption>Allowable bearing capacity</caption>
+    <tr><th>Parameter</th><th>Source</th><th>Value</th></tr>
+    <tr class="governing"><td>q<sub>a</sub>, allowable</td><td class="clause">${ref ? escapeHtml(ref) : 'Geotechnical report (reference not entered)'}</td><td class="num">${fmt(qa,1)} kPa</td></tr>
+  </table></div>
+  <div class="note">Detailed soil bearing capacity is outside the scope of this calculation. q<sub>a</sub> is taken as given by the geotechnical report and feeds "4A — Foundation Stability" directly.</div>`;
+}
 
 // TERZAGHI_* tables, terzaghiFactors(), meyerhofFactors(), terzaghiShapeFactors() and bearingCapacityCheck() live in lib/foundation/shared/bearingCapacity.js.
 export function calcBearing() {
+  const given = !inScope('bearing');
+  document.getElementById('bc-given-fields').style.display = given ? 'block' : 'none';
+  document.getElementById('bc-calc-fields').style.display = given ? 'none' : 'block';
+  if (given) { renderGivenBearing(); return; }
   const c = num('bc-c'), phiDeg = num('bc-phi'), gamma = num('gen-gs');
   const shape = getRadioVal('bc-shape');
   const B = num('bc-B'), Lraw = num('bc-L'), Df = num('bc-Df');

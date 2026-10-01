@@ -1,28 +1,33 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20260927f'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20260927f';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260927f';
-import { dlWorksheetItem } from './core/worksheet.js?v=20260927f';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260927f';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260927f';
-import { loadTesseract } from './ocr/tesseract.js?v=20260927f';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260927f';
-import { renderSummaryReport } from './report/summary.js?v=20260927f';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260927f';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260927f';
-import { calcFoundation } from './tabs/foundation.js?v=20260927f';
-import { calcFoundSize } from './tabs/foundSize.js?v=20260927f';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260927f';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260927f';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260927f';
-import { calcRebar } from './tabs/rebar.js?v=20260927f';
-import { calcSettlement } from './tabs/settlement.js?v=20260927f';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260927f';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260927f';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260927f';
-import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260927f';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260927f';
+} from '../lib/foundation/index.js?v=20260930v'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20260930v';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260930v';
+import { dlWorksheetItem } from './core/worksheet.js?v=20260930v';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260930v';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260930v';
+import { loadTesseract } from './ocr/tesseract.js?v=20260930v';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260930v';
+import { renderSummaryReport } from './report/summary.js?v=20260930v';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260930v';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260930v';
+import { calcFoundation } from './tabs/foundation.js?v=20260930v';
+import { calcFoundSize } from './tabs/foundSize.js?v=20260930v';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260930v';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260930v';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260930v';
+import { calcRebar } from './tabs/rebar.js?v=20260930v';
+import { calcSettlement } from './tabs/settlement.js?v=20260930v';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260930v';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260930v';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260930v';
+import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260930v';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260930v';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20260930v';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20260930v';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20260930v';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20260930v';
+import { renderScopePanel } from './workflow/scope.js?v=20260930v';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -691,6 +696,14 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 selectRadio('eq-type', updateEquipmentSetup);
 updateEquipmentSetup(); // Run on startup
+// 00 profile card: each required check opens the tab where it is done ('stability' -> 4A or 4B by Support).
+document.getElementById('setup-status').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-check-tab]');
+  if (b) switchWorkflowTab(resolveCheckTab(b.dataset.checkTab));
+});
+// Scope of Work (right panel on 00): taking a check in or out of scope re-runs everything that reads it (08, 4A via q_a, 09,
+// Table 1.3.1, Design Status) and sets the NOT IN SCOPE banners.
+['scope-stability', 'scope-bearing', 'scope-settlement', 'scope-structural', 'scope-anchor'].forEach((id) => document.getElementById(id).addEventListener('change', () => { renderScopePanel(); recalcAll(); }));
 updateFoundationTabVisibility(); // Run on startup — hide the tab that doesn't match the default Support selection
 document.getElementById('st-copy-bearing').addEventListener('click', () => {
   document.getElementById('st-B').value = document.getElementById('bc-B').value;
@@ -833,6 +846,43 @@ document.querySelectorAll('#wf-nav button').forEach((btn) => {
     switchWorkflowTab(btn.dataset.val);
   });
 });
+
+// ---------- Layout: collapsible input panel + Focus Canvas / Report Preview switch (js/ui/) ----------
+// Injected before the first renderWorkflowLive() below so the governing badges get filled on startup.
+injectSidebarRails();
+injectSectionNavs(); // sticky Previous / Next section bar at the bottom of the main (preview) panel
+injectViewSwitchers();
+setSidebarState(getSavedSidebarState(), false);
+setRightPanelState(getSavedRightPanelState(), false);
+setViewMode(getSavedViewMode(), false);
+document.addEventListener('click', (e) => {
+  const t = e.target.closest && e.target.closest('[data-sidebar-set], [data-sidebar-step], [data-go-tab], [data-rp-set], .view-switcher-bar [data-mode]');
+  if (!t) return;
+  if (t.dataset.rpSet) { setRightPanelState(t.dataset.rpSet); return; }
+  if (t.dataset.sidebarSet) setSidebarState(t.dataset.sidebarSet);
+  else if (t.dataset.sidebarStep) shrinkSidebar();
+  else if (t.dataset.goTab) switchWorkflowTab(t.dataset.goTab);
+  else if (t.dataset.mode) setViewMode(t.dataset.mode);
+});
+// Compact strip codes follow the active tab and the 4A/4B visibility (Support radio in Tab 02).
+document.querySelectorAll('.sidebar-menu .tab').forEach((t) => t.addEventListener('click', syncSidebarRails));
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.radio-row button')) setTimeout(syncSidebarRails, 0); }, true);
+// 02 Focus Canvas viewport: Plan / Elevation / Isometric switch (in place, no re-render).
+document.getElementById('focus-foundsize').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-cad-view]');
+  if (b) setCadView(b.dataset.cadView);
+});
+// Watermark under the sheet: current year.
+document.getElementById('app-year').textContent = String(new Date().getFullYear());
+// Light / dark toggle in the header; the button icon also follows OS theme changes while no choice is saved.
+syncThemeButton();
+document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', syncThemeButton);
+// Scrolling over a focused number input must not change its value — drop focus first.
+document.addEventListener('wheel', () => {
+  const el = document.activeElement;
+  if (el && el.type === 'number') el.blur();
+}, { passive: true });
 
 document.addEventListener('input', scheduleWorkflowLive, true);
 document.addEventListener('change', scheduleWorkflowLive, true);

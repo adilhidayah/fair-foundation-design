@@ -2,13 +2,14 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260927f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt as fmtRaw } from '../core/format.js?v=20260927f';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20260927f';
-import { comboLabel } from '../core/worksheet.js?v=20260927f';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260927f';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260927f';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20260930v';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt as fmtRaw } from '../core/format.js?v=20260930v';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20260930v';
+import { comboLabel } from '../core/worksheet.js?v=20260930v';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20260930v';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20260930v';
+import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20260930v';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -109,19 +110,23 @@ export function calcPile() {
   const { at, items } = pileComboLoads();
   const out = document.getElementById('calc-pile');
   lastResults.pile = { label: 'Pile Foundation Stability', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
+  const focusAlert = (msg) => { document.getElementById('focus-pile').innerHTML = stabilityAlertHTML('4B · Pile Foundation Stability', 'Not computed', msg); };
   if (pileList.length === 0) {
     out.innerHTML = CHAPTER_TITLE + `<div class="warn-box"><strong>⚠  No piles defined:</strong> add at least one pile.</div>`;
     lastResults.pile.detail = 'No piles defined.';
+    focusAlert('No piles defined — add at least one pile in the input panel.');
     return;
   }
   if (comboState.lc.length === 0) {
     out.innerHTML = CHAPTER_TITLE + `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
     lastResults.pile.detail = 'No load combinations defined.';
+    focusAlert('No load combinations — add at least one in "03 — LOADING DATA".');
     return;
   }
   if (!(D > 0)) {
     out.innerHTML = CHAPTER_TITLE + `<div class="warn-box"><strong>⚠  Pile diameter missing:</strong> enter the pile diameter D in "01 — GENERAL INPUT DATA" (Deep Foundation) — spacing limits, group efficiency and p-multipliers are all based on D.</div>`;
     lastResults.pile.detail = 'Pile diameter D not set.';
+    focusAlert('Pile diameter D missing — enter it in "01 — GENERAL INPUT DATA" (Deep Foundation).');
     return;
   }
 
@@ -225,7 +230,8 @@ export function calcPile() {
     return { ...pf, ucAxial, ucLat, fail: ucAxial > 1 + 1e-9 || ucLat > 1 + 1e-9 };
   }) : null; // no forces yet -> pile numbers only
   html += section('Pile Layout', `Plan of the pile group on the pile cap (${fmt(Bf, 2)} × ${fmt(Lf, 2)} m from Section 02), with the minimum spacing and edge distance checked against the project limits. Coordinates are measured from the pile cap centre; pile colours show the axial state in the governing combination.`);
-  html += pileDiagramSVG(pileList, Bf, Lf, D, forcesForDiagram, diagramInfo, diagramOpts);
+  const pileSvg = pileDiagramSVG(pileList, Bf, Lf, D, forcesForDiagram, diagramInfo, diagramOpts);
+  html += pileSvg;
 
   // 1) Layout check
   const sp = layout.spacing, ed = layout.edge;
@@ -294,7 +300,8 @@ export function calcPile() {
 
     // 5) DCR per check. Compression, tension and lateral are governed by different combinations (and different piles), so each
     //    check has its own summary row, its own table, and its own governing row — never one combined "governing" row.
-    const pileCells = (p) => (p ? `<td class="num">#${p.i}</td><td class="num">(${fmt(p.x, 2)}, ${fmt(p.y, 2)})</td>` : '<td class="num">—</td><td class="num">—</td>');
+    // "nw" = one line (css/app.css): short values that must not break between the numbers.
+    const pileCells = (p) => (p ? `<td class="num">#${p.i}</td><td class="num nw">(${fmt(p.x, 2)}, ${fmt(p.y, 2)})</td>` : '<td class="num">—</td><td class="num">—</td>');
     const okTxt = (uc) => (uc <= 1.0 + 1e-9 ? 'OK' : stTxt('FAIL'));
     const invalidRow = (r, cols) => `<tr><td>${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td colspan="${cols}" class="num">${escapeHtml(r.note || 'INVALID')}</td><td>INVALID</td></tr>`;
     const tensDemand = (r) => Math.max(-r.Fmin, 0), compDemand = (r) => Math.max(r.Fmax, 0);
@@ -310,7 +317,7 @@ export function calcPile() {
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Demand / capacity ratio (DCR) per check — each check with its own governing load combination (ASD)</caption>
       <tr><th>Check</th><th>Demand</th><th>Capacity</th><th>DCR</th><th>Governing combination</th><th>Pile</th><th>(x, z) m</th><th>Status</th></tr>
-      ${summaryRows.map(x => `<tr class="${x.uc === ucMax ? 'governing' : ''}"><td>${x.name}</td><td class="num">${x.demand}</td><td class="num">${x.cap}</td><td class="num">${fmt(x.uc, 3)}</td><td>${x.combo ? escapeHtml(lcNo(x.combo)) : '—'}</td>${pileCells(x.pile)}<td>${okTxt(x.uc)}</td></tr>`).join('')}
+      ${summaryRows.map(x => `<tr class="${x.uc === ucMax ? 'governing' : ''}"><td>${x.name}</td><td class="num nw">${x.demand}</td><td class="num">${x.cap}</td><td class="num">${fmt(x.uc, 3)}</td><td>${x.combo ? escapeHtml(lcNo(x.combo)) : '—'}</td>${pileCells(x.pile)}<td>${okTxt(x.uc)}</td></tr>`).join('')}
     </table></div>`;
 
     // Captions are names only (user request) — the formula, capacity and governing combination go in the sentence above.
@@ -392,4 +399,26 @@ export function calcPile() {
     return `<caption>Table 4.${curSec}.${tn}. `;
   });
   out.innerHTML = html;
+  // Focus Canvas view of the same results (js/tabs/stabilityFocus.js) — shown instead of the report sheet in that mode.
+  const lcOf = (r) => (r ? (r.combo.lc || r.combo.name) : null);
+  const nb = (t) => `<span class="fz-nb">${t}</span>`;
+  const focusChecks = [];
+  if (governing) {
+    if (compGov) focusChecks.push({ name: 'Compression', uc: compGov.checks[0].uc, lc: lcOf(compGov), pile: compGov.Fmax > 0 ? compGov.FmaxPile.i : null,
+      sub: `${nb(`F<sub>max</sub> = ${fmt(Math.max(compGov.Fmax, 0), 1)}`)} / ${nb(`P<sub>all,g</sub> = ${fmt(governing.QcG, 1)} kN`)}` });
+    if (tensGov) focusChecks.push({ name: 'Tension / uplift', uc: tensGov.checks[1].uc, lc: lcOf(tensGov), pile: tensGov.Fmin < 0 ? tensGov.FminPile.i : null,
+      sub: `${nb(`|F<sub>min</sub>| = ${fmt(Math.max(-tensGov.Fmin, 0), 1)}`)} / ${nb(`T<sub>all,g</sub> = ${fmt(governing.QtG, 1)} kN`)}` });
+    if (latGov) focusChecks.push({ name: 'Lateral (incl. torsion)', uc: latGov.checks[2].uc, lc: lcOf(latGov), pile: latGov.Vmax > 0 ? latGov.VmaxPile.i : null,
+      sub: `${nb(`V<sub>max</sub> = ${fmt(latGov.Vmax, 1)}`)} / ${nb(`H<sub>all</sub> = ${fmt(Ql, 1)} kN`)}` });
+  }
+  focusChecks.push({ name: 'Minimum pile spacing', uc: sp.uc, lc: null,
+    sub: sp.actual === null ? 'Single pile' : `${nb(`s = ${fmt(sp.actual, 3)} m (${fmt(sp.actual / D, 2)}D)`)}${sp.limit === null ? ' · limit NOT SET' : ` vs ${nb(`min ${fmt(sp.limit, 3)} m`)}`}` });
+  document.getElementById('focus-pile').innerHTML = pileFocusHTML({
+    nPiles: pileList.length, D, Eg: EgOk ? eff.Eg : NaN, status, checks: focusChecks,
+    rows: results.map((r) => (r.valid
+      ? { lc: lcOf(r), name: r.combo.name, P: r.load.P, Fmax: r.Fmax, Fmin: r.Fmin, Vmax: r.Vmax, ucC: r.checks[0].uc, ucT: r.checks[1].uc, ucL: r.checks[2].uc,
+          govC: r === compGov, govT: r === tensGov, govL: r === latGov }
+      : { lc: lcOf(r), name: r.combo.name, invalid: r.note || 'Not evaluated.' })),
+    svg: pileSvg, govLc: lcOf(governing), notices
+  });
 }

@@ -1,19 +1,19 @@
 // 01 — General Input Data: design standards register + general summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20260927f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { designStandards } from '../core/state.js?v=20260927f';
-import { calcAnchor } from '../tabs/anchor.js?v=20260927f';
-import { calcBearing } from '../tabs/bearing.js?v=20260927f';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260927f';
-import { calcFoundation } from '../tabs/foundation.js?v=20260927f';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260927f';
-import { calcPile } from '../tabs/pile.js?v=20260927f';
-import { calcRebar } from '../tabs/rebar.js?v=20260927f';
-import { calcSettlement } from '../tabs/settlement.js?v=20260927f';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260927f';
-import { renderWorkflowLive } from '../workflow/status.js?v=20260927f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { designStandards } from '../core/state.js?v=20260930v';
+import { calcAnchor } from '../tabs/anchor.js?v=20260930v';
+import { allowableBearing, calcBearing } from '../tabs/bearing.js?v=20260930v';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20260930v';
+import { calcFoundation } from '../tabs/foundation.js?v=20260930v';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20260930v';
+import { calcPile } from '../tabs/pile.js?v=20260930v';
+import { calcRebar } from '../tabs/rebar.js?v=20260930v';
+import { calcSettlement } from '../tabs/settlement.js?v=20260930v';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20260930v';
+import { getWorkflowStepStatus, renderWorkflowLive } from '../workflow/status.js?v=20260930v';
+import { generalFocusHTML } from '../tabs/generalFocus.js?v=20260930v';
 
 // Rows are editable in place (✎ -> Save/Cancel); the editing row index lives on window since this renders at startup.
 export function renderDesignStandardsTable() {
@@ -45,15 +45,10 @@ export function renderGeneralSummary() {
   // Geotechnical parameters below are NOT separate inputs — they are read live from where they're actually
   // set ("08 — Bearing Capacity" and "4A — Foundation Stability") so this section can never drift out of
   // sync with a second, duplicate copy of the same number.
-  const bcC = num('bc-c'), bcPhi = num('bc-phi'), bcFS = num('bc-FS'), bcShape = getRadioVal('bc-shape');
-  const bcB = num('bc-B'), bcLraw = num('bc-L'), bcDf = num('bc-Df');
-  const bcMethod = getRadioVal('bc-method'), bcFailure = getRadioVal('bc-failure'), bcBeta = num('bc-beta');
-  const bcL = (bcShape === 'square' || bcShape === 'circular') ? bcB : bcLraw;
-  let qaRows = `<tr><td>Allowable bearing capacity, q<sub>a</sub></td><td class="num">—</td></tr>`;
-  if (bcB > 0) {
-    const { qa } = bearingCapacityCheck({ c: bcC, phiDeg: bcPhi, gamma: gs, shape: bcShape, B: bcB, L: bcL, Df: bcDf, method: bcMethod, FS: bcFS, failure: bcFailure, beta: bcBeta });
-    qaRows = `<tr><td>Allowable bearing capacity, q<sub>a</sub></td><td class="num">${fmt(qa,1)} kPa</td></tr>`;
-  }
+  // q_a: computed in 08, or given by the geotechnical report when bearing is out of scope (Section 00) — allowableBearing().
+  const qaSrc = allowableBearing();
+  const qaRows = `<tr><td>Allowable bearing capacity, q<sub>a</sub>${qaSrc.given ? ' (geotechnical report)' : ''}</td><td class="num">${
+    qaSrc.qa !== null ? fmt(qaSrc.qa,1) + ' kPa' : (qaSrc.given ? 'NOT SET' : '—')}</td></tr>`;
   const fsDistinguish = document.getElementById('fd-fsDistinguish').checked;
   document.getElementById('fd-fsSlide-temp-field').style.display = fsDistinguish ? 'block' : 'none';
   document.getElementById('fd-fsOT-temp-field').style.display = fsDistinguish ? 'block' : 'none';
@@ -134,6 +129,13 @@ export function renderGeneralSummary() {
       <tr><td>Factor of safety, sliding — Temporary (seismic/wind), FS<sub>sliding,temp</sub></td><td class="num">${fmt(fdFsSlideTemp,2)}</td></tr>
     </table></div>`}
   `;
+  // Focus Canvas view of the same values (js/tabs/generalFocus.js) — shown instead of the report sheet in that mode.
+  document.getElementById('focus-general').innerHTML = generalFocusHTML({
+    projName, isPile, status: getWorkflowStepStatus('01'), fc, Ec, fy, gc, gl, gs, qa: qaSrc,
+    fs: { otPerm: fdFsOTPerm, otTemp: fdFsOTTemp, slPerm: fdFsSlidePerm, slTemp: fdFsSlideTemp, distinct: fsDistinguish },
+    pile: { type: (document.getElementById('pf-type').value || '').trim(), D: num('pf-dia'), L: num('pf-L'), Qc: num('pf-Qc'), Qt: num('pf-Qt'), Ql: num('pf-Ql') },
+    standards: designStandards
+  });
 }
 export function recalcAllGeneral() {
   calcOneWay();

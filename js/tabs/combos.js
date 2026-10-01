@@ -1,10 +1,13 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260927f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { comboState, state } from '../core/state.js?v=20260927f';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260927f';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260930v';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
+import { fmt } from '../core/format.js?v=20260930v';
+import { comboState, state } from '../core/state.js?v=20260930v';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260930v';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20260930v';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20260930v';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20260930v';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
@@ -103,6 +106,24 @@ export function renderLcSummary() {
     : '<div class="note">No LRFD combinations — load them with "Edit Load Combinations (LRFD)".</div>';
   renderComboPrintTable();
   renderLrfdPrintTable();
+  // Focus Canvas view of the same vectors (js/tabs/loadingFocus.js) — shown instead of the A4 sheet in that mode.
+  const focusEl = document.getElementById('focus-loading');
+  if (focusEl) {
+    const isPile = getRadioVal('fs-support') === 'pile';
+    focusEl.innerHTML = loadingFocusHTML({
+      modeLabel: getRadioVal('ld-mode') === 'reaction' ? 'Support reaction (structural model)' : 'Manual input (from components)',
+      status: getWorkflowStepStatus('03'), nTypes: state.lcLoadTypes.length, nAsd: comboState.lc.length, nLrfd: comboState.lrfd.length,
+      dW: num('lc-dW'), dh: num('lc-dh'), untyped: state.lastUntypedLoadTypes, cWord: isPile ? 'pile cap' : 'footing',
+      types: state.lcLoadTypes.map(lt => ({ code: lt.code, label: lt.label, kindLabel: LOAD_KINDS[lt.kind] ? LOAD_KINDS[lt.kind].label : '—', v: footBase[lt.code] || null })),
+      // Bottom of footing = top vector + the transfer terms, H / M as the resultants of the biaxial components (as 4A / 4B read them).
+      rows: comboState.lc.map(combo => {
+        const v = stdComboVector(combo.f, footBase);
+        return { lc: combo.lc || '', name: combo.name, P: v.P + v.dP, H: Math.hypot(v.Fx, v.Fz), M: Math.hypot(v.Mx + v.dMx, v.Mz + v.dMz) };
+      }),
+      // Own marker ids: the report copy of this diagram is hidden in this mode (a marker in a hidden SVG does not render elsewhere).
+      svg: loadTransferDiagramSVG(getRadioVal('fs-type') === 'pedestal', isPile, num('lc-dh'), num('lc-dW')).replaceAll('ltr-arrow', 'fz3-arrow')
+    });
+  }
 }
 // Read-only print/preview version of the "Edit Load Combinations" table (#lc-combo-table) — same
 // comboState.lc / state.lcLoadTypes data, formatted for "3.2 Load Combination" in the report instead of an
