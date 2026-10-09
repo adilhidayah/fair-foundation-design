@@ -1131,6 +1131,8 @@
   .fdn-diagram .dim-text { fill: var(--ink-soft); font-family: var(--mono); font-size: 10px; font-weight: 700; }
   .fdn-diagram .centerline { stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 4 3; }
   .fdn-diagram .load-line { stroke: var(--fail); stroke-width: 2; }
+  .fdn-diagram .kern { fill: none; stroke: var(--caution); stroke-width: 1.2; stroke-dasharray: 4 3; } /* 4.1 plan: allowable kern diamond */
+  .fdn-diagram .kern-text { fill: var(--caution); font-size: 9px; }
   .fdn-diagram .load-text { fill: var(--fail); font-family: var(--mono); font-size: 10px; font-weight: 700; }
   .fdn-diagram .pressure { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; opacity: 0.85; }
   .fdn-diagram .panel-title { fill: var(--accent); font-family: var(--mono); font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }

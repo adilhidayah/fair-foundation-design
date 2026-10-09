@@ -1,10 +1,10 @@
 // 08 — Bearing capacity (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261009d';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009d';
-import { fmt } from '../core/format.js?v=20261009d';
-import { lastResults } from '../core/state.js?v=20261009d';
-import { inScope } from '../workflow/scope.js?v=20261009d';
+import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261009h';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009h';
+import { fmt } from '../core/format.js?v=20261009h';
+import { lastResults } from '../core/state.js?v=20261009h';
+import { inScope } from '../workflow/scope.js?v=20261009h';
 
 // q_a used by 4A and Table 1.3.1 — one source. In scope: computed from the Tab 08 soil inputs (same bearingCapacityCheck()
 // call as calcBearing()). Out of scope (Section 00 → Scope of Work): the geotechnical-report value bc-qa-given, as entered.
@@ -20,6 +20,16 @@ export function allowableBearing() {
   const { qa } = bearingCapacityCheck({ c: num('bc-c'), phiDeg: num('bc-phi'), gamma: num('gen-gs'), shape, B, L, Df: num('bc-Df'),
     method: getRadioVal('bc-method'), FS: num('bc-FS'), failure: getRadioVal('bc-failure'), beta: num('bc-beta') });
   return { qa, given: false, ref: '' };
+}
+// q_a for an effective footing B′ × L′ (4A, Meyerhof effective area): the same soil inputs, formula and FS as Tab 08, with the
+// shorter effective side as the width (rectangular shape). Out of scope (given q_a): the given value — it cannot be recomputed.
+export function allowableBearingAt(Beff, Leff) {
+  if (!inScope('bearing')) return { qa: allowableBearing().qa, recomputed: false };
+  const Bs = Math.min(Beff, Leff), Ls = Math.max(Beff, Leff);
+  if (!(Bs > 0)) return { qa: null, recomputed: true };
+  const { qa } = bearingCapacityCheck({ c: num('bc-c'), phiDeg: num('bc-phi'), gamma: num('gen-gs'), shape: 'rectangular', B: Bs, L: Ls,
+    Df: num('bc-Df'), method: getRadioVal('bc-method'), FS: num('bc-FS'), failure: getRadioVal('bc-failure'), beta: num('bc-beta') });
+  return { qa, recomputed: true };
 }
 // Out of scope: no soil calculation — Tab 08 shows the given q_a and its source only.
 function renderGivenBearing() {

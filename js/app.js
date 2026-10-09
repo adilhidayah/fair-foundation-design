@@ -1,34 +1,34 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261009d'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261009d';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009d';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261009d';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009d';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009d';
-import { loadTesseract } from './ocr/tesseract.js?v=20261009d';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009d';
-import { renderSummaryReport } from './report/summary.js?v=20261009d';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009d';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009d';
-import { calcFoundation } from './tabs/foundation.js?v=20261009d';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261009d';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009d';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009d';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009d';
-import { calcRebar } from './tabs/rebar.js?v=20261009d';
-import { calcSettlement } from './tabs/settlement.js?v=20261009d';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009d';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009d';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009d';
-import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009d';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009d';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009d';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009d';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009d';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261009d';
-import { renderScopePanel } from './workflow/scope.js?v=20261009d';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, validateProject } from './workflow/project.js?v=20261009d';
+} from '../lib/foundation/index.js?v=20261009h'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261009h';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009h';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261009h';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009h';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009h';
+import { loadTesseract } from './ocr/tesseract.js?v=20261009h';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009h';
+import { renderSummaryReport } from './report/summary.js?v=20261009h';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009h';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009h';
+import { calcFoundation } from './tabs/foundation.js?v=20261009h';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261009h';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009h';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009h';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009h';
+import { calcRebar } from './tabs/rebar.js?v=20261009h';
+import { calcSettlement } from './tabs/settlement.js?v=20261009h';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009h';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009h';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009h';
+import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009h';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009h';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009h';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009h';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009h';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261009h';
+import { renderScopePanel } from './workflow/scope.js?v=20261009h';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261009h';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -629,6 +629,7 @@ selectRadio('tw-vu-src', calcTwoWay);
 selectRadio('tw-lambda', calcTwoWay);
 selectRadio('tw-loc', calcTwoWay);
 selectRadio('fd-ecc', calcFoundationAndGeneral);
+selectRadio('fd-bearmeth', calcFoundationAndGeneral);
 selectRadio('bc-shape', calcBearingAndFoundation);
 selectRadio('bc-method', calcBearingAndFoundation);
 selectRadio('bc-failure', calcBearingAndFoundation);
@@ -1013,6 +1014,28 @@ window.addEventListener('beforeunload', (e) => {
   e.returnValue = '';
 });
 updateProjectLabel();
+// Open a project straight from the address bar: ?project=<relative path on this server>.json [&tab=<ribbon tab id>], e.g.
+// FAIR%20Foundation%20Design.html?project=projects/my-job.fair.json&tab=foundation. Same-origin relative paths only.
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const path = q.get('project');
+  if (!path) return;
+  if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(path) || !/\.json$/i.test(path)) { projectToast('✗ ?project= must be a relative path to a .json file on this server', true); return; }
+  try {
+    const res = await fetch(path, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+    const data = parseProjectText(await res.text());
+    loadProjectData(data);
+    setProjectFileName(decodeURIComponent(path.split('/').pop()));
+    updateProjectLabel();
+    const tab = q.get('tab');
+    if (tab) switchWorkflowTab(tab);
+    projectToast(`✓ Opened: ${decodeURIComponent(path.split('/').pop())} — ${data.project || 'project'}`);
+  } catch (e) {
+    console.error('Open project from URL:', e);
+    projectToast('✗ Could not open the project: ' + (e && e.message ? e.message : e), true);
+  }
+})();
 // For automation / tests: read the current project, or load one (object or JSON text) without the file dialogs.
 window.fairProject = {
   collect: collectProject,

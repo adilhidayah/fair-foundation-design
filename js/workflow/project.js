@@ -9,7 +9,7 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, pileList, reportBlocks, state } from '../core/state.js?v=20261009d';
+import { boltList, comboState, designStandards, pileList, reportBlocks, state } from '../core/state.js?v=20261009h';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
@@ -96,6 +96,8 @@ let dirty = false;
 export const projectFile = () => ({ name: fileName, dirty, canOverwrite: !!fileHandle });
 export function setProjectDirty(v) { dirty = !!v; }
 export function resetProjectFile() { fileHandle = null; fileName = null; dirty = false; }
+// A project loaded without a file handle (from a URL): remember its name for the label; Save then asks where to save.
+export function setProjectFileName(name) { fileHandle = null; fileName = name || null; dirty = false; }
 
 const safeName = (s) => (s || 'Untitled project').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'Untitled project';
 const FILE_TYPES = [{ description: 'FAIR Foundation Design project', accept: { 'application/json': ['.json'] } }];

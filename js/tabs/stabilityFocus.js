@@ -2,12 +2,13 @@
 // sheet while the preview is in Focus Canvas mode (css/app.css); Report Preview and print keep #calc-foundation / #calc-pile.
 // Builds markup only — every UC / force comes from calcFoundation() / calcPile() (lib results); nothing is recomputed here.
 // Declarations only. Reuses the .fz-* layout of the 01 / 02 Focus views.
-import { escapeHtml } from '../core/dom.js?v=20261009d';
-import { fmt } from '../core/format.js?v=20261009d';
+import { escapeHtml } from '../core/dom.js?v=20261009h';
+import { fmt } from '../core/format.js?v=20261009h';
 
 const PASS_EPS = 1e-9;
-const ucText = (uc) => (uc === null || uc === undefined ? 'NOT SET' : (Number.isFinite(uc) ? fmt(uc, 3) : '∞'));
-const ucCls = (uc) => (uc === null || uc === undefined ? 'na' : (uc <= 1 + PASS_EPS ? 'ok' : 'bad'));
+// A string "uc" is an informative value (e.g. contact area %), shown as is without a pass / fail colour.
+const ucText = (uc) => (typeof uc === 'string' ? uc : uc === null || uc === undefined ? 'NOT SET' : (Number.isFinite(uc) ? fmt(uc, 3) : '∞'));
+const ucCls = (uc) => (typeof uc === 'string' || uc === null || uc === undefined ? 'na' : (uc <= 1 + PASS_EPS ? 'ok' : 'bad'));
 // Status tag from the check's lastResults status (PASS / FAIL / anything else = incomplete).
 function statusTag(status) {
   if (status === 'PASS') return '<span class="fz-tag ok">All checks pass</span>';

@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 494 checks, 494 pass, 0 fail** (13 files, run 9 Oct 2026).
+**Total: 537 checks, 537 pass, 0 fail** (14 files, run 9 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -17,7 +17,8 @@ Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
 | validation_shared_part13.mjs | shallow footing with an offset pedestal; biaxial kern / overturning in the governing UC | 22 |
-| **Total** | | **494** |
+| validation_shared_part14.mjs | biaxial no-tension soil pressure (rigid footing); "no eccentricity limit" option; Meyerhof effective area | 43 |
+| **Total** | | **537** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -97,6 +98,17 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
 - combineFootingChecks: B = L = 1.2, P = 10, Mx = Mz = 1.1 — resultant e = 0.156 ≤ B/6 (uniaxial passes, UC 0.778) but the
   kern diamond gives 1.100 → combined result fails, governed by the biaxial kern; all-pass case; invalid result passed through.
 
+### part14 — biaxial soil pressure without tension; no eccentricity limit (9 Oct 2026)
+- biaxialSoilPressure: full contact q = (P/BL)(1 ± 6ex/B ± 6ez/L) (2.0 × 3.0, P 600, ex 0.10, ez 0.15 → 160 / 40 kPa; kern line
+  → 2P/A); uniaxial beyond the kern q_max = 2P/[3L(B/2 − e)] (266.667, contact 75 %; along z 333.333); corner-triangle closed form
+  q_max = 6P/(s·t), s = 4(B/2 − ex), t = 4(L/2 − ez) (416.667, contact 18 %; rectangular 1071.43); four general partial-contact
+  cases checked by an independent 600 × 600 grid integration of the returned plane (ΣV, ΣM about both axes, contact area);
+  continuity at the kern line; resultant outside the footing / P ≤ 0 → invalid.
+- combineFootingChecks with { eccLimit: false, ucBearingBiaxial }: eccentricity checks left out, biaxial bearing added; the call
+  without options is unchanged.
+- meyerhofEffectiveArea: B' = B − 2ex, L' = L − 2ez, q' = P/(B'L') (2.0 × 3.0, P 600, ex 0.5, ez 0.3 → 1.0 × 2.4, 250 kPa); shorter
+  effective side taken as the width; invalid at ex ≥ B/2; q_u with B' × L' (Terzaghi rectangular, DCPT-01 soil) = hand calc; q_a(B', L') < q_a(B, L).
+
 ## How to re-run
 ```
 node lib/foundation/validation/validation_shared_part1.mjs
@@ -112,6 +124,7 @@ node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
 node lib/foundation/validation/validation_static_part12.mjs
 node lib/foundation/validation/validation_shared_part13.mjs
+node lib/foundation/validation/validation_shared_part14.mjs
 ```
 
 ## Notes
