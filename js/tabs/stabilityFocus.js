@@ -2,8 +2,8 @@
 // sheet while the preview is in Focus Canvas mode (css/app.css); Report Preview and print keep #calc-foundation / #calc-pile.
 // Builds markup only — every UC / force comes from calcFoundation() / calcPile() (lib results); nothing is recomputed here.
 // Declarations only. Reuses the .fz-* layout of the 01 / 02 Focus views.
-import { escapeHtml } from '../core/dom.js?v=20261009a';
-import { fmt } from '../core/format.js?v=20261009a';
+import { escapeHtml } from '../core/dom.js?v=20261009d';
+import { fmt } from '../core/format.js?v=20261009d';
 
 const PASS_EPS = 1e-9;
 const ucText = (uc) => (uc === null || uc === undefined ? 'NOT SET' : (Number.isFinite(uc) ? fmt(uc, 3) : '∞'));

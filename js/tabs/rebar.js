@@ -1,14 +1,14 @@
 // 5A pedestal P-M reinforcement + 5B pile cap flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009a';
-import { num } from '../core/dom.js?v=20261009a';
-import { fmt } from '../core/format.js?v=20261009a';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009a';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009a';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009a';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009a';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009a';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009a';
+import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009d';
+import { num } from '../core/dom.js?v=20261009d';
+import { fmt } from '../core/format.js?v=20261009d';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009d';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009d';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009d';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009d';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009d';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009d';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.

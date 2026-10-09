@@ -1,13 +1,13 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261009a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009a';
-import { fmt } from '../core/format.js?v=20261009a';
-import { comboState, state } from '../core/state.js?v=20261009a';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261009a';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261009a';
-import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261009a';
-import { getWorkflowStepStatus } from '../workflow/status.js?v=20261009a';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261009d';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009d';
+import { fmt } from '../core/format.js?v=20261009d';
+import { comboState, state } from '../core/state.js?v=20261009d';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261009d';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261009d';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261009d';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20261009d';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
@@ -91,6 +91,11 @@ export function renderLcSummary() {
   const footBase = buildStdComboBase();
   topEl.innerHTML = untypedLoadTypesWarning() + resultTable('lc', footBase, 'Load Combination Result at top of pedestal (ASD) — For Anchor Bolt Calculation', 'For Anchor Bolt Calculation', false);
   botEl.innerHTML = resultTable('lc', footBase, 'Load Combination Result at bottom of footing (ASD) — For Foundation Stability Calculation', 'For Foundation Stability Calculation', true);
+  // Shallow footing with an offset pedestal: 4A adds the offset moments to these values (pedestalOffsetMoments()).
+  const offX = num('fs-OffX'), offZ = num('fs-OffZ');
+  if (getRadioVal('fs-support') !== 'pile' && getRadioVal('fs-type') === 'pedestal' && (Math.abs(offX) > 1e-9 || Math.abs(offZ) > 1e-9)) {
+    botEl.innerHTML += `<div class="note">Moments about the footing <em>centre line under the pedestal</em>. The pedestal is offset from the footing centre (Off<sub>X</sub> = ${fmt(offX,2)} m, Off<sub>Z</sub> = ${fmt(offZ,2)} m, Section 02): Section 04 adds the moments of the offset loads and self-weight about the footing centroid to these values — see the pedestal-offset table in 4.1.</div>`;
+  }
   // LRFD results (strength design): the pedestal base carries H × pedestal height and the pedestal weight (5A pedestal design);
   // the bottom of the footing carries the whole footing transfer (5B pile cap flexure / shear).
   const lrfdPedEl = document.getElementById('lrfd-summary-ped'), lrfdBotEl = document.getElementById('lrfd-summary-bottom');

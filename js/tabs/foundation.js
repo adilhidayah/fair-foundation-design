@@ -1,14 +1,14 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261009a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009a';
-import { fmt } from '../core/format.js?v=20261009a';
-import { comboState, lastResults, state } from '../core/state.js?v=20261009a';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009a';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261009a';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261009a';
-import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261009a';
-import { allowableBearing } from '../tabs/bearing.js?v=20261009a';
+import { LOAD_KINDS, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261009d';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009d';
+import { fmt } from '../core/format.js?v=20261009d';
+import { comboState, lastResults, state } from '../core/state.js?v=20261009d';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009d';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261009d';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261009d';
+import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261009d';
+import { allowableBearing } from '../tabs/bearing.js?v=20261009d';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -75,9 +75,19 @@ export function calcFoundation() {
   // Still a simplification (see the Limitation note), but now numerically consistent for the same combo.
   const base = buildStdComboBase();
   const B1 = B / 2, B2 = L / 2; // overturning lever arms — B1 resists M_z (transversal), B2 resists M_x (longitudinal)
+  // Pedestal offset from the footing centre (Tab 02): the loads at the top of the pedestal, the pedestal + grout weight and the
+  // backfill centroid are eccentric to the footing — their moments about the footing centroid are added to Mx / Mz
+  // (pedestalOffsetMoments(), lib). The self-weight parts take the combination's dead-load factor kD = dP / ΔW.
+  const OffX = hasPed ? num('fs-OffX') : 0, OffZ = hasPed ? num('fs-OffZ') : 0;
+  const hasOffset = Math.abs(OffX) > 1e-9 || Math.abs(OffZ) > 1e-9;
+  const dWfoot = num('lc-dW');
   const results = comboState.lc.map(combo => {
     const v = stdComboVector(combo.f, base);
-    const Pbot = v.P + v.dP, Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
+    const kD = dWfoot > 0 ? v.dP / dWfoot : 0;
+    const off = hasOffset
+      ? pedestalOffsetMoments({ Ptop: v.P, kD, Wped: state.pedW, Wsoil: state.footSoilW, OffX, OffZ, Af: B * L, Ap: Bp * Lp })
+      : { dMx: 0, dMz: 0 };
+    const Pbot = v.P + v.dP, Mx = v.Mx + v.dMx + off.dMx, Mz = v.Mz + v.dMz + off.dMz;
     const Hbot = Math.sqrt(v.Fx * v.Fx + v.Fz * v.Fz);
     const Mbot = Math.sqrt(Mx * Mx + Mz * Mz);
     // Biaxial kern (ex/ez) and overturning (OM1/2, SF1/2) checks — evaluateBiaxialFooting(), lib/foundation/
@@ -87,10 +97,12 @@ export function calcFoundation() {
     const temporary = isTemporaryCombo(combo);
     const fsSlideMin = temporary ? fsSlideTemp : fsSlidePerm;
     const fsOTMin = temporary ? fsOTTemp : fsOTPerm;
+    const uni = evaluateFoundationCombo(B, L, Pbot, Hbot, Mbot, qa, mu, eccRatioAllow, fsSlideMin, fsOTMin);
+    const bi = evaluateBiaxialFooting(B, L, Pbot, Mx, Mz, eccRatioAllow, fsOTMin);
+    // Governing check / UC / pass cover the biaxial kern and overturning too (combineFootingChecks(), lib).
     return {
-      combo, P: Pbot, H: Hbot, M: Mbot, Mx, Mz, temporary, fsSlideMin, fsOTMin,
-      ...evaluateFoundationCombo(B, L, Pbot, Hbot, Mbot, qa, mu, eccRatioAllow, fsSlideMin, fsOTMin),
-      ...evaluateBiaxialFooting(B, L, Pbot, Mx, Mz, eccRatioAllow, fsOTMin)
+      combo, P: Pbot, H: Hbot, M: Mbot, Mx, Mz, temporary, fsSlideMin, fsOTMin, Ptop: v.P, kD, offMx: off.dMx, offMz: off.dMz,
+      ...uni, ...bi, ...combineFootingChecks(uni, bi)
     };
   });
   const governing = results.reduce((a, b) => b.governingUC > a.governingUC ? b : a);
@@ -117,7 +129,7 @@ export function calcFoundation() {
   // Row for a combination that could not be evaluated: the reason spans the data columns, status NG.
   const invalidRow = (r, nData) => `<tr><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td colspan="${nData}" class="clause">${escapeHtml(r.note || 'Not evaluated.')}</td><td>NG</td></tr>`;
   let html = chapterHeader('04. Foundation Stability',
-    `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: eccentricity (kern), bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (${qaRef}), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh.`);
+    `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: eccentricity (kern), bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (${qaRef}), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh${hasOffset ? `, and the moments from the pedestal offset (Off<sub>X</sub> = ${fmt(OffX,2)} m, Off<sub>Z</sub> = ${fmt(OffZ,2)} m — see the offset table in 4.1)` : ''}. The governing check covers the uniaxial (resultant) and the biaxial kern and overturning checks.`);
   html += untypedLoadTypesWarning();
   html += sectionHeader('4.1', 'Governing Load Combination', shown
     ? `Combination with the highest utilization${invalidResults.length ? ' among those that could be evaluated' : ''}: ${escapeHtml(comboLabel(shown.combo))}, governed by ${shown.governingCheck.name.toLowerCase()}.${invalidResults.length ? ` ${invalidResults.length} combination(s) could not be evaluated (${invalidResults.map(r => escapeHtml(r.combo.lc || r.combo.name)).join(', ')}) and fail the check — see the tables below and the Design Status panel.` : ''}`
@@ -129,7 +141,7 @@ export function calcFoundation() {
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>${escapeHtml(comboLabel(shown.combo))} — eccentricity and bearing pressure</caption>
       <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
-      <tr><td>P, H, M at bottom of footing</td><td class="clause">Σ factor·load, + ΔW, + H·Δh</td><td class="num">${fmt(shown.P,1)} kN, ${fmt(shown.H,1)} kN, ${fmt(shown.M,1)} kN·m</td></tr>
+      <tr><td>P, H, M at bottom of footing</td><td class="clause">Σ factor·load, + ΔW, + H·Δh${hasOffset ? ', + pedestal offset' : ''}</td><td class="num">${fmt(shown.P,1)} kN, ${fmt(shown.H,1)} kN, ${fmt(shown.M,1)} kN·m</td></tr>
       <tr><td>Eccentricity, e</td><td class="clause">|M| / P</td><td class="num">${fmt(shown.e,3)} m</td></tr>
       <tr><td>Kern limit, B/6</td><td class="clause">—</td><td class="num">${fmt(shown.kernLimit,3)} m</td></tr>
       <tr><td>Allowable eccentricity, e<sub>allow</sub></td><td class="clause">(e/B)<sub>allow</sub> · B</td><td class="num">${fmt(shown.eAllow,3)} m</td></tr>
@@ -142,6 +154,22 @@ export function calcFoundation() {
       <caption>${escapeHtml(comboLabel(shown.combo))} — utilization per check</caption>
       <tr><th>Check</th><th>UC</th><th>Status</th></tr>
       ${shown.checks.map(c => `<tr class="${c === shown.governingCheck ? 'governing' : ''}"><td>${c.name}</td><td class="num">${fmt(c.uc,3)}</td><td>${okNg(c.uc)}</td></tr>`).join('')}
+    </table></div>`;
+  }
+  if (hasOffset) {
+    // Pedestal offset — statics of the vertical loads about the footing centroid (pedestalOffsetMoments(), lib).
+    const Ap = Bp * Lp, Af = B * L, share = Af > Ap && Ap > 0 ? Ap / (Af - Ap) : 0;
+    html += `<div class="lc-formula">
+      <div class="lc-formula-title">Pedestal offset — moments about the footing centroid</div>
+      The pedestal centre is at Off<sub>X</sub> = ${fmt(OffX,2)} m, Off<sub>Z</sub> = ${fmt(OffZ,2)} m from the footing centre. The loads at the top of the pedestal (P<sub>top</sub>) and the pedestal + grout weight W<sub>P</sub> + W<sub>G</sub> = ${fmt(state.pedW,2)} kN act there; the footing weight acts at the footing centre; the backfill above the footing, W<sub>soil</sub> = ${fmt(state.footSoilW,2)} kN, acts at its own centroid x<sub>s</sub> = −Off<sub>X</sub>·A<sub>p</sub>/(A<sub>f</sub> − A<sub>p</sub>) = ${fmt(-OffX * share + 0,4)} m, z<sub>s</sub> = −Off<sub>Z</sub>·A<sub>p</sub>/(A<sub>f</sub> − A<sub>p</sub>) = ${fmt(-OffZ * share + 0,4)} m. The self-weight terms take the dead-load factor k<sub>D</sub> of the combination.<br>
+      ΔM<sub>z,off</sub> = (P<sub>top</sub> + k<sub>D</sub>·(W<sub>P</sub> + W<sub>G</sub>))·Off<sub>X</sub> + k<sub>D</sub>·W<sub>soil</sub>·x<sub>s</sub><br>
+      ΔM<sub>x,off</sub> = −[(P<sub>top</sub> + k<sub>D</sub>·(W<sub>P</sub> + W<sub>G</sub>))·Off<sub>Z</sub> + k<sub>D</sub>·W<sub>soil</sub>·z<sub>s</sub>]
+      <div class="lc-formula-where">Sign: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −z side (same as the load vectors of Section 03). These moments are added to the bottom-of-footing moments of Section 03 (Table 3.3.2) for every check of this chapter.</div>
+    </div>`;
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Moments from the pedestal offset per load combination</caption>
+      <tr><th class="lc-no">No.</th><th>Combination</th><th>P<sub>top</sub> (kN)</th><th>k<sub>D</sub></th><th>ΔM<sub>x,off</sub> (kN·m)</th><th>ΔM<sub>z,off</sub> (kN·m)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th></tr>
+      ${results.map(r => `<tr><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.Ptop,2)}</td><td class="num">${fmt(r.kD,3)}</td><td class="num">${fmt(r.offMx,3)}</td><td class="num">${fmt(r.offMz,3)}</td><td class="num">${fmt(r.Mx,3)}</td><td class="num">${fmt(r.Mz,3)}</td></tr>`).join('')}
     </table></div>`;
   }
   // Kern (eccentricity), bearing pressure, sliding and overturning, each per load combination with its own governing
@@ -210,22 +238,28 @@ export function calcFoundation() {
   document.getElementById('calc-foundation').innerHTML = numberTables(html, '4');
   // Focus Canvas view of the same results (js/tabs/stabilityFocus.js) — shown instead of the report sheet in that mode.
   const lcOf = (r) => (r ? (r.combo.lc || r.combo.name) : null);
+  // Focus tiles / table: kern and overturning as the larger of the uniaxial (resultant) and biaxial checks — both count in the
+  // governing UC (combineFootingChecks()), so the tile never shows less than what governs.
+  const kernUC = (r) => Math.max(ucOf(r, 'Eccentricity'), r.ucKernBiaxial);
+  const otUC = (r) => Math.max(ucOf(r, 'Overturning'), r.ucOTBiaxial);
+  const pick = (fn) => (validResults.length ? validResults.reduce((a, b) => (fn(b) > fn(a) ? b : a)) : null);
+  const kernF = pick(kernUC), otF = pick(otUC);
   const sfTxt = (v) => (Number.isFinite(v) ? fmt(v, 2) : '∞');
   document.getElementById('focus-foundation').innerHTML = foundationFocusHTML({
     B, L, status: lastResults.foundation.status, nCombos: results.length, qaText: `${fmt(qa, 1)} kPa`,
     checks: [
-      { name: 'Eccentricity (kern)', uc: kernGov ? kernGov.ucKernBiaxial : null, lc: lcOf(kernGov),
-        sub: kernGov ? `<span class="fz-nb">e<sub>x</sub> = ${fmt(kernGov.ex, 3)} m</span> · <span class="fz-nb">e<sub>z</sub> = ${fmt(kernGov.ez, 3)} m</span>` : '' },
+      { name: 'Eccentricity (kern)', uc: kernF ? kernUC(kernF) : null, lc: lcOf(kernF),
+        sub: kernF ? `<span class="fz-nb">e<sub>x</sub> = ${fmt(kernF.ex, 3)} m</span> · <span class="fz-nb">e<sub>z</sub> = ${fmt(kernF.ez, 3)} m</span>` : '' },
       { name: 'Bearing pressure', uc: bearingGov ? ucOf(bearingGov, 'Bearing pressure') : null, lc: lcOf(bearingGov),
         sub: bearingGov ? `<span class="fz-nb">q<sub>max</sub> = ${fmt(bearingGov.qmax, 1)}</span> / <span class="fz-nb">q<sub>a</sub> = ${fmt(qa, 1)} kPa</span>` : '' },
       { name: 'Sliding', uc: slidingGov ? ucOf(slidingGov, 'Sliding') : null, lc: lcOf(slidingGov),
         sub: slidingGov ? `<span class="fz-nb">SF = ${sfTxt(slidingGov.fsSliding)}</span> vs <span class="fz-nb">min ${fmt(slidingGov.fsSlideMin, 2)}</span>` : '' },
-      { name: 'Overturning', uc: otGov ? otGov.ucOTBiaxial : null, lc: lcOf(otGov),
-        sub: otGov ? `<span class="fz-nb">SF = ${sfTxt(Math.min(otGov.SF1, otGov.SF2))}</span> vs <span class="fz-nb">min ${fmt(otGov.fsOTMin, 2)}</span>` : '' }
+      { name: 'Overturning', uc: otF ? otUC(otF) : null, lc: lcOf(otF),
+        sub: otF ? `<span class="fz-nb">SF = ${sfTxt(otF.fsOTMin / otUC(otF))}</span> vs <span class="fz-nb">min ${fmt(otF.fsOTMin, 2)}</span>` : '' }
     ],
     rows: results.map((r) => (r.valid
-      ? { lc: lcOf(r), name: r.combo.name, temporary: r.temporary, kern: r.ucKernBiaxial, bearing: ucOf(r, 'Bearing pressure'), sliding: ucOf(r, 'Sliding'),
-          ot: r.ucOTBiaxial, govKern: r === kernGov, govBearing: r === bearingGov, govSliding: r === slidingGov, govOt: r === otGov }
+      ? { lc: lcOf(r), name: r.combo.name, temporary: r.temporary, kern: kernUC(r), bearing: ucOf(r, 'Bearing pressure'), sliding: ucOf(r, 'Sliding'),
+          ot: otUC(r), govKern: r === kernF, govBearing: r === bearingGov, govSliding: r === slidingGov, govOt: r === otF }
       : { lc: lcOf(r), name: r.combo.name, invalid: r.note || 'Not evaluated.' })),
     // Own marker ids: the report copy of this diagram is hidden in this mode (a marker in a hidden SVG does not render elsewhere).
     svg: shownSvg.replaceAll('fdn-arrow', 'fz4a-arrow'), shownLc: lcOf(shown)

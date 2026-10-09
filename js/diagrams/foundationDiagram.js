@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261009a';
+import { fmt } from '../core/format.js?v=20261009d';
 
 // Shallow foundation stability — plan + section with bearing pressure.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.

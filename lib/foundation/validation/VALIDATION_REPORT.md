@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
-Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 472 checks, 472 pass, 0 fail** (12 files, run 26 Sep 2026).
+Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
+**Total: 494 checks, 494 pass, 0 fail** (13 files, run 9 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -16,7 +16,8 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
-| **Total** | | **472** |
+| validation_shared_part13.mjs | shallow footing with an offset pedestal; biaxial kern / overturning in the governing UC | 22 |
+| **Total** | | **494** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -86,6 +87,16 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
   (flush edge allowed; 2.4 m footing, Bp 1.25, OffX −0.6 → 0.025 m out); pile embedment h < Hf (h = Hf fails);
   pedestal / pile checks skipped when not applicable.
 
+### part13 — offset pedestal on a shallow footing; biaxial checks govern (9 Oct 2026)
+- pedestalOffsetMoments (statics about the footing centroid): no offset → 0; P at +x → ΔMz = +P·OffX, P at +z → ΔMx = −P·OffZ
+  (app sign convention); backfill centroid z_s = −OffZ·Ap/(Af − Ap); kD scales the self-weight only; a uniform-weight
+  pedestal + soil prism over the whole footing gives zero net moment.
+- Pipe support, STAAD node 1, LC 115 (kD = 0.6 − 0.14·0.623), footing 1.30 × 1.40 × 0.25, Df 0.90, pedestal 0.30 × 0.30,
+  OffZ 0.30: ΔW = 33.21 kN, Δh = 1.200 m, ΔMx,off = −0.340, P = 17.65 kN, Mx = −1.267, Mz = 2.545 kN·m, biaxial kern
+  (2.545/17.65/1.3 + 1.267/17.65/1.4)·6 = 0.973, biaxial OT UC 1.5/(17.65·0.65/2.545) = 0.333.
+- combineFootingChecks: B = L = 1.2, P = 10, Mx = Mz = 1.1 — resultant e = 0.156 ≤ B/6 (uniaxial passes, UC 0.778) but the
+  kern diamond gives 1.100 → combined result fails, governed by the biaxial kern; all-pass case; invalid result passed through.
+
 ## How to re-run
 ```
 node lib/foundation/validation/validation_shared_part1.mjs
@@ -100,6 +111,7 @@ node lib/foundation/validation/validation_shared_part9.mjs
 node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
 node lib/foundation/validation/validation_static_part12.mjs
+node lib/foundation/validation/validation_shared_part13.mjs
 ```
 
 ## Notes

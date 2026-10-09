@@ -9,7 +9,7 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, pileList, reportBlocks, state } from '../core/state.js?v=20261009a';
+import { boltList, comboState, designStandards, pileList, reportBlocks, state } from '../core/state.js?v=20261009d';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
@@ -99,6 +99,8 @@ export function resetProjectFile() { fileHandle = null; fileName = null; dirty =
 
 const safeName = (s) => (s || 'Untitled project').replace(/[\\/:*?"<>|]+/g, '_').trim() || 'Untitled project';
 const FILE_TYPES = [{ description: 'FAIR Foundation Design project', accept: { 'application/json': ['.json'] } }];
+// Same picker id for Open and Save: the browser remembers the last folder used for FAIR projects (first time: Documents).
+const PICKER = { id: 'fair-projects', startIn: 'documents' };
 
 // Save (asNew = false: write to the file it was opened from / last saved to, if the browser allows) or Save As.
 // Returns false when the user cancels the dialog.
@@ -108,7 +110,7 @@ export async function saveProjectFile(asNew) {
   const suggested = fileName || safeName(data.project) + PROJECT_EXT;
   if (window.showSaveFilePicker) {
     try {
-      if (asNew || !fileHandle) fileHandle = await window.showSaveFilePicker({ suggestedName: suggested, types: FILE_TYPES });
+      if (asNew || !fileHandle) fileHandle = await window.showSaveFilePicker({ ...PICKER, suggestedName: suggested, types: FILE_TYPES });
       const w = await fileHandle.createWritable();
       await w.write(text);
       await w.close();
@@ -135,7 +137,7 @@ export async function pickProjectFile() {
   let file = null, handle = null;
   if (window.showOpenFilePicker) {
     try {
-      [handle] = await window.showOpenFilePicker({ types: FILE_TYPES, multiple: false });
+      [handle] = await window.showOpenFilePicker({ ...PICKER, types: FILE_TYPES, multiple: false });
       file = await handle.getFile();
     } catch (e) {
       if (e && e.name === 'AbortError') return null;

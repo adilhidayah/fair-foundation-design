@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261009a';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261009d';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -80,6 +80,9 @@ export const state = {
   // Pedestal of Tab 02 for the 5A pedestal design: height Hp (m, incl. grout — the lever arm of H down to the pedestal
   // base) and self-weight pedW (kN, concrete + grout). Both 0 when Tab 02 has no pedestal. Set by calcFoundSize().
   pedHp: 0, pedW: 0,
+  // Backfill above the footing / pile cap (kN, footing area minus pedestal, over the pedestal depth below ground) — set by
+  // calcFoundSize(); 4A places it at its own centroid when the pedestal is offset (pedestalOffsetMoments()).
+  footSoilW: 0,
   // Report header logos (data URLs from the logo uploads).
   rptLogo1: null, rptLogo2: null
 };

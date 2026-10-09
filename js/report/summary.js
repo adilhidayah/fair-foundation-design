@@ -1,8 +1,8 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { lastResults } from '../core/state.js?v=20261009a';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261009a';
-import { generateReport } from '../report/builder.js?v=20261009a';
+import { lastResults } from '../core/state.js?v=20261009d';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261009d';
+import { generateReport } from '../report/builder.js?v=20261009d';
 
 export function buildQuickStatusHtml() {
   const order = ['oneway', 'twoway', 'foundation', 'pile', 'bearing', 'settlement', 'anchor', 'pedestalRebar', 'pileCapRebar'];

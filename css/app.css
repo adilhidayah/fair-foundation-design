@@ -1931,6 +1931,13 @@
   .tb-file-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
   @media (max-width: 900px) { .tb-file-name { display: none; } }
   @media print { .tb-file { display: none !important; } }
+  /* Open / Save / New confirmation (js/app.js projectToast) */
+  .project-toast { position: fixed; left: 50%; top: 14px; z-index: 50; max-width: min(720px, 92vw); padding: 10px 16px; transform: translate(-50%, -20px);
+    font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--pass); background: var(--pass-bg); border: 1px solid var(--pass-border);
+    border-radius: var(--radius); box-shadow: var(--shadow-md); opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
+  .project-toast.show { opacity: 1; transform: translate(-50%, 0); }
+  .project-toast.bad { color: var(--fail); background: var(--fail-bg); border-color: var(--fail-border); }
+  @media print { .project-toast { display: none !important; } }
   /* App watermark under the sheet (screen only) */
   .app-footer {
     max-width: 1440px; width: 98%; margin: 18px auto 0;

@@ -1,34 +1,34 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261009a'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261009a';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009a';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261009a';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009a';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009a';
-import { loadTesseract } from './ocr/tesseract.js?v=20261009a';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009a';
-import { renderSummaryReport } from './report/summary.js?v=20261009a';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009a';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009a';
-import { calcFoundation } from './tabs/foundation.js?v=20261009a';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261009a';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009a';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009a';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009a';
-import { calcRebar } from './tabs/rebar.js?v=20261009a';
-import { calcSettlement } from './tabs/settlement.js?v=20261009a';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009a';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009a';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009a';
-import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009a';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009a';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009a';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009a';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009a';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261009a';
-import { renderScopePanel } from './workflow/scope.js?v=20261009a';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, validateProject } from './workflow/project.js?v=20261009a';
+} from '../lib/foundation/index.js?v=20261009d'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261009d';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009d';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261009d';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009d';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009d';
+import { loadTesseract } from './ocr/tesseract.js?v=20261009d';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009d';
+import { renderSummaryReport } from './report/summary.js?v=20261009d';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009d';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009d';
+import { calcFoundation } from './tabs/foundation.js?v=20261009d';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261009d';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009d';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009d';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009d';
+import { calcRebar } from './tabs/rebar.js?v=20261009d';
+import { calcSettlement } from './tabs/settlement.js?v=20261009d';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009d';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009d';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009d';
+import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009d';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009d';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009d';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009d';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009d';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261009d';
+import { renderScopePanel } from './workflow/scope.js?v=20261009d';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, validateProject } from './workflow/project.js?v=20261009d';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -953,16 +953,30 @@ function updateProjectLabel() {
   el.title = f.dirty ? 'Unsaved changes' : (f.name ? 'Saved' : 'Not saved yet');
 }
 const confirmDiscard = () => !projectFile().dirty || window.confirm('Discard the unsaved changes of the current project?');
+// Short confirmation under the header (Open / Save / New) — a successful load otherwise only shows in the file name.
+let projectToastT = null;
+function projectToast(msg, bad) {
+  let el = document.getElementById('project-toast');
+  if (!el) { el = document.createElement('div'); el.id = 'project-toast'; el.setAttribute('role', 'status'); document.body.append(el); }
+  el.textContent = msg;
+  el.className = 'project-toast show' + (bad ? ' bad' : '');
+  clearTimeout(projectToastT);
+  projectToastT = setTimeout(() => { el.className = 'project-toast' + (bad ? ' bad' : ''); }, bad ? 8000 : 4000);
+}
 async function saveProject(asNew) {
-  try { if (await saveProjectFile(asNew)) updateProjectLabel(); }
-  catch (e) { window.alert('Could not save the project: ' + (e && e.message ? e.message : e)); }
+  try { if (await saveProjectFile(asNew)) { updateProjectLabel(); projectToast('✓ Saved: ' + projectFile().name); } }
+  catch (e) { console.error('Save project:', e); projectToast('✗ Could not save the project: ' + (e && e.message ? e.message : e), true); }
 }
 async function openProject() {
   if (!confirmDiscard()) return;
   try {
     const r = await pickProjectFile();
-    if (r) loadProjectData(r.data);
-  } catch (e) { window.alert('Could not open the project: ' + (e && e.message ? e.message : e)); }
+    if (r) {
+      loadProjectData(r.data);
+      switchWorkflowTab('foundsize'); // show something that visibly comes from the file
+      projectToast(`✓ Opened: ${r.name} — ${r.data.project || 'project'} (footing ${document.getElementById('fs-Bf').value} × ${document.getElementById('fs-Lf').value} m)`);
+    }
+  } catch (e) { console.error('Open project:', e); projectToast('✗ Could not open the project: ' + (e && e.message ? e.message : e), true); }
   updateProjectLabel();
 }
 document.getElementById('project-new').addEventListener('click', () => {
@@ -970,6 +984,7 @@ document.getElementById('project-new').addEventListener('click', () => {
   loadProjectData(PROJECT_DEFAULTS);
   resetProjectFile();
   updateProjectLabel();
+  projectToast('✓ New project (default values)');
 });
 document.getElementById('project-open').addEventListener('click', openProject);
 document.getElementById('project-save').addEventListener('click', () => saveProject(false));
