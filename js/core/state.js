@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261009n';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261009q';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -42,6 +42,8 @@ export const reportBlocks = [
 export const state = {
   // 02 Focus Canvas viewport view: 'plan' | 'elev' | 'iso' (js/tabs/foundSizeFocus.js) — survives calcFoundSize() re-renders.
   fzView: 'plan',
+  // 5B Focus Canvas (js/tabs/shearFocus.js): shear check shown ('oneway' | 'twoway') and its viewport view ('plan' | 'elev' | 'iso').
+  shMode: 'oneway', shView: 'plan',
   // Holds independent Fx/Mz (transversal) and Fz/Mx (longitudinal) Wind values — set by manual "Apply" (asymmetric,
   // whatever was actually typed into the Fx/Fz dialog) or by the ASCE 7-22 generator (from Asx/Asz). Read by
   // renderLoadSummary() for the WX/WZ rows. Declared here (not next to where it's set, further down) because

@@ -2,10 +2,10 @@
 // preview is in Focus Canvas mode (css/app.css); Report Preview and print keep #calc-foundsize.
 // Builds markup only — every value comes from calcFoundSize() (foundationSizing() / foundationGeometryCheck() results),
 // nothing is recomputed here. Declarations only.
-import { escapeHtml } from '../core/dom.js?v=20261009n';
-import { fmt } from '../core/format.js?v=20261009n';
-import { state } from '../core/state.js?v=20261009n';
-import { foundIsoDiagramSVG } from '../diagrams/foundIsoDiagram.js?v=20261009n';
+import { escapeHtml } from '../core/dom.js?v=20261009q';
+import { fmt } from '../core/format.js?v=20261009q';
+import { state } from '../core/state.js?v=20261009q';
+import { foundIsoDiagramSVG } from '../diagrams/foundIsoDiagram.js?v=20261009q';
 
 // CAD viewport views: [key, icon, label] — the key is the data-cad-view value and the #btn-* / #svg-* id suffix.
 const CAD_VIEWS = [['plan', '📐', 'Plan View'], ['elev', '📏', 'Elevation View'], ['iso', '🧊', 'Isometric 2.5D']];

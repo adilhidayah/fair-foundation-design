@@ -77,6 +77,7 @@ MASTER CALCULATOR/
 | [js/diagrams/pmDiagram.js](../js/diagrams/pmDiagram.js) | 2 KB | Diagram interaksi P-M |
 | [js/diagrams/equipmentDiagram.js](../js/diagrams/equipmentDiagram.js) | 6 KB | Skema elevasi equipment + fondasi (00, tidak berskala) |
 | [js/diagrams/foundIsoDiagram.js](../js/diagrams/foundIsoDiagram.js) | 5 KB | Isometrik 2.5D footing / pedestal / tiang (02 Focus Canvas) |
+| [js/diagrams/shearFocusDiagram.js](../js/diagrams/shearFocusDiagram.js) | 17 KB | 5B Focus Canvas: geser satu arah + punching — plan / potongan / iso 2.5D (SVG murni) |
 | [js/tabs/general.js](../js/tabs/general.js) | 12 KB | 01 — Design standards + ringkasan general |
 | [js/tabs/foundSize.js](../js/tabs/foundSize.js) | 13 KB | 02 — `calcFoundSize()` |
 | [js/tabs/loading.js](../js/tabs/loading.js) | 26 KB | 03 — Load types/values, live, equipment, wind, seismic, design load summary |
@@ -101,6 +102,7 @@ MASTER CALCULATOR/
 | [js/tabs/stabilityFocus.js](../js/tabs/stabilityFocus.js) | 6 KB | 4A / 4B — tampilan Focus Canvas (UC per cek, diagram, tabel UC / DCR per kombinasi) |
 | [js/tabs/generalFocus.js](../js/tabs/generalFocus.js) | 3 KB | 01 — tampilan Focus Canvas (material, berat isi, q_a / kapasitas tiang, standar, kriteria geoteknik) |
 | [js/tabs/foundSizeFocus.js](../js/tabs/foundSizeFocus.js) | 4 KB | 02 — tampilan Focus Canvas (dimensi utama, diagram, self-weight, geometry check) |
+| [js/tabs/shearFocus.js](../js/tabs/shearFocus.js) | 5 KB | 5B — Focus Canvas geser (`#focus-capcheck`): toggle mode/view, badge D/C, tile, tooltip |
 | [js/workflow/project.js](../js/workflow/project.js) | 6 KB | File proyek `*.fair.json`: New / Open / Save / Save As |
 | [js/workflow/scope.js](../js/workflow/scope.js) | 1 KB | Scope of Work (panel kanan di 00): anchor by vendor / q_a given geotech |
 | [js/ui/theme.js](../js/ui/theme.js) | 1 KB | Tombol tema terang / gelap di header |

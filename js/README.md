@@ -18,6 +18,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/general.js` | 01 — design standards register, general summary |
 | `tabs/generalFocus.js` | 01 — Focus Canvas view (`#focus-general`): material / unit-weight / q_a tiles, standards list, geotechnical criteria; replaces the A4 sheet only in Focus Canvas mode |
 | `tabs/foundSize.js` | 02 — `calcFoundSize` |
+| `tabs/shearFocus.js` | 5B — Focus Canvas of the shear checks (`#focus-capcheck`): one-way / punching toggle (`state.shMode`), Plan / Elevation / Isometric 2.5D (`state.shView`), D/C badge, tiles, hover popover on `[data-tip]`; draws `lastResults.oneway.viz` / `.twoway.viz` (set in shear.js) with `diagrams/shearFocusDiagram.js` |
 | `tabs/foundSizeFocus.js` | 02 — Focus Canvas view (`#focus-foundsize`): tiles, CAD viewport (Plan / Elevation = crops of the report diagram, Isometric 2.5D; view in `state.fzView`), self-weight, geometry checks; replaces the A4 sheet only in Focus Canvas mode |
 | `tabs/loading.js` | 03 — load types / values, live, equipment, wind & seismic direct entry, design load summary |
 | `tabs/combos.js` | load combination tables, computed summary, standard LC101-126 set |

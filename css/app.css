@@ -1734,8 +1734,9 @@
     .results[data-view="canvas"]:has(#calc-foundsize.active) #focus-foundsize,
     .results[data-view="canvas"]:has(#calc-general.active) #focus-general,
     .results[data-view="canvas"]:has(#calc-foundation.active) #focus-foundation,
-    .results[data-view="canvas"]:has(#calc-pile.active) #focus-pile { display: block; }
-    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile).active { display: none; }
+    .results[data-view="canvas"]:has(#calc-pile.active) #focus-pile,
+    .results[data-view="canvas"]:has(#calc-oneway.active) #focus-capcheck { display: block; }
+    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway).active { display: none; }
     /* 03: the sheet stays under the Focus view while an OCR / paste review is open there (it holds the review tables). */
     .ld-results[data-view="canvas"] #focus-loading { display: block; margin-bottom: 16px; }
     .ld-results[data-view="canvas"] .ld-page:not(:has(#eq-ocr-preview:not(:empty), #eq-ocr-review:not(:empty), #lc-ocr-preview:not(:empty), #lc-ocr-review:not(:empty))) { display: none; }
@@ -1828,6 +1829,51 @@
   .fdn-diagram .iso-pile { fill: var(--accent-soft); stroke: var(--accent); }
   .fdn-diagram .iso-ground { fill: color-mix(in srgb, var(--ink-soft) 14%, transparent); stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 5 4; }
   .fdn-diagram .iso-axis { stroke: var(--ink-soft); stroke-width: 1.2; }
+
+  /* ===== 5B — shear Focus Canvas (#focus-capcheck, js/tabs/shearFocus.js + js/diagrams/shearFocusDiagram.js) =====
+     Critical section / perimeter = --fail (red), tributary / punched area and soil-pressure vectors = --caution (amber),
+     footing / pedestal outlines as in Section 02; theme tokens, so light and dark themes both work. */
+  #focus-capcheck .sh-modes { margin: 0 0 10px; }
+  #focus-capcheck .sh-viewport .sh-svg { display: none; width: 100%; height: auto; max-height: 64vh; margin: 0 auto; background: transparent; }
+  #focus-capcheck .sh-viewport[data-view="plan"] .sh-plan,
+  #focus-capcheck .sh-viewport[data-view="elev"] .sh-elev,
+  #focus-capcheck .sh-viewport[data-view="iso"] .sh-iso { display: block; }
+  #focus-capcheck .sh-stage { position: relative; }
+  #focus-capcheck .sh-tip {
+    position: absolute; z-index: 5; max-width: 300px; padding: 6px 9px; pointer-events: none;
+    font: 600 11.5px/1.35 var(--mono); color: var(--ink); background: var(--panel);
+    border: 1px solid var(--fail); border-radius: var(--radius-sm); box-shadow: var(--shadow-md);
+  }
+  #focus-capcheck .sh-dc { font-family: var(--mono); font-weight: 700; }
+  .fdn-diagram [data-tip] { cursor: help; }
+  .fdn-diagram .sh-crit { stroke: var(--fail); stroke-width: 2; stroke-dasharray: 8 4; fill: none; opacity: 0.55; }
+  .fdn-diagram .sh-crit.gov { stroke-width: 3; opacity: 1; }
+  .fdn-diagram .sh-hit { stroke: transparent; stroke-width: 12; }
+  .fdn-diagram .sh-crit-text { fill: var(--fail); }
+  .fdn-diagram .sh-block-text { fill: var(--caution); }
+  .fdn-diagram .sh-bo { fill: var(--fail); }
+  .fdn-diagram .sh-trib { fill: color-mix(in srgb, var(--caution) 14%, transparent); stroke: none; }
+  .fdn-diagram .sh-trib.gov { fill: color-mix(in srgb, var(--caution) 32%, transparent); }
+  .fdn-diagram .sh-arrow { stroke: color-mix(in srgb, var(--caution) 45%, var(--panel)); stroke-width: 1.6; }
+  .fdn-diagram .sh-arrow.hot { stroke: var(--caution); stroke-width: 2; }
+  .fdn-diagram .sh-head-q { fill: var(--caution); }
+  .fdn-diagram .sh-head-dim { fill: var(--ink-soft); }
+  .fdn-diagram .sh-rebar { fill: var(--accent); }
+  .fdn-diagram .sh-rebar-line { stroke: var(--accent); stroke-width: 1; stroke-dasharray: 2 3; }
+  .fdn-diagram .sh-crack { stroke: var(--fail); stroke-width: 1.6; opacity: 0.55; }
+  .fdn-diagram .sh-crack.gov { stroke-width: 2.4; opacity: 1; }
+  .fdn-diagram .sh-cone { fill: color-mix(in srgb, var(--fail) 16%, transparent); stroke: var(--fail); stroke-width: 1.2; }
+  .fdn-diagram .sh-cone.front { fill: color-mix(in srgb, var(--fail) 26%, transparent); }
+  .fdn-diagram .sh-cone.base { fill: color-mix(in srgb, var(--fail) 10%, transparent); stroke-dasharray: 4 3; }
+  .fdn-diagram .sh-plane { fill: color-mix(in srgb, var(--fail) 30%, transparent); stroke: var(--fail); stroke-width: 1.4; }
+  .fdn-diagram .iso-face.sh-block { fill: color-mix(in srgb, var(--caution) 18%, var(--panel)); stroke: var(--caution); }
+  .fdn-diagram .iso-face.sh-block.gov.iso-top { fill: color-mix(in srgb, var(--caution) 34%, var(--panel)); }
+  .fdn-diagram .iso-face.sh-block.gov.iso-sx { fill: color-mix(in srgb, var(--caution) 48%, var(--panel)); }
+  .fdn-diagram .iso-face.sh-block.gov.iso-sz { fill: color-mix(in srgb, var(--caution) 60%, var(--panel)); }
+  .fdn-diagram .iso-face.sh-ghost { fill: color-mix(in srgb, var(--line) 30%, transparent); stroke: var(--line-strong); stroke-dasharray: 5 3; }
+  .fdn-diagram .sh-ghost-edge { stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.7; }
+  .fdn-diagram .sh-pile { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1; stroke-dasharray: 3 2; }
+  .fdn-diagram .sh-pile.hot { stroke-dasharray: none; stroke-width: 1.6; }
 
   /* ===== 4A / 4B Focus Canvas (js/tabs/stabilityFocus.js): check tiles with UC bar, UC table per combination ===== */
   .fz-check .fz-tile-value { font-size: 22px; }

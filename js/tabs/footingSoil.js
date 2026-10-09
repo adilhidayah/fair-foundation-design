@@ -1,11 +1,11 @@
 // 5B shallow footing — factored (LRFD) soil pressure per combination, shared by the one-way shear, punching and flexure panels.
 // Function/const declarations only; event wiring stays in app.js.
-import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261009n';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009n';
-import { fmt } from '../core/format.js?v=20261009n';
-import { comboState, state } from '../core/state.js?v=20261009n';
-import { comboLabel } from '../core/worksheet.js?v=20261009n';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261009n';
+import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261009q';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009q';
+import { fmt } from '../core/format.js?v=20261009q';
+import { comboState, lastResults, state } from '../core/state.js?v=20261009q';
+import { comboLabel, introPara } from '../core/worksheet.js?v=20261009q';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261009q';
 
 export const isShallow = () => getRadioVal('fs-support') !== 'pile';
 
@@ -45,20 +45,28 @@ export function footingLrfdActions() {
   return { valid: true, B, L, ped, hasPed, wUnit, items };
 }
 
-// Formula block + per-combination table of the design pressure, shown under each 5B panel in shallow mode.
-export function soilPressureHtml(fa, extraCols = null) {
+// Sentence + per-combination table of the design pressure, used by the chapter 06 sections in shallow mode (report pattern:
+// the model and formulas in the sentence above the table, a short caption).
+export function soilPressureHtml(fa, extraCols = null, caption = 'Design soil pressure per load combination') {
   const rows = fa.items.map(it => it.invalid
     ? `<tr><td>${escapeHtml(comboLabel(it.combo))}</td><td class="num">${fmt(it.Pu, 1)}</td><td class="num">${fmt(it.Mx, 1)}</td><td class="num">${fmt(it.Mz, 1)}</td><td colspan="${4 + (extraCols ? extraCols.head.length : 0)}">${escapeHtml(it.invalid)}</td></tr>`
     : `<tr class="${extraCols && extraCols.gov === it ? 'governing' : ''}"><td>${escapeHtml(comboLabel(it.combo))}</td><td class="num">${fmt(it.Pu, 1)}</td><td class="num">${fmt(it.Mx, 1)}</td><td class="num">${fmt(it.Mz, 1)}</td><td class="num">${fmt(it.pl.qmax, 1)}</td><td class="num">${fmt(it.pl.qmin, 1)}</td><td class="num">${fmt(100 * it.pl.contactRatio, 0)}%</td><td class="num">${fmt(it.w, 2)}</td>${extraCols ? extraCols.cells(it) : ''}</tr>`).join('');
-  return `<div class="lc-formula">
-    <div class="lc-formula-title">Design soil pressure — factored (LRFD) combinations at the underside of the footing</div>
-    q(x, z) = max(0, a + b·x + c·z): rigid footing, linear pressure, no tension, resultant at x<sub>R</sub> = M<sub>z</sub>/P<sub>u</sub>, z<sub>R</sub> = −M<sub>x</sub>/P<sub>u</sub> (same model as the 4A bearing check); full contact q = (P<sub>u</sub>/BL)(1 ± 6e<sub>x</sub>/B ± 6e<sub>z</sub>/L)<br>
-    Net design pressure q − w, w = k<sub>D</sub>·(W<sub>f</sub>/A<sub>f</sub> + W<sub>s</sub>/(A<sub>f</sub> − A<sub>p</sub>)) = k<sub>D</sub> × ${fmt(fa.wUnit, 2)} kPa (factored footing + backfill, k<sub>D</sub> = dead-load factor of the combination)
-    <div class="lc-formula-where">P<sub>u</sub>, M<sub>x</sub>, M<sub>z</sub> include the footing, pedestal and backfill weights × k<sub>D</sub>${fa.hasPed && (Math.abs(fa.ped.x) > 1e-9 || Math.abs(fa.ped.z) > 1e-9) ? ' and the moments of the pedestal offset (as in 4A)' : ''}. Pedestal centre (${fmt(fa.ped.x, 3)}, ${fmt(fa.ped.z, 3)}) m, B<sub>p</sub> × L<sub>p</sub> = ${fmt(fa.ped.c1, 3)} × ${fmt(fa.ped.c2, 3)} m.</div>
-  </div>
-  <div class="overflow-x"><table class="calc-table">
-    <caption>Design soil pressure per LRFD combination</caption>
+  const offset = fa.hasPed && (Math.abs(fa.ped.x) > 1e-9 || Math.abs(fa.ped.z) > 1e-9);
+  return introPara(`Soil pressure under the factored LRFD combinations at the underside of the footing — rigid footing, linear pressure, no tension (same model as the 4A bearing check): q(x, z) = max(0, a + b·x + c·z) with the resultant at x<sub>R</sub> = M<sub>z</sub>/P<sub>u</sub>, z<sub>R</sub> = −M<sub>x</sub>/P<sub>u</sub>; in full contact q = (P<sub>u</sub>/BL)(1 ± 6e<sub>x</sub>/B ± 6e<sub>z</sub>/L). P<sub>u</sub>, M<sub>x</sub>, M<sub>z</sub> include the footing, pedestal and backfill weights × k<sub>D</sub>${offset ? ' and the moments of the pedestal offset' : ''}. Net design pressure q − w, with w = k<sub>D</sub>·(W<sub>f</sub>/A<sub>f</sub> + W<sub>s</sub>/(A<sub>f</sub> − A<sub>p</sub>)) = k<sub>D</sub> × ${fmt(fa.wUnit, 2)} kPa (k<sub>D</sub> = dead-load factor of the combination).`)
+    + `<div class="overflow-x"><table class="calc-table">
+    <caption>${caption}</caption>
     <tr><th>Combination</th><th>P<sub>u</sub> (kN)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th><th>q<sub>max</sub> (kPa)</th><th>q<sub>min</sub> (kPa)</th><th>Contact</th><th>w (kPa)</th>${extraCols ? extraCols.head.map(h => `<th>${h}</th>`).join('') : ''}</tr>
     ${rows}
   </table></div>`;
+}
+
+// Chapter 06 ends with one Limitation box (report pattern), filled from the three sections' own texts (lastResults.oneway.limit,
+// .twoway.limit, .pileCapRebar.limit). The box sits at the end of 6.3 (#calc-rebarcap .ch6-limits); calcRebar() runs before
+// calcOneWay() / calcTwoWay(), so each of the three calls this after storing its text.
+export function renderCh6Limits() {
+  const el = document.querySelector('#calc-rebarcap .ch6-limits');
+  if (!el) return;
+  const parts = [['One-way shear', lastResults.oneway], ['Punching shear', lastResults.twoway], ['Flexure', lastResults.pileCapRebar]]
+    .filter(([, r]) => r && r.limit);
+  el.innerHTML = parts.length ? `<div class="limits-box"><strong>Limitation:</strong> ${parts.map(([n, r]) => `${n}: ${r.limit}`).join(' ')}</div>` : '';
 }

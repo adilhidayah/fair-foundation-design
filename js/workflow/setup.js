@@ -1,9 +1,9 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261009n';
-import { getRadioVal } from '../core/dom.js?v=20261009n';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261009n';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261009n';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261009q';
+import { getRadioVal } from '../core/dom.js?v=20261009q';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261009q';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261009q';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
