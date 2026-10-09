@@ -1920,6 +1920,17 @@
     display: block; margin: 0 0 12px; padding: 8px 12px; border: 1.5px solid #64748B; border-radius: 6px;
     background: #F1F5F9; color: #475569 !important; font-weight: 700; font-size: 10.5px !important; letter-spacing: 0.02em;
   }
+  /* Project file group in the header (js/workflow/project.js) */
+  .tb-file { display: flex; align-items: center; gap: 6px; margin-right: 10px; }
+  .tb-file-name { max-width: 260px; margin-right: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: var(--mono); font-size: 11px; color: rgba(255, 255, 255, 0.75); }
+  .tb-file-name.dirty { color: #FDE68A; }
+  .tb-file-btn { padding: 5px 10px; font-family: var(--mono); font-size: 11px; font-weight: 600; color: #fff; cursor: pointer;
+    background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: var(--radius-sm); }
+  .tb-file-btn:hover { background: rgba(255, 255, 255, 0.16); }
+  .tb-file-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+  @media (max-width: 900px) { .tb-file-name { display: none; } }
+  @media print { .tb-file { display: none !important; } }
   /* App watermark under the sheet (screen only) */
   .app-footer {
     max-width: 1440px; width: 98%; margin: 18px auto 0;

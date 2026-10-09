@@ -1,13 +1,13 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20260930v';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20260930v';
-import { fmt } from '../core/format.js?v=20260930v';
-import { comboState, state } from '../core/state.js?v=20260930v';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20260930v';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20260930v';
-import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20260930v';
-import { getWorkflowStepStatus } from '../workflow/status.js?v=20260930v';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261009a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009a';
+import { fmt } from '../core/format.js?v=20261009a';
+import { comboState, state } from '../core/state.js?v=20261009a';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261009a';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261009a';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261009a';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20261009a';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {

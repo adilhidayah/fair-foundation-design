@@ -1,33 +1,34 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20260930v'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20260930v';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260930v';
-import { dlWorksheetItem } from './core/worksheet.js?v=20260930v';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260930v';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260930v';
-import { loadTesseract } from './ocr/tesseract.js?v=20260930v';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260930v';
-import { renderSummaryReport } from './report/summary.js?v=20260930v';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260930v';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260930v';
-import { calcFoundation } from './tabs/foundation.js?v=20260930v';
-import { calcFoundSize } from './tabs/foundSize.js?v=20260930v';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260930v';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260930v';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260930v';
-import { calcRebar } from './tabs/rebar.js?v=20260930v';
-import { calcSettlement } from './tabs/settlement.js?v=20260930v';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260930v';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260930v';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260930v';
-import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260930v';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260930v';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20260930v';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20260930v';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20260930v';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20260930v';
-import { renderScopePanel } from './workflow/scope.js?v=20260930v';
+} from '../lib/foundation/index.js?v=20261009a'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261009a';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009a';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261009a';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009a';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009a';
+import { loadTesseract } from './ocr/tesseract.js?v=20261009a';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009a';
+import { renderSummaryReport } from './report/summary.js?v=20261009a';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009a';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009a';
+import { calcFoundation } from './tabs/foundation.js?v=20261009a';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261009a';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009a';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009a';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009a';
+import { calcRebar } from './tabs/rebar.js?v=20261009a';
+import { calcSettlement } from './tabs/settlement.js?v=20261009a';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009a';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009a';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009a';
+import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009a';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009a';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009a';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009a';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009a';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261009a';
+import { renderScopePanel } from './workflow/scope.js?v=20261009a';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, validateProject } from './workflow/project.js?v=20261009a';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -892,3 +893,113 @@ document.addEventListener('click', (e) => { if (e.target.closest && e.target.clo
 document.querySelectorAll('.sidebar-menu .tab').forEach((t) => t.addEventListener('click', scheduleWorkflowLive));
 try { renderWorkflowLive(); } catch (e) {}
 
+// ---------- Project file: New / Open / Save / Save As (js/workflow/project.js) ----------
+// Defaults = the state right after startup; "New" restores them and "Open" starts from them, so nothing from the previous
+// project survives a load.
+const PROJECT_DEFAULTS = collectProject();
+let projectLoading = false;
+function renderProjectLists() {
+  renderLoadTypesTable(); // also the Load Values rows (lc-<code>-*)
+  renderComboTable('lc'); // ASD and LRFD tables
+  renderPileTable();
+  renderBoltTable();
+  renderDesignStandardsTable();
+  renderBlockList();
+  [['rpt-logo1-preview', state.rptLogo1], ['rpt-logo2-preview', state.rptLogo2]].forEach(([id, src]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = src ? `<img src="${src}" style="max-height:60px;max-width:100%;border:1px solid var(--line);margin-top:6px;">` : '';
+  });
+}
+// Writes a project into the page and recalculates everything, in startup order.
+function loadProjectData(data) {
+  projectLoading = true;
+  try {
+    applyProjectData(PROJECT_DEFAULTS, renderProjectLists);
+    applyProjectData(data, renderProjectLists);
+    // Replay the radio choices as clicks so each group's own handler runs (field visibility, tab visibility, ...). Equipment
+    // type first: its handler may pre-select a foundation type, which the file's own fs-type choice then overrides.
+    const radios = data.radios || {};
+    Object.keys(radios).sort((a, b) => (b === 'eq-type') - (a === 'eq-type')).forEach((id) => {
+      const g = document.getElementById(id);
+      const btn = g && [...g.querySelectorAll('button[data-val]')].find((x) => x.dataset.val === radios[id]);
+      if (btn && !btn.disabled) btn.click();
+    });
+    toggleLoadInputMode();
+    updateFoundationTabVisibility();
+    renderScopePanel();
+    renderEquipmentLoad(); renderLiveLoad(); renderWindDirectPreview(); renderSeismicDirectPreview();
+    calcFoundSize(); // also recalcAll()
+    recalcPileCap();
+    calcSettlement();
+    recalcAllGeneral();
+    renderLcSummary();
+    if (typeof renderStdComboTables === 'function') renderStdComboTables();
+    renderSummaryReport();
+    // A loaded project is not a first-time entry: show the results, not the readiness checklist.
+    window.__liveBarVisited = new Set([...document.querySelectorAll('.sidebar-menu .tab')].map((t) => t.dataset.tab));
+    syncSidebarRails();
+    renderWorkflowLive();
+  } finally {
+    projectLoading = false;
+  }
+  setProjectDirty(false);
+  updateProjectLabel();
+}
+function updateProjectLabel() {
+  const f = projectFile();
+  const el = document.getElementById('project-file-name');
+  el.textContent = (f.name || 'Untitled project') + (f.dirty ? ' ●' : '');
+  el.classList.toggle('dirty', f.dirty);
+  el.title = f.dirty ? 'Unsaved changes' : (f.name ? 'Saved' : 'Not saved yet');
+}
+const confirmDiscard = () => !projectFile().dirty || window.confirm('Discard the unsaved changes of the current project?');
+async function saveProject(asNew) {
+  try { if (await saveProjectFile(asNew)) updateProjectLabel(); }
+  catch (e) { window.alert('Could not save the project: ' + (e && e.message ? e.message : e)); }
+}
+async function openProject() {
+  if (!confirmDiscard()) return;
+  try {
+    const r = await pickProjectFile();
+    if (r) loadProjectData(r.data);
+  } catch (e) { window.alert('Could not open the project: ' + (e && e.message ? e.message : e)); }
+  updateProjectLabel();
+}
+document.getElementById('project-new').addEventListener('click', () => {
+  if (!confirmDiscard()) return;
+  loadProjectData(PROJECT_DEFAULTS);
+  resetProjectFile();
+  updateProjectLabel();
+});
+document.getElementById('project-open').addEventListener('click', openProject);
+document.getElementById('project-save').addEventListener('click', () => saveProject(false));
+document.getElementById('project-saveas').addEventListener('click', () => saveProject(true));
+document.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 's') { e.preventDefault(); saveProject(e.shiftKey); }
+  else if (k === 'o' && !e.shiftKey) { e.preventDefault(); openProject(); }
+});
+// Unsaved-changes marker: any edit of an input, or a button press inside the input panels / dialogs / Scope of Work.
+const markProjectDirty = (e) => {
+  if (projectLoading || (e.target && e.target.type === 'file') || projectFile().dirty) return;
+  setProjectDirty(true);
+  updateProjectLabel();
+};
+document.addEventListener('input', markProjectDirty, true);
+document.addEventListener('change', markProjectDirty, true);
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('button');
+  if (b && b.closest('.inputs, .ld-inputs, .modal-box, #scope-panel') && !b.closest('.sidebar-rail')) markProjectDirty(e);
+}, true);
+window.addEventListener('beforeunload', (e) => {
+  if (!projectFile().dirty) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+updateProjectLabel();
+// For automation / tests: read the current project, or load one (object or JSON text) without the file dialogs.
+window.fairProject = {
+  collect: collectProject,
+  load: (p) => { const data = typeof p === 'string' ? parseProjectText(p) : p; validateProject(data); loadProjectData(data); }
+};

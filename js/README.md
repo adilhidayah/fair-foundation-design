@@ -36,6 +36,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `workflow/setup.js` | 00 — equipment setup, foundation-tab visibility, load input mode |
 | `workflow/status.js` | workflow step status, live design-status bar |
 | `workflow/assistant.js` | right-panel assistant drawer |
+| `workflow/project.js` | project file `*.fair.json` — `collectProject()` / `applyProjectData()` (every input / select / textarea by id, radio groups, load types, combinations, piles, bolts, standards, report blocks, wind / seismic, logos), Save / Save As (File System Access API, download fallback), Open; wired in `app.js` (header buttons, Ctrl+S / Ctrl+Shift+S / Ctrl+O, unsaved marker, `window.fairProject.collect()` / `.load()`) |
 | `workflow/scope.js` | Scope of Work (right panel on 00): `inScope('anchor'|'bearing')` — out of scope = status `NA`, left out of the governing UC; bearing out of scope = q_a given (`bc-qa-given`), read via `allowableBearing()` in `tabs/bearing.js` |
 | `ui/theme.js` | light / dark toggle in the header (`localStorage` `fair_fdn_theme`; applied before paint by an inline script in `<head>`) |
 | `ui/sidebar.js` | collapsible input column — `.layout-wrapper[data-sidebar]` expanded / compact / collapsed, saved in `localStorage` (`fair_fdn_sidebar_state`); sticky Previous / Next section bar at the bottom of the main preview panel (ribbon order, hidden tabs skipped); right status panel hide / show (`.layout-wrapper[data-rpanel]`, `localStorage` `fair_fdn_rightpanel_state`) |

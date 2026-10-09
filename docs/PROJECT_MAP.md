@@ -100,6 +100,7 @@ MASTER CALCULATOR/
 | [js/tabs/stabilityFocus.js](../js/tabs/stabilityFocus.js) | 6 KB | 4A / 4B — tampilan Focus Canvas (UC per cek, diagram, tabel UC / DCR per kombinasi) |
 | [js/tabs/generalFocus.js](../js/tabs/generalFocus.js) | 3 KB | 01 — tampilan Focus Canvas (material, berat isi, q_a / kapasitas tiang, standar, kriteria geoteknik) |
 | [js/tabs/foundSizeFocus.js](../js/tabs/foundSizeFocus.js) | 4 KB | 02 — tampilan Focus Canvas (dimensi utama, diagram, self-weight, geometry check) |
+| [js/workflow/project.js](../js/workflow/project.js) | 6 KB | File proyek `*.fair.json`: New / Open / Save / Save As |
 | [js/workflow/scope.js](../js/workflow/scope.js) | 1 KB | Scope of Work (panel kanan di 00): anchor by vendor / q_a given geotech |
 | [js/ui/theme.js](../js/ui/theme.js) | 1 KB | Tombol tema terang / gelap di header |
 | [js/ui/sidebar.js](../js/ui/sidebar.js) | 3 KB | Panel input kiri: expanded / compact / collapsed (`localStorage` `fair_fdn_sidebar_state`) |
