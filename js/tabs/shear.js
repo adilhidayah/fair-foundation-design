@@ -1,12 +1,12 @@
 // Pile cap one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009i';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009i';
-import { fmt } from '../core/format.js?v=20261009i';
-import { lastResults, pileList } from '../core/state.js?v=20261009i';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009i';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009i';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009i';
+import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009j';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009j';
+import { fmt } from '../core/format.js?v=20261009j';
+import { lastResults, pileList } from '../core/state.js?v=20261009j';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009j';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009j';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009j';
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group
@@ -164,7 +164,7 @@ export function calcOneWay() {
   html += `<tr><td>V<sub>c,min</sub></td><td class="clause">0.17λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_lower/1000,1)} kN</td></tr>
     <tr><td>V<sub>c,max</sub></td><td class="clause">0.42λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_upper/1000,1)} kN</td></tr>
     <tr class="governing"><td>V<sub>c</sub>, governing</td><td class="clause">${detail}</td><td class="num">${fmt(vc/1000,1)} kN</td></tr>
-    <tr><td>π V<sub>c</sub></td><td class="clause">π  = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
+    <tr><td>φV<sub>c</sub></td><td class="clause">φ = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
     <tr><td>V<sub>u</sub></td><td class="clause">${pv ? 'from pile reactions, LRFD' : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
   </table></div>`;
   if (pv) html += pileShearHtml(pv);
@@ -254,7 +254,7 @@ export function calcTwoWay() {
     <caption>Capacity check</caption>
     <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
     <tr><td>V<sub>c</sub></td><td class="clause">v<sub>c,gov</sub> · b<sub>o</sub> · d</td><td class="num">${fmt(Vc/1000,1)} kN</td></tr>
-    <tr><td>π V<sub>c</sub></td><td class="clause">π  = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
+    <tr><td>φV<sub>c</sub></td><td class="clause">φ = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
     <tr><td>V<sub>u</sub></td><td class="clause">${pv ? 'from pile reactions, LRFD' : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
   </table></div>`;
   const [tz, tx] = ecc.terms;

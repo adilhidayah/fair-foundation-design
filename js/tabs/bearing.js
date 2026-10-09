@@ -1,10 +1,10 @@
 // 08 — Bearing capacity (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261009i';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009i';
-import { fmt } from '../core/format.js?v=20261009i';
-import { lastResults } from '../core/state.js?v=20261009i';
-import { inScope } from '../workflow/scope.js?v=20261009i';
+import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261009j';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009j';
+import { fmt } from '../core/format.js?v=20261009j';
+import { lastResults } from '../core/state.js?v=20261009j';
+import { inScope } from '../workflow/scope.js?v=20261009j';
 
 // q_a used by 4A and Table 1.3.1 — one source. In scope: computed from the Tab 08 soil inputs (same bearingCapacityCheck()
 // call as calcBearing()). Out of scope (Section 00 → Scope of Work): the geotechnical-report value bc-qa-given, as entered.
@@ -81,14 +81,14 @@ export function calcBearing() {
   if (detail.type === 'terzaghi') {
     detailRows = `
       <tr><td>${detail.failure === 'local' ? "c′ = (2/3)c" : 'c (input)'}</td><td class="clause">—</td><td class="num">${fmt(detail.useC,2)} kPa</td></tr>
-      <tr><td>${detail.failure === 'local' ? "π ′ = arctan[(2/3)tanπ ]" : 'π  (input)'}</td><td class="clause">—</td><td class="num">${fmt(detail.usePhi,2)}°</td></tr>
-      <tr><td>N<sub>c</sub>, N<sub>q</sub>, N<sub>γ</sub></td><td class="clause">Terzaghi table, interpolated${detail.clamped ? ' (π  clamped to 0–50°)' : ''}</td><td class="num">${fmt(detail.Nc,2)}, ${fmt(detail.Nq,2)}, ${fmt(detail.Ng,2)}</td></tr>
+      <tr><td>${detail.failure === 'local' ? "φ′ = arctan[(2/3)tanφ]" : 'φ (input)'}</td><td class="clause">—</td><td class="num">${fmt(detail.usePhi,2)}°</td></tr>
+      <tr><td>N<sub>c</sub>, N<sub>q</sub>, N<sub>γ</sub></td><td class="clause">Terzaghi table, interpolated${detail.clamped ? ' (φ clamped to 0–50°)' : ''}</td><td class="num">${fmt(detail.Nc,2)}, ${fmt(detail.Nq,2)}, ${fmt(detail.Ng,2)}</td></tr>
       <tr><td>Shape factors s<sub>c</sub>, s<sub>γ</sub></td><td class="clause">${detail.shape}</td><td class="num">${fmt(detail.sc,3)}, ${fmt(detail.sg,3)}</td></tr>
       <tr><td>Surcharge, q = γ·D<sub>f</sub></td><td class="clause">—</td><td class="num">${fmt(detail.q,2)} kPa</td></tr>
       <tr class="governing"><td>q<sub>u</sub></td><td class="clause">c·N<sub>c</sub>·s<sub>c</sub> + q·N<sub>q</sub> + 0.5·γ·B·N<sub>γ</sub>·s<sub>γ</sub></td><td class="num">${fmt(qu,1)} kPa</td></tr>`;
   } else {
     detailRows = `
-      <tr><td>N<sub>c</sub>, N<sub>q</sub>, N<sub>γ</sub></td><td class="clause">exact, K<sub>p</sub>=tan²(45+π /2)</td><td class="num">${fmt(detail.Nc,2)}, ${fmt(detail.Nq,2)}, ${fmt(detail.Ng,2)}</td></tr>
+      <tr><td>N<sub>c</sub>, N<sub>q</sub>, N<sub>γ</sub></td><td class="clause">exact, K<sub>p</sub>=tan²(45+φ/2)</td><td class="num">${fmt(detail.Nc,2)}, ${fmt(detail.Nq,2)}, ${fmt(detail.Ng,2)}</td></tr>
       <tr><td>Shape F<sub>cs</sub>, F<sub>qs</sub>=F<sub>γs</sub></td><td class="clause">B/L = ${fmt(detail.bl,3)}</td><td class="num">${fmt(detail.Fcs,3)}, ${fmt(detail.Fqs,3)}</td></tr>
       <tr><td>Depth F<sub>cd</sub>, F<sub>qd</sub>=F<sub>γd</sub></td><td class="clause">D<sub>f</sub>/B = ${fmt(detail.Df/detail.B,3)}</td><td class="num">${fmt(detail.Fcd,3)}, ${fmt(detail.Fqd,3)}</td></tr>
       <tr><td>Inclination F<sub>ci</sub>=F<sub>qi</sub>, F<sub>γi</sub></td><td class="clause">β = ${fmt(detail.beta,1)}°</td><td class="num">${fmt(detail.Fci,3)}, ${fmt(detail.Fgi,3)}</td></tr>

@@ -1,14 +1,14 @@
 // 5A pedestal P-M reinforcement + 5B pile cap flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009i';
-import { num } from '../core/dom.js?v=20261009i';
-import { fmt } from '../core/format.js?v=20261009i';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009i';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009i';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009i';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009i';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009i';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009i';
+import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009j';
+import { num } from '../core/dom.js?v=20261009j';
+import { fmt } from '../core/format.js?v=20261009j';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009j';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009j';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009j';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009j';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009j';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009j';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -23,7 +23,7 @@ export function calcRebar() {
     lastResults.pileCapRebar.detail = 'No load combinations defined.';
     return;
   }
-  // 5A pedestal design loads: factored (LRFD, comboState.lrfd) at the BASE of the pedestal — ACI 318 compares π·Mn with
+  // 5A pedestal design loads: factored (LRFD, comboState.lrfd) at the BASE of the pedestal — ACI 318 compares φ·Mn with
   // strength-level actions, and the base is the critical section: M includes H × pedestal height Hp (dMx / dMz of the
   // shared load vectors) and P includes the pedestal self-weight. Mu is the resultant of the two moment components,
   // as in 4A (uniaxial design in the resultant direction). Fields keep the names Ptop / Mtop that searchPedestalBars() reads.
@@ -83,7 +83,7 @@ export function calcRebar() {
       </div>`;
       html += `<div class="overflow-x"><table class="calc-table">
         <caption>Per-combination check — factored (LRFD) P<sub>u</sub>, M<sub>u</sub> at the base of the pedestal (M<sub>u</sub> = √(M<sub>x</sub>² + M<sub>z</sub>²), incl. H·H<sub>p</sub>; P<sub>u</sub> incl. pedestal weight)</caption>
-        <tr><th>Combination</th><th>P<sub>u</sub> (kN)</th><th>M<sub>u</sub> (kN·m)</th><th>π M<sub>n</sub> at P<sub>u</sub> (kN·m)</th><th>UC</th><th>Status</th></tr>
+        <tr><th>Combination</th><th>P<sub>u</sub> (kN)</th><th>M<sub>u</sub> (kN·m)</th><th>φM<sub>n</sub> at P<sub>u</sub> (kN·m)</th><th>UC</th><th>Status</th></tr>
         ${search.perCombo.map(r => `<tr class="${r.combo === search.worstCombo ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.Pu,1)}</td><td class="num">${fmt(r.Mu,1)}</td><td class="num">${r.outOfRange ? '—' : fmt(r.phiMn,1)}</td><td class="num">${isFinite(r.uc) ? fmt(r.uc,3) : '—'}</td><td>${r.outOfRange ? 'P OUT OF RANGE' : (r.uc<=1.0?'OK':'EXCEEDS')}</td></tr>`).join('')}
       </table></div>`;
       html += sectionHeader('5A.2', 'P-M Interaction', 'Design interaction diagram (φP<sub>n</sub>, φM<sub>n</sub>) of the selected reinforcement, with every combination plotted as a point.');
@@ -191,7 +191,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   html += `<div class="lc-formula">
     <div class="lc-formula-title">Flexure at the pedestal faces</div>
     M<sub>u</sub> = Σ F<sub>i</sub>·(|c<sub>i</sub> − c<sub>p</sub>| − h<sub>p</sub>) over the piles beyond the face, per side; c = x (h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(halfX,3)} m, c<sub>p</sub> = ${fmt(at.x,3)} m) or z (h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(halfY,3)} m, c<sub>p</sub> = ${fmt(at.y,3)} m)<br>
-    net &gt; 0 → sagging, bottom steel;  net &lt; 0 → hogging, top steel (uplift piles);  A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(π·b·d²), π = 0.9, and A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>)
+    net &gt; 0 → sagging, bottom steel;  net &lt; 0 → hogging, top steel (uplift piles);  A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ= 0.9, and A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>)
     <div class="lc-formula-where">d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer); z-direction bars are the inner layer, d − d<sub>b</sub> = ${fmt(d - capBar,0)} mm. b = cap width perpendicular to the bending (L<sub>f</sub> for x, B<sub>f</sub> for z).</div>
   </div>`;
 

@@ -986,7 +986,7 @@
           <input type="number" id="bc-c" value="10" min="0">
         </div>
         <div class="field">
-          <label for="bc-phi">Friction angle, π  <span class="unit">deg</span></label>
+          <label for="bc-phi">Friction angle, φ <span class="unit">deg</span></label>
           <input type="number" id="bc-phi" value="30" min="0" max="50" step="0.5">
         </div>
         <div class="note">Soil unit weight γ is set in "01 — GENERAL INPUT DATA".</div>
@@ -1027,7 +1027,7 @@
             <button data-val="general" class="sel">General shear</button>
             <button data-val="local">Local shear</button>
           </div>
-          <div class="note">Local shear uses reduced strength c′=(2/3)c, π ′=arctan[(2/3)tanπ ] — for loose sand/soft clay per Terzaghi's original criterion.</div>
+          <div class="note">Local shear uses reduced strength c′=(2/3)c, φ′=arctan[(2/3)tanφ] — for loose sand/soft clay per Terzaghi's original criterion.</div>
         </div>
         <div class="field" id="bc-incl-field" style="display:none;">
           <label for="bc-beta">Load inclination from vertical, β <span class="unit">deg</span></label>
@@ -1205,29 +1205,29 @@
             <button data-val="uncracked">Uncracked</button>
           </div>
         </div>
-        <div class="section-label">Strength Reduction Factors, π  (Condition B default — editable)</div>
+        <div class="section-label">Strength Reduction Factors, φ (Condition B default — editable)</div>
         <div class="field">
-          <label for="ab-phi-Nsa"><span>π , steel tension (N<sub>sa</sub>)</span></label>
+          <label for="ab-phi-Nsa"><span>φ, steel tension (N<sub>sa</sub>)</span></label>
           <input type="number" id="ab-phi-Nsa" value="0.75" min="0" max="1" step="0.05">
         </div>
         <div class="field">
-          <label for="ab-phi-Ncb"><span>π , concrete breakout tension (N<sub>cb</sub>)</span></label>
+          <label for="ab-phi-Ncb"><span>φ, concrete breakout tension (N<sub>cb</sub>)</span></label>
           <input type="number" id="ab-phi-Ncb" value="0.65" min="0" max="1" step="0.05">
         </div>
         <div class="field">
-          <label for="ab-phi-Npn"><span>π , pullout (N<sub>pn</sub>)</span></label>
+          <label for="ab-phi-Npn"><span>φ, pullout (N<sub>pn</sub>)</span></label>
           <input type="number" id="ab-phi-Npn" value="0.65" min="0" max="1" step="0.05">
         </div>
         <div class="field">
-          <label for="ab-phi-Vsa"><span>π , steel shear (V<sub>sa</sub>)</span></label>
+          <label for="ab-phi-Vsa"><span>φ, steel shear (V<sub>sa</sub>)</span></label>
           <input type="number" id="ab-phi-Vsa" value="0.65" min="0" max="1" step="0.05">
         </div>
         <div class="field">
-          <label for="ab-phi-Vcb"><span>π , concrete breakout shear (V<sub>cb</sub>)</span></label>
+          <label for="ab-phi-Vcb"><span>φ, concrete breakout shear (V<sub>cb</sub>)</span></label>
           <input type="number" id="ab-phi-Vcb" value="0.70" min="0" max="1" step="0.05">
         </div>
         <div class="field">
-          <label for="ab-phi-Vcp"><span>π , pryout (V<sub>cp</sub>)</span></label>
+          <label for="ab-phi-Vcp"><span>φ, pryout (V<sub>cp</sub>)</span></label>
           <input type="number" id="ab-phi-Vcp" value="0.70" min="0" max="1" step="0.05">
         </div>
       </div>

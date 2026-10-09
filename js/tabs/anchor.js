@@ -1,13 +1,13 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261009i';
-import { getRadioVal, num } from '../core/dom.js?v=20261009i';
-import { fmt } from '../core/format.js?v=20261009i';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261009i';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009i';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261009i';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261009i';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261009i';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261009j';
+import { getRadioVal, num } from '../core/dom.js?v=20261009j';
+import { fmt } from '../core/format.js?v=20261009j';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261009j';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009j';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261009j';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261009j';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261009j';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -89,7 +89,7 @@ export function calcAnchor() {
     html += sectionHeader('9.2', 'Anchor Capacity', 'Design strength of a single anchor in tension and shear for each failure mode; the smallest governs.');
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Per-anchor capacity (single anchor, ACI 318M-19 Ch.17)</caption>
-      <tr><th>Mode</th><th>Nominal</th><th>π </th><th>π ·Nominal</th></tr>
+      <tr><th>Mode</th><th>Nominal</th><th>φ</th><th>φ·Nominal</th></tr>
       <tr><td>Governing edge distance, c<sub>a1</sub> (computed)</td><td class="clause">B<sub>p</sub>/2 - |x - x̅|, min over bolts</td><td class="num" colspan="2">${fmt(ca1,1)} mm</td></tr>
       ${cap.modesN.map(m => `<tr class="${m.name === cap.govNMode ? 'governing' : ''}"><td>${m.name}</td><td class="num">${fmt(m.val/1000,2)} kN</td><td class="num">${fmt(m.phi,2)}</td><td class="num">${fmt(m.phi*m.val/1000,2)} kN</td></tr>`).join('')}
       ${cap.modesV.map(m => `<tr class="${m.name === cap.govVMode ? 'governing' : ''}"><td>${m.name}</td><td class="num">${fmt(m.val/1000,2)} kN</td><td class="num">${fmt(m.phi,2)}</td><td class="num">${fmt(m.phi*m.val/1000,2)} kN</td></tr>`).join('')}
