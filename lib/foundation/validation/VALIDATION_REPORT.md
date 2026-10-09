@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 596 checks, 596 pass, 0 fail** (16 files, run 9 Oct 2026).
+**Total: 622 checks, 622 pass, 0 fail** (17 files, run 9 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -20,7 +20,8 @@ Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation
 | validation_shared_part14.mjs | biaxial no-tension soil pressure (rigid footing); "no eccentricity limit" option; Meyerhof effective area | 43 |
 | validation_shared_part15.mjs | wind force generator, ASCE 7-22 Ch. 29 (Table 26.11-1 constants, Kz with zmin, qz without Kd, Ke) | 26 |
 | validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
-| **Total** | | **596** |
+| validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift | 26 |
+| **Total** | | **622** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -38,6 +39,14 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
 - soil: Cn = √(100/σv) capped, Peck φ, Stroud cu, Bowles Es, γsub = γsat − 9.81.
 - settlement: Se = qB(1 − ν²)/Es·If·0.8, Sc = H/(1 + e0)·C·log10 (NC + OC branches).
 - seismic (Fa/Fv, SDS/SD1, Cs) generator. (Wind was listed here but had no vector; it is covered by part15 since 9 Oct 2026.)
+
+### part17 — footing punching at an edge / corner (footingDesign.js)
+- Interior section reproduces eccentricPunchingStress() exactly (v<sub>u</sub>, J<sub>c</sub>, no moment shift).
+- Edge (pedestal 0.5 at x 0.7 on a 2 × 2 footing, d 0.3): b<sub>o</sub> 2.2, x̄ 0.522727, J<sub>z</sub> 0.0390091, J<sub>x</sub> 0.0818 m⁴,
+  V<sub>u</sub> 344, M<sub>z,c</sub> = V<sub>u</sub>(x<sub>p</sub> − x̄) = 60.982, γ<sub>v</sub> 0.384088, v<sub>u</sub> 0.807783 MPa; v<sub>c</sub> (a) governs, (c) 2.7690.
+- Corner (0.7, 0.7): b<sub>o</sub> 1.4, centroid 0.475, J<sub>z</sub> 0.0230125, V<sub>u</sub> 351, v<sub>u</sub> 1.316171 MPa, (c) 2.8575.
+- Limits: section spanning two opposite edges and pedestal outside the footing are invalid; face exactly d/2 from the edge -> edge.
+- Browser: default footing interior result unchanged (UC 0.078); Off X 0.5 -> edge b<sub>o</sub> 4,582 mm, (0.5, −0.5) -> corner 2,991 mm.
 
 ### part16 — shallow footing design actions (footingDesign.js)
 - Uniform pressure (B = L = 2, P = 400, pedestal 0.5, d 0.3): M = qLc²/2 = 56.25, V = 90, punching 336; net with w = 20 kPa: 45 / 72 / 268.8.

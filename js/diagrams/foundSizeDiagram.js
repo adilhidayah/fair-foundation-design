@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261009k';
+import { fmt } from '../core/format.js?v=20261009l';
 
 // Foundation sizing plan + elevation. patch.js keeps its #fsize-arrow marker clean.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.

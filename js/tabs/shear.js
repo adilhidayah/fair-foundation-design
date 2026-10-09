@@ -1,13 +1,13 @@
 // Pile cap / shallow footing one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingShear, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009k';
-import { fmt } from '../core/format.js?v=20261009k';
-import { lastResults, pileList } from '../core/state.js?v=20261009k';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009k';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009k';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009k';
-import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009k';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009l';
+import { fmt } from '../core/format.js?v=20261009l';
+import { lastResults, pileList } from '../core/state.js?v=20261009l';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009l';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009l';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009l';
+import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009l';
 
 // The automatic V_u source follows the foundation type (a project file may carry the other one): piles <-> soil.
 const autoSrc = (src) => (src === 'manual' ? src : (isShallow() ? 'soil' : 'piles'));
@@ -40,7 +40,8 @@ function punchingVuFromSoil({ c1, c2, h, cc, Dbar, loc }) {
     const res = it.invalid ? null : footingPunchingShear({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, cx: fa.ped.x, cz: fa.ped.z, c1: c1 / 1000, c2: c2 / 1000, d });
     const v = stdComboVector(it.combo.f, pedBase);
     const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
-    const ecc = res && res.valid ? eccentricPunchingStress({ c1, c2, d: d * 1000, Vu: res.Vu, Mx, Mz, loc }) : null;
+    // critical section cut by the footing edges (interior / edge / corner detected from the geometry, not the tw-loc input)
+    const ecc = res && res.valid ? footingPunchingStress({ sec: res.sec, Vu: res.Vu, Mx, Mz }) : null;
     return { combo: it.combo, it, invalid: it.invalid || (res && !res.valid ? res.note : null), res, Mx, Mz, ecc };
   });
   const ok = per.filter(p => p.res && p.res.valid);
@@ -58,7 +59,7 @@ function soilShearHtml(pv) {
   html += one
     ? `Critical sections at d from the pedestal face: ${cn}<sub>±</sub> = ${cn}<sub>p</sub> ± (${pv.axis === 'x' ? 'B' : 'L'}<sub>p</sub>/2 + d) = ${fmt(pv.center, 3)} ± (${fmt(pv.half, 3)} + ${fmt(pv.d, 3)}) → ${fmt(g.res.pos.plus, 3)} m / ${fmt(g.res.pos.minus, 3)} m<br>
     V = ∫(q − w) dA over the part of the footing beyond the section (full width); V<sub>u</sub> = larger |V| of the two sides → <strong>${fmt(pv.Vu, 1)} kN</strong> (${g.res.side} side)`
-    : `Critical perimeter at d/2 from the pedestal faces: half-sizes h<sub>x</sub> = c<sub>1</sub>/2 + d/2 = ${fmt(g.res.hx, 3)} m, h<sub>z</sub> = c<sub>2</sub>/2 + d/2 = ${fmt(g.res.hz, 3)} m, centred at (${fmt(pv.center.x, 3)}, ${fmt(pv.center.y, 3)}) m<br>
+    : `Critical section at d/2 from the pedestal faces (centre (${fmt(pv.center.x, 3)}, ${fmt(pv.center.y, 3)}) m), cut by the footing edges: x ${fmt(g.res.sec.rect.X1, 3)} … ${fmt(g.res.sec.rect.X2, 3)} m, z ${fmt(g.res.sec.rect.Z1, 3)} … ${fmt(g.res.sec.rect.Z2, 3)} m — ${g.res.sec.loc}<br>
     V<sub>u</sub> = ∫(q − w) dA outside the perimeter = (${fmt(g.res.Fall, 1)} − ${fmt(g.res.Finside, 1)}) − w·${fmt(g.res.Aout, 3)} m² → <strong>${fmt(pv.Vu, 1)} kN</strong>`;
   html += `<div class="lc-formula-where">Critical sections per ACI 318M-19 §13.2.7.2 (one-way at d, two-way at d/2 from the face of the pedestal).</div></div>`;
   const byIt = new Map(pv.per.map(p => [p.it, p]));
@@ -285,6 +286,7 @@ export function calcTwoWay() {
     lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: `V_u from ${srcName} not available: ` + pv.note };
     return;
   }
+  if (pv && pv.soil) return renderTwoWaySoil(pv, { fc, lambda });
   const { d, alphaS, bo, boFormula, beta, sqrtfc, vc_vals, vc_gov, Vc, phiVc, hMinRounded, phi } = r;
   // Combined stress with the unbalanced moments — ACI 318M-19 §8.4.4.2 (interior pedestal); UC = v_u / (φ·v_c).
   const ecc = eccentricPunchingStress({ c1, c2, d, Vu: vu, Mx, Mz, loc });
@@ -355,5 +357,63 @@ export function calcTwoWay() {
   document.getElementById('opt-twoway').innerHTML = (effHtml || suggestHtml)
     ? `<div class="section-label">Optimization Notes</div>${effHtml}${suggestHtml}`
     : '';
+  document.getElementById('calc-twoway').innerHTML = numberTables(html, '5B');
+}
+
+// 5B.2 for a shallow footing with V_u from the soil pressure: the critical section is cut by the footing edges (interior / edge /
+// corner from the geometry — footingPunchingSection()), α_s and b_o follow the actual sides, and the unbalanced moments are moved
+// to the centroid of the section (footingPunchingStress()). Governing combination = largest combined stress (same v_c for all).
+function renderTwoWaySoil(pv, { fc, lambda }) {
+  const g = pv.gov, sec = g.res.sec, ecc = g.ecc;
+  const cap = footingPunchingCapacity({ sec, fc, lambda });
+  const uc = ecc.vu / cap.phiVc_stress, pass = uc <= 1.0;
+  const dmm = sec.d * 1000;
+  const freeTxt = ['xm', 'xp', 'zm', 'zp'].filter(k => sec.free[k]).map(k => ({ xm: 'x−', xp: 'x+', zm: 'z−', zp: 'z+' }[k]));
+  lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: pass ? 'PASS' : 'FAIL', metric: `UC = ${fmt(uc,3)}`,
+    detail: `${sec.loc}, b_o=${fmt(sec.bo * 1000,0)}mm, d=${fmt(dmm,0)}mm, V_u=${fmt(g.res.Vu,1)}kN, v_u=${fmt(ecc.vu,3)}MPa (soil, ${comboLabel(g.combo)})` };
+  lastResults.twoway.notices = sec.loc !== 'interior' ? [{ title: 'Punching: ' + sec.loc + ' pedestal',
+    text: `The critical section reaches the footing edge on side ${freeTxt.join(', ')} (less than d/2 from the pedestal face) — ${sec.loc} section with α_s = ${sec.alphaS}, detected from Tab 02; the "Column location" input is not used with V_u from the soil pressure.` }] : [];
+  const sideRows = sec.sides.map(sd => `<tr><td>Side ${sd.name}</td><td class="clause">${sd.dir === 'z' ? `x = ${fmt(sd.x,3)} m, z ${fmt(sd.z1,3)} … ${fmt(sd.z2,3)} m` : `z = ${fmt(sd.z,3)} m, x ${fmt(sd.x1,3)} … ${fmt(sd.x2,3)} m`}</td><td class="num">${fmt(sd.l * 1000,0)} mm</td></tr>`).join('');
+  let html = TW_HEAD();
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Critical section geometry — §22.6.4.1, cut by the footing edges</caption>
+    <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
+    <tr><td>Effective depth, d</td><td class="clause">h − cc − D</td><td class="num">${fmt(dmm,0)} mm</td></tr>
+    <tr><td>Location</td><td class="clause">${freeTxt.length ? `free side(s) ${freeTxt.join(', ')}: pedestal face less than d/2 from the footing edge` : 'all faces at least d/2 from the footing edges'}</td><td class="num">${sec.loc}</td></tr>
+    ${sideRows}
+    <tr><td>Critical perimeter, b<sub>o</sub></td><td class="clause">Σ sides</td><td class="num">${fmt(sec.bo * 1000,0)} mm</td></tr>
+    <tr><td>α<sub>s</sub></td><td class="clause">§22.6.5.3 (${sec.loc})</td><td class="num">${sec.alphaS}</td></tr>
+    <tr><td>β (long/short side)</td><td class="clause">max(c₁,c₂)/min(c₁,c₂)</td><td class="num">${fmt(cap.beta,3)}</td></tr>
+    <tr><td>Centroid of the section, (x̄, z̄)</td><td class="clause">Σ l·(x, z) / b<sub>o</sub></td><td class="num">(${fmt(sec.xbar,3)}, ${fmt(sec.zbar,3)}) m</td></tr>
+  </table></div>`;
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Governing shear stress — Table 22.6.5.2</caption>
+    <tr><th>Equation</th><th>Clause</th><th>v<sub>c</sub> (MPa)</th></tr>
+    ${cap.vc_vals.map(v => `<tr class="${Math.abs(v.val - cap.vc_gov) < 1e-9 ? 'governing' : ''}"><td>${v.label}</td><td class="clause">${v.clause}</td><td class="num">${fmt(v.val,3)}</td></tr>`).join('')}
+  </table></div>`;
+  const termRows = (t, name, Mname, sym) => `
+    <tr><td>${Mname}</td><td class="clause">base of pedestal, same LRFD combination (03, Table 3.3.4)</td><td class="num">${fmt(t.M,1)} kN·m</td></tr>
+    <tr><td>${Mname} at the section centroid</td><td class="clause">${sym === 'z' ? `M<sub>z</sub> + V<sub>u</sub>·(x<sub>p</sub> − x̄) = ${fmt(t.M,1)} + ${fmt(g.res.Vu,1)}·(${fmt(sec.cx,3)} − ${fmt(sec.xbar,3)})` : `M<sub>x</sub> − V<sub>u</sub>·(z<sub>p</sub> − z̄) = ${fmt(t.M,1)} − ${fmt(g.res.Vu,1)}·(${fmt(sec.cz,3)} − ${fmt(sec.zbar,3)})`} — R8.4.4.2.3</td><td class="num">${fmt(t.Mc,1)} kN·m</td></tr>
+    <tr><td>b<sub>1</sub>, b<sub>2</sub> (${name})</td><td class="clause">section extent ${sym === 'z' ? 'along x, along z' : 'along z, along x'}</td><td class="num">${fmt(t.b1 * 1000,0)}, ${fmt(t.b2 * 1000,0)} mm</td></tr>
+    <tr><td>γ<sub>v</sub> (${name})</td><td class="clause">1 − 1/(1 + (2/3)√(b<sub>1</sub>/b<sub>2</sub>)) — §8.4.2.2.2</td><td class="num">${fmt(t.gv,3)}</td></tr>
+    <tr><td>J<sub>c</sub> (${name})</td><td class="clause">Σ sides about the centroid (R8.4.4.2.3)</td><td class="num">${fmt(t.J * 1e12 / 1e9,3)} ×10⁹ mm⁴</td></tr>
+    <tr><td>γ<sub>v</sub>·M<sub>c</sub>·c/J<sub>c</sub> (${name})</td><td class="clause">c = ${fmt(t.c * 1000,0)} mm to the governing point</td><td class="num">${fmt(t.v,3)} MPa</td></tr>`;
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Combined shear stress with unbalanced moment — ACI 318M-19 §8.4.4.2 (governing point (${fmt(ecc.at.x,3)}, ${fmt(ecc.at.z,3)}) m)</caption>
+    <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
+    <tr><td>V<sub>u</sub></td><td class="clause">from soil pressure, LRFD</td><td class="num">${fmt(g.res.Vu,1)} kN</td></tr>
+    <tr><td>Direct shear stress</td><td class="clause">V<sub>u</sub>/(b<sub>o</sub>·d)</td><td class="num">${fmt(ecc.vDirect,3)} MPa</td></tr>
+    ${termRows(ecc.terms[0], 'M<sub>z</sub>', 'M<sub>uz</sub>', 'z')}
+    ${termRows(ecc.terms[1], 'M<sub>x</sub>', 'M<sub>ux</sub>', 'x')}
+    <tr class="governing"><td>Combined stress, v<sub>u</sub></td><td class="clause">max over the ends of the sides</td><td class="num">${fmt(ecc.vu,3)} MPa</td></tr>
+    <tr><td>φ·v<sub>c</sub></td><td class="clause">0.75 × ${fmt(cap.vc_gov,3)}</td><td class="num">${fmt(cap.phiVc_stress,3)} MPa</td></tr>
+    <tr class="governing"><td>UC</td><td class="clause">v<sub>u</sub> / (φ·v<sub>c</sub>)</td><td class="num">${fmt(uc,3)}</td></tr>
+  </table></div>`;
+  html += soilShearHtml(pv);
+  html += `<div class="limits-box">
+    <strong>Limitation:</strong> Critical section at d/2 from the pedestal faces; a side closer than d/2 to the footing edge is dropped and the section runs out to the edge (edge = 3 sides, corner = 2 sides, α<sub>s</sub> 30 / 20). The unbalanced moments at the base of the pedestal are moved to the centroid of the critical section (Commentary R8.4.4.2.3) and the stress is checked at the ends of every side; γ<sub>f</sub> is not increased per §8.4.2.2.4. V<sub>u</sub> = net soil pressure outside the section (footing and backfill weight deducted). A section spanning two opposite edges is not a two-way case — one-way shear governs.
+  </div>`;
+  const effHtml = efficiencyBadge(uc, pass);
+  document.getElementById('opt-twoway').innerHTML = effHtml ? `<div class="section-label">Optimization Notes</div>${effHtml}` : '';
   document.getElementById('calc-twoway').innerHTML = numberTables(html, '5B');
 }
