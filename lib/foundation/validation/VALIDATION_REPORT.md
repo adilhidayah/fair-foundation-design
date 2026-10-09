@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 622 checks, 622 pass, 0 fail** (17 files, run 9 Oct 2026).
+**Total: 627 checks, 627 pass, 0 fail** (17 files, run 9 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -20,8 +20,8 @@ Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation
 | validation_shared_part14.mjs | biaxial no-tension soil pressure (rigid footing); "no eccentricity limit" option; Meyerhof effective area | 43 |
 | validation_shared_part15.mjs | wind force generator, ASCE 7-22 Ch. 29 (Table 26.11-1 constants, Kz with zmin, qz without Kd, Ke) | 26 |
 | validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
-| validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift | 26 |
-| **Total** | | **622** |
+| validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift; two-way size effect λs | 31 |
+| **Total** | | **627** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -46,6 +46,9 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
   V<sub>u</sub> 344, M<sub>z,c</sub> = V<sub>u</sub>(x<sub>p</sub> − x̄) = 60.982, γ<sub>v</sub> 0.384088, v<sub>u</sub> 0.807783 MPa; v<sub>c</sub> (a) governs, (c) 2.7690.
 - Corner (0.7, 0.7): b<sub>o</sub> 1.4, centroid 0.475, J<sub>z</sub> 0.0230125, V<sub>u</sub> 351, v<sub>u</sub> 1.316171 MPa, (c) 2.8575.
 - Limits: section spanning two opposite edges and pedestal outside the footing are invalid; face exactly d/2 from the edge -> edge.
+- Size effect λs = √(2/(1 + 0.004d)) ≤ 1 in all three v<sub>c</sub> expressions (Table 22.6.5.2): d 300 -> 0.953463, edge v<sub>c</sub> (a)
+  1.723369, (c) 2.640125, corner (c) 2.724564; twoWayShearCheck() d 435 -> 0.854358, (a) 1.409690, (b) 2.178612, (c) 2.358667;
+  λs = 1 for d ≤ 250. Browser (d 341, λs 0.920): punching UC manual 0.289 -> 0.314, pile 0.037 -> 0.041, soil 0.078 -> 0.085.
 - Browser: default footing interior result unchanged (UC 0.078); Off X 0.5 -> edge b<sub>o</sub> 4,582 mm, (0.5, −0.5) -> corner 2,991 mm.
 
 ### part16 — shallow footing design actions (footingDesign.js)

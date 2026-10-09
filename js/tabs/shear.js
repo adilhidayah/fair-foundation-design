@@ -1,13 +1,13 @@
 // Pile cap / shallow footing one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009l';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009l';
-import { fmt } from '../core/format.js?v=20261009l';
-import { lastResults, pileList } from '../core/state.js?v=20261009l';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009l';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009l';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009l';
-import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009l';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009m';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009m';
+import { fmt } from '../core/format.js?v=20261009m';
+import { lastResults, pileList } from '../core/state.js?v=20261009m';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009m';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009m';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009m';
+import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009m';
 
 // The automatic V_u source follows the foundation type (a project file may carry the other one): piles <-> soil.
 const autoSrc = (src) => (src === 'manual' ? src : (isShallow() ? 'soil' : 'piles'));
@@ -227,14 +227,14 @@ export function calcOneWay() {
     <caption>Calculation — §22.5.5</caption>
     <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
     <tr><td>Effective depth, d</td><td class="clause">h - cc - D</td><td class="num">${fmt(d,0)} mm</td></tr>
-    <tr><td>↓f'c</td><td class="clause">—</td><td class="num">${fmt(sqrtfc,3)} MPa<sup>0.5</sup></td></tr>`;
+    <tr><td>√f'c</td><td class="clause">—</td><td class="num">${fmt(sqrtfc,3)} MPa<sup>0.5</sup></td></tr>`;
   if (method === 'detailed') {
     html += `<tr><td>Size effect factor, λ<sub>s</sub></td><td class="clause">Eq. 22.5.5.1.3</td><td class="num">${fmt(lambdaS,3)}</td></tr>
       <tr><td>ρ<sub>w</sub></td><td class="clause">input</td><td class="num">${fmt(rho*100,3)}%</td></tr>
-      <tr><td>V<sub>c</sub>, unbounded</td><td class="clause">0.66λ<sub>s</sub>λ(ρ<sub>w</sub>)<sup>1/3</sup>↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(0.66 * lambdaS * lambda * Math.pow(Math.max(rho,0.0001),1/3) * sqrtfc * bw * d / 1000,1)} kN</td></tr>`;
+      <tr><td>V<sub>c</sub>, unbounded</td><td class="clause">0.66λ<sub>s</sub>λ(ρ<sub>w</sub>)<sup>1/3</sup>√f'c·b<sub>w</sub>·d</td><td class="num">${fmt(0.66 * lambdaS * lambda * Math.pow(Math.max(rho,0.0001),1/3) * sqrtfc * bw * d / 1000,1)} kN</td></tr>`;
   }
-  html += `<tr><td>V<sub>c,min</sub></td><td class="clause">0.17λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_lower/1000,1)} kN</td></tr>
-    <tr><td>V<sub>c,max</sub></td><td class="clause">0.42λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_upper/1000,1)} kN</td></tr>
+  html += `<tr><td>V<sub>c,min</sub></td><td class="clause">0.17λ√f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_lower/1000,1)} kN</td></tr>
+    <tr><td>V<sub>c,max</sub></td><td class="clause">0.42λ√f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_upper/1000,1)} kN</td></tr>
     <tr class="governing"><td>V<sub>c</sub>, governing</td><td class="clause">${detail}</td><td class="num">${fmt(vc/1000,1)} kN</td></tr>
     <tr><td>φV<sub>c</sub></td><td class="clause">φ = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
     <tr><td>V<sub>u</sub></td><td class="clause">${pv ? `from ${srcName}, LRFD` : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
@@ -315,6 +315,7 @@ export function calcTwoWay() {
     <tr><td>Effective depth, d</td><td class="clause">h - cc - D</td><td class="num">${fmt(d,0)} mm</td></tr>
     <tr><td>α<sub>s</sub></td><td class="clause">§22.6.5.3 (location)</td><td class="num">${alphaS}</td></tr>
     <tr><td>β (long/short side)</td><td class="clause">max(c₁,c₂)/min(c₁,c₂)</td><td class="num">${fmt(beta,3)}</td></tr>
+    <tr><td>Size effect factor, λ<sub>s</sub></td><td class="clause">√(2/(1 + 0.004d)) ≤ 1 — §22.5.5.1.3, Table 22.6.5.2</td><td class="num">${fmt(r.lambdaS,3)}</td></tr>
     <tr><td>Critical perimeter, b<sub>o</sub></td><td class="clause">${boFormula}</td><td class="num">${fmt(bo,0)} mm</td></tr>
   </table></div>`;
   html += `<div class="overflow-x"><table class="calc-table">
@@ -384,6 +385,7 @@ function renderTwoWaySoil(pv, { fc, lambda }) {
     <tr><td>Critical perimeter, b<sub>o</sub></td><td class="clause">Σ sides</td><td class="num">${fmt(sec.bo * 1000,0)} mm</td></tr>
     <tr><td>α<sub>s</sub></td><td class="clause">§22.6.5.3 (${sec.loc})</td><td class="num">${sec.alphaS}</td></tr>
     <tr><td>β (long/short side)</td><td class="clause">max(c₁,c₂)/min(c₁,c₂)</td><td class="num">${fmt(cap.beta,3)}</td></tr>
+    <tr><td>Size effect factor, λ<sub>s</sub></td><td class="clause">√(2/(1 + 0.004d)) ≤ 1 — §22.5.5.1.3, Table 22.6.5.2</td><td class="num">${fmt(cap.lambdaS,3)}</td></tr>
     <tr><td>Centroid of the section, (x̄, z̄)</td><td class="clause">Σ l·(x, z) / b<sub>o</sub></td><td class="num">(${fmt(sec.xbar,3)}, ${fmt(sec.zbar,3)}) m</td></tr>
   </table></div>`;
   html += `<div class="overflow-x"><table class="calc-table">
