@@ -1,14 +1,15 @@
-// 5A pedestal P-M reinforcement + 5B pile cap flexure.
+// 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009j';
-import { num } from '../core/dom.js?v=20261009j';
-import { fmt } from '../core/format.js?v=20261009j';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009j';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009j';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009j';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009j';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009j';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009j';
+import { evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009k';
+import { num } from '../core/dom.js?v=20261009k';
+import { fmt } from '../core/format.js?v=20261009k';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009k';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009k';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009k';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009k';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009k';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009k';
+import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009k';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -18,7 +19,7 @@ export function calcRebar() {
   if (comboState.lc.length === 0) {
     const noCombo = `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
     document.getElementById('calc-rebar').innerHTML = chapterHeader('5A. Pedestal Check') + noCombo;
-    document.getElementById('calc-rebarcap').innerHTML = sectionHeader('5B.3', 'Pile Cap Flexure', '', true) + noCombo;
+    document.getElementById('calc-rebarcap').innerHTML = sectionHeader('5B.3', isShallow() ? 'Footing Flexure' : 'Pile Cap Flexure', '', true) + noCombo;
     lastResults.pedestalRebar.detail = 'No load combinations defined.';
     lastResults.pileCapRebar.detail = 'No load combinations defined.';
     return;
@@ -110,6 +111,7 @@ export function calcRebar() {
 // pileCapMomentAxis() then returns kN·m directly. Bars: x-direction bars are taken as the outer layer (d), z-direction (internal field y)
 // bars as the inner layer (d − d_b), for both faces.
 function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
+  if (isShallow()) return calcFootingFlexure({ fc, fy });
   let html = sectionHeader('5B.3', 'Pile Cap Flexure', 'Bottom and top reinforcement in both directions from the factored pile reactions beyond the pedestal faces — ACI 318M-19 Ch.13 (footings).', true);
   const Lcap = num('rb-Lcap'), Bcap = num('rb-Bcap'), t = num('rb-t'), cc = num('rb-cc'), capBar = num('rb-capbar');
   const d = t - cc - capBar;
@@ -218,6 +220,95 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   </table></div>`;
   html += `<div class="limits-box">
     <strong>Limitation:</strong> Critical sections are taken at the pedestal faces (simplified — does not shift the section per §13.2.7.2 for non-square pedestals or consider two-way action toward all four faces). One-way and punching shear for the pile cap are checked separately in this tab (5B), with the pile cap's own b<sub>w</sub>/d and factored shear. Pile reactions come from the 4B group model (biaxial, including the moment of an off-centroid load point) evaluated for the separate factored LRFD combinations (ASCE 7-22 §2.3, LC201+). Both directions are designed with x-direction bars as the outer layer and z-direction bars as the inner layer (d − d<sub>b</sub>) — swap them in the detailing if the opposite layering is used. Top steel is designed only where the combinations produce hogging from uplift piles; minimum top steel for crack control / detailing is not added. Cap self-weight and soil over the cap are not deducted. The bar count assumes one layer across the full cap width — check spacing, development length and the cap-edge cover in the detailing.
+  </div>`;
+  document.getElementById('calc-rebarcap').innerHTML = numberTables(html, '5B');
+}
+// 5B shallow footing flexure — both axes, bottom AND top face, from the net soil pressure of the factored (LRFD) combinations
+// (footingLrfdActions(), js/tabs/footingSoil.js): M at each pedestal face = ∫(q − w)·arm dA over the part of the footing beyond
+// it, full width (footingFlexureAxis(), lib/foundation/shared/footingDesign.js) — ACI 318M-19 §13.2.7.1 (face of the pedestal).
+// Positive = sagging (bottom steel); negative = hogging (top steel), which happens on the uplift side of a partly lifted
+// footing where the footing + backfill weight is not carried by soil pressure. Bar layers as for the pile cap.
+function calcFootingFlexure({ fc, fy }) {
+  let html = sectionHeader('5B.3', 'Footing Flexure', 'Bottom and top reinforcement in both directions from the net soil pressure (factored, minus the footing and backfill weight) beyond the pedestal faces — ACI 318M-19 §13.2.7.1.', true);
+  lastResults.pileCapRebar.label = 'Footing Reinforcement';
+  const t = num('rb-t'), cc = num('rb-cc'), bar = num('rb-capbar');
+  const d = t - cc - bar;
+  const fail = (box, detail) => {
+    lastResults.pileCapRebar.detail = detail;
+    document.getElementById('calc-rebarcap').innerHTML = html + box;
+  };
+  if (d - bar <= 0) return fail(`<div class="warn-box"><strong>⚠  Invalid section:</strong> effective depth d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (z-direction inner layer ${fmt(d - bar,0)} mm) is zero or negative.</div>`, 'Invalid section (d ≤ 0).');
+  const fa = footingLrfdActions();
+  if (!fa.valid) return fail(`<div class="warn-box"><strong>⚠  Soil pressure not available:</strong> ${fa.note}</div>`, fa.note);
+  const { B, L, ped } = fa;
+  const res = fa.items.map(it => {
+    if (it.invalid) return { it, name: comboLabel(it.combo), invalid: it.invalid, m: { xb: 0, xt: 0, yb: 0, yt: 0 } };
+    const mx = footingFlexureAxis({ pl: it.pl, w: it.w, B, L, axis: 'x', ref: ped.x, half: ped.c1 / 2 });
+    const mz = footingFlexureAxis({ pl: it.pl, w: it.w, B, L, axis: 'z', ref: ped.z, half: ped.c2 / 2 });
+    return { it, name: comboLabel(it.combo), invalid: null, mx, mz, m: { xb: mx.bottom, xt: mx.top, yb: mz.bottom, yt: mz.top } };
+  });
+  const invalid = res.filter(r => r.invalid);
+  if (invalid.length) html += `<div class="warn-box"><strong>⚠  No soil pressure:</strong> ${invalid.map(r => `${r.name}: ${r.invalid}`).join('; ')} — these combinations are not included below (net uplift / overturning is checked in 4A).</div>`;
+  const CASES = [
+    { key: 'xb', lbl: 'x', face: 'bottom', title: 'x-direction — bottom', b: L * 1000, dEff: d },
+    { key: 'yb', lbl: 'z', face: 'bottom', title: 'z-direction — bottom', b: B * 1000, dEff: d - bar },
+    { key: 'xt', lbl: 'x', face: 'top', title: 'x-direction — top', b: L * 1000, dEff: d },
+    { key: 'yt', lbl: 'z', face: 'top', title: 'z-direction — top', b: B * 1000, dEff: d - bar }
+  ];
+  const Abar = Math.PI / 4 * bar * bar;
+  const okRes = res.filter(r => !r.invalid);
+  CASES.forEach(c => {
+    c.gov = okRes.length ? okRes.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 } };
+    c.Mu = c.gov.m[c.key];
+    c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel only where a combination produces hogging
+    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy) : null;
+    if (c.design && c.design.ok) { c.n = Math.ceil(c.design.As / Abar); c.spacing = c.b / (c.n + 1); }
+  });
+  const tooSmall = CASES.filter(c => c.design && !c.design.ok);
+  tooSmall.forEach(c => {
+    html += `<div class="warn-box"><strong>⚠  Section too small (${c.title}):</strong> M<sub>u</sub> = ${fmt(c.Mu,1)} kN·m exceeds what this thickness/width can resist even over-reinforced — increase H<sub>f</sub> or the footing width.</div>`;
+  });
+  const status = tooSmall.length ? 'FAIL' : (invalid.length || !okRes.length ? 'ERROR' : 'PASS');
+  const barTxt = (c) => (c.design && c.design.ok ? `${c.n} — D${fmt(bar,0)} @ ~${fmt(c.spacing,0)}mm` : '—');
+  const topCases = CASES.filter(c => c.face === 'top' && c.required);
+  Object.assign(lastResults.pileCapRebar, {
+    status,
+    metric: tooSmall.length ? 'SECTION TOO SMALL' : `x ${barTxt(CASES[0])}; z ${barTxt(CASES[1])}${topCases.length ? '; top ' + topCases.map(c => `${c.lbl} ${barTxt(c)}`).join(', ') : ''}`,
+    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
+      + (invalid.length ? ` | ${invalid.length} combination(s) without soil pressure` : '') + (tooSmall.length ? ' | section too small: ' + tooSmall.map(c => c.title).join(', ') : '')
+  });
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Recommended footing flexural reinforcement (M<sub>u</sub> factored, LRFD)</caption>
+    <tr><th>Section</th><th>Governing combination</th><th>M<sub>u</sub> (kN·m)</th><th>b (mm)</th><th>d (mm)</th><th>A<sub>s</sub> req. (mm²)</th><th>A<sub>s,min</sub> (mm²)</th><th>A<sub>s</sub> gov. (mm²)</th><th>Bars</th></tr>
+    ${CASES.map(c => {
+      if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment beyond the pedestal faces. Provide the minimum / detailing top steel per the project.</td></tr>`;
+      if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(Math.max(c.design.AsMinTS, c.design.AsMinFlex),0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+    }).join('')}
+  </table></div>`;
+  const drawLayers = {};
+  CASES.forEach(c => { if (c.required && c.design && c.design.ok) drawLayers[c.key] = { n: c.n, label: barTxt(c) }; });
+  if (Object.keys(drawLayers).length && !tooSmall.length) {
+    const pedDraw = { x: ped.x, y: ped.z, Bp: ped.c1 * 1000, Lp: ped.c2 * 1000 };
+    html += pileCapRebarPlanSVG({ Bf: B, Lf: L, cc, db: bar, piles: [], D: 0, ped: pedDraw, layers: drawLayers, name: 'Footing' });
+    html += pileCapRebarSectionSVG({ Bf: B, t, cc, db: bar, piles: [], D: 0, ped: pedDraw, layers: drawLayers, name: 'Footing' });
+  }
+  const minClear = Math.max(25, bar);
+  const tight = CASES.filter(c => c.required && c.design && c.design.ok && (c.spacing - bar) < minClear - 1e-9);
+  lastResults.pileCapRebar.notices = tight.length ? [{ title: 'Footing bar spacing',
+    text: `Clear spacing < ${fmt(minClear, 0)} mm = max(25 mm, d_b) (ACI 318M-19 §25.2.1): ${tight.map(c => `${c.title} ${fmt(c.spacing - bar, 0)} mm (${c.n} × D${fmt(bar, 0)})`).join('; ')} — use a larger bar or a second layer.` }] : [];
+  html += `<div class="lc-formula">
+    <div class="lc-formula-title">Flexure at the pedestal faces</div>
+    M<sub>u</sub> = ∫(q − w)·(|c − c<sub>p</sub>| − h<sub>p</sub>) dA over the part of the footing beyond the face, full width, per side; c = x (h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(ped.c1 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.x,3)} m) or z (h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(ped.c2 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.z,3)} m)<br>
+    net &gt; 0 → sagging, bottom steel;  net &lt; 0 → hogging, top steel (uplift side);  A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, and A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>)
+    <div class="lc-formula-where">d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer); z-direction bars are the inner layer, d − d<sub>b</sub> = ${fmt(d - bar,0)} mm. b = footing width perpendicular to the bending (L<sub>f</sub> for x, B<sub>f</sub> for z).</div>
+  </div>`;
+  const byIt = new Map(res.map(r => [r.it, r]));
+  const strong = (r, c) => (r === c.gov && c.required ? `<strong>${fmt(r.m[c.key],1)}</strong>` : fmt(r.m[c.key],1));
+  html += soilPressureHtml(fa, { head: CASES.map(c => `M<sub>u</sub> ${c.title.replace(' — ', ' ')} (kN·m)`), gov: null,
+    cells: (it) => { const r = byIt.get(it); return CASES.map(c => `<td class="num">${r.m[c.key] > 1e-6 || c.face === 'bottom' ? strong(r, c) : '—'}</td>`).join(''); } });
+  html += `<div class="limits-box">
+    <strong>Limitation:</strong> Critical sections at the pedestal faces over the full footing width (ACI 318M-19 §13.2.7.1); the concentration of reinforcement in the central band of a rectangular footing (§13.3.3.3) is not applied — distribute the short-direction bars accordingly in the detailing. Soil pressure: rigid footing, linear, no tension, from the factored LRFD combinations (ASCE 7-22 §2.3, LC201+) at the underside of the footing — the same model as the 4A bearing check, at strength level. The factored footing and backfill weight is deducted where it sits (net pressure). Bar layers: x-direction outer (d), z-direction inner (d − d<sub>b</sub>). Development length, bar spacing at the edges and top steel for crack control are left to the detailing.
   </div>`;
   document.getElementById('calc-rebarcap').innerHTML = numberTables(html, '5B');
 }

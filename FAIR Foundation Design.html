@@ -682,6 +682,7 @@
           <div class="radio-row" id="ow-vu-src" role="radiogroup" aria-labelledby="ow-vu-src-label">
             <button data-val="manual" class="sel">Manual input</button>
             <button data-val="piles">From pile reactions (LRFD)</button>
+            <button data-val="soil" style="display:none;">From soil pressure (LRFD)</button>
           </div>
         </div>
         <div id="ow-vu-piles-fields" style="display:none;">
@@ -692,7 +693,7 @@
               <button data-val="y">⟂ z (b<sub>w</sub> = B<sub>f</sub>)</button>
             </div>
           </div>
-          <div class="note">Sections at d from the pedestal face (pedestal size and load point from Tab 02). b<sub>w</sub> must equal the cap width perpendicular to the section: <strong id="ow-bw-hint">—</strong> mm. Reactions come from the separate factored LRFD combinations.</div>
+          <div class="note">Sections at d from the pedestal face (pedestal size and load point from Tab 02). b<sub>w</sub> must equal the cap / footing width perpendicular to the section: <strong id="ow-bw-hint">—</strong> mm. Pile reactions (pile cap) or the net soil pressure (shallow footing) come from the separate factored LRFD combinations.</div>
           <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         <div class="field">
@@ -756,10 +757,11 @@
           <div class="radio-row" id="tw-vu-src" role="radiogroup" aria-labelledby="tw-vu-src-label">
             <button data-val="manual" class="sel">Manual input</button>
             <button data-val="piles">From pile reactions (LRFD)</button>
+            <button data-val="soil" style="display:none;">From soil pressure (LRFD)</button>
           </div>
         </div>
         <div id="tw-vu-piles-fields" style="display:none;">
-          <div class="note">V<sub>u</sub> = pile reactions outside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along z), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
+          <div class="note">V<sub>u</sub> = pile reactions (pile cap) or net soil pressure (shallow footing) outside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along z), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
           <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         <div class="field">
@@ -1286,7 +1288,7 @@
           <label for="rb-capbar"><span>Bar diameter (flexural), d<sub>b,cap</sub></span> <span class="unit">mm</span></label>
           <input type="number" id="rb-capbar" value="25" min="0">
         </div>
-        <div class="note">Critical section for moment is taken at the pedestal face (x = ±B<sub>p</sub>/2 from the pedestal centre), summing the pile reactions beyond that section. The pile layout, load point and group model come from "4B — PILE FOUNDATION STABILITY"; the reactions are those of the separate <strong>factored (LRFD)</strong> combinations below.</div>
+        <div class="note">Critical section for moment is taken at the pedestal face (x = ±B<sub>p</sub>/2 from the pedestal centre), summing the pile reactions beyond that section. The pile layout, load point and group model come from "4B — PILE FOUNDATION STABILITY"; the reactions are those of the separate <strong>factored (LRFD)</strong> combinations below. For a shallow footing the moments come from the net soil pressure (factored, minus the footing and backfill weight) of the same combinations.</div>
         <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         </details>

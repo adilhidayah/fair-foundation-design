@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 563 checks, 563 pass, 0 fail** (15 files, run 9 Oct 2026).
+**Total: 596 checks, 596 pass, 0 fail** (16 files, run 9 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -19,7 +19,8 @@ Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation
 | validation_shared_part13.mjs | shallow footing with an offset pedestal; biaxial kern / overturning in the governing UC | 22 |
 | validation_shared_part14.mjs | biaxial no-tension soil pressure (rigid footing); "no eccentricity limit" option; Meyerhof effective area | 43 |
 | validation_shared_part15.mjs | wind force generator, ASCE 7-22 Ch. 29 (Table 26.11-1 constants, Kz with zmin, qz without Kd, Ke) | 26 |
-| **Total** | | **563** |
+| validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
+| **Total** | | **596** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -37,6 +38,18 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
 - soil: Cn = √(100/σv) capped, Peck φ, Stroud cu, Bowles Es, γsub = γsat − 9.81.
 - settlement: Se = qB(1 − ν²)/Es·If·0.8, Sc = H/(1 + e0)·C·log10 (NC + OC branches).
 - seismic (Fa/Fv, SDS/SD1, Cs) generator. (Wind was listed here but had no vector; it is covered by part15 since 9 Oct 2026.)
+
+### part16 — shallow footing design actions (footingDesign.js)
+- Uniform pressure (B = L = 2, P = 400, pedestal 0.5, d 0.3): M = qLc²/2 = 56.25, V = 90, punching 336; net with w = 20 kPa: 45 / 72 / 268.8.
+- Trapezoidal (M<sub>z</sub> 40 → q = 100 + 30x): face moments 68.906 / 43.594 by direct integration; sign convention
+  (M<sub>z</sub> > 0 compresses +x, M<sub>x</sub> > 0 compresses −z) in all four directions.
+- Triangular partial contact (q<sub>max</sub> = 2P/[3L(B/2 − e)] = 400): face moments 93.75 / 0.694, net hogging on the uplift
+  side 2.118, punching 214.667. Offset pedestal (uniform) and perimeter-at-edge rejection.
+- Biaxial partial contact (contact 71%): ∫q = P and first moments = P·x<sub>R</sub>, P·z<sub>R</sub>; flexure (4 faces), one-way and punching
+  against an independent 800 × 800 midpoint grid (agreement ~1e-7).
+- UI wiring checked in a headless browser: default data LC206 (P<sub>u</sub> 360.1, M<sub>z</sub> 166.5, partial contact) hand calc
+  q<sub>max</sub> 135.61, V<sub>u</sub> = 72.13 − 13.75 = 58.38 kN, M<sub>u</sub> = 49.14 − 9.71 = 39.43 kN·m (app 135.6 / 58.4 / 39.4); pile mode output identical
+  to the previous commit apart from wording.
 
 ### part15 — wind generator (ASCE 7-22)
 - Table 26.11-1 constants B/C/D (α, z<sub>g</sub>, z<sub>min</sub>, ft → m), K<sub>z</sub> = 2.41(z/z<sub>g</sub>)<sup>2/α</sup> with z raised to z<sub>min</sub>,

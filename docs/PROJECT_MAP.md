@@ -41,7 +41,7 @@ MASTER CALCULATOR/
 | 4A — Foundation Stability | [js/tabs/foundation.js](../js/tabs/foundation.js), diagram [foundationDiagram.js](../js/diagrams/foundationDiagram.js) | [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) |
 | 4B — Pile Stability | [js/tabs/pile.js](../js/tabs/pile.js), diagram [pileDiagram.js](../js/diagrams/pileDiagram.js) | [shared/pileGroup.js](../lib/foundation/shared/pileGroup.js) (spasi/tepi, efisiensi, p-multiplier, biaksial + torsi); `pileComboLoads()` (pile.js) juga dipakai 5B; `evaluatePileCombo` (uniaksial lama) di [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) tidak lagi dipakai UI |
 | 5A — Pedestal (P-M) | [js/tabs/rebar.js](../js/tabs/rebar.js), diagram [pmDiagram.js](../js/diagrams/pmDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
-| 5B — Pile cap shear / flexure | [js/tabs/shear.js](../js/tabs/shear.js), [js/tabs/rebar.js](../js/tabs/rebar.js) | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js) |
+| 5B — Pile cap / footing shear + flexure | [js/tabs/shear.js](../js/tabs/shear.js), [js/tabs/rebar.js](../js/tabs/rebar.js), [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js), [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js), [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) |
 | 08 — Bearing Capacity | [js/tabs/bearing.js](../js/tabs/bearing.js) | [shared/bearingCapacity.js](../lib/foundation/shared/bearingCapacity.js) |
 | 08B — Settlement | [js/tabs/settlement.js](../js/tabs/settlement.js) | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js), [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) |
 | 09 — Anchor Bolt | [js/tabs/anchor.js](../js/tabs/anchor.js), diagram [anchorDiagram.js](../js/diagrams/anchorDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
@@ -85,6 +85,7 @@ MASTER CALCULATOR/
 | [js/tabs/pile.js](../js/tabs/pile.js) | 10 KB | 4B — tabel tiang + `calcPile()` |
 | [js/tabs/rebar.js](../js/tabs/rebar.js) | 10 KB | 5A/5B — `calcRebar()` |
 | [js/tabs/shear.js](../js/tabs/shear.js) | 10 KB | 5B — `calcOneWay()`, `calcTwoWay()` |
+| [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | 5 KB | 5B shallow — `footingLrfdActions()` (beban LRFD di dasar footing + bidang tekanan tanah per kombinasi), `soilPressureHtml()` |
 | [js/tabs/bearing.js](../js/tabs/bearing.js) | 6 KB | 08 — `calcBearing()` |
 | [js/tabs/settlement.js](../js/tabs/settlement.js) | 6 KB | 08B — `calcSettlement()` |
 | [js/tabs/anchor.js](../js/tabs/anchor.js) | 8 KB | 09 — tabel bolt + `calcAnchor()` |
@@ -118,6 +119,7 @@ MASTER CALCULATOR/
 | [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js) | 5 KB | V_u geser satu arah / punching pile cap dari reaksi tiang (interpolasi d_p/2) |
 | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) | 7 KB | P-M pedestal, anchor bolt (ACI Ch.17) |
 | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js) | 6 KB | One-way / punching shear, lentur |
+| [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 6 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak) |
 | [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) | 2 KB | Korelasi SPT (Peck/Stroud/Bowles) |
 | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js) | 3 KB | Penurunan elastis + konsolidasi |
 | [shared/windLoad.js](../lib/foundation/shared/windLoad.js) | 2 KB | Beban angin |

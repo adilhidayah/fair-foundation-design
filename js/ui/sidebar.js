@@ -3,7 +3,7 @@
 // Two states on ".layout-wrapper[data-sidebar]": expanded (full input panel) and collapsed (hidden; the preview takes the
 // full width, "▶ Inputs" in the preview bar brings it back). The preference is kept per browser. (The former "compact" code
 // strip was removed on request — a saved "compact" falls back to expanded.)
-import { escapeHtml } from '../core/dom.js?v=20261009j';
+import { escapeHtml } from '../core/dom.js?v=20261009k';
 
 export const SIDEBAR_KEY = 'fair_fdn_sidebar_state';
 export const SIDEBAR_STATES = ['expanded', 'collapsed'];

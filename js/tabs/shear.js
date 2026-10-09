@@ -1,12 +1,77 @@
-// Pile cap one-way and punching shear (5B).
+// Pile cap / shallow footing one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009j';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009j';
-import { fmt } from '../core/format.js?v=20261009j';
-import { lastResults, pileList } from '../core/state.js?v=20261009j';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009j';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009j';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009j';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingShear, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009k';
+import { fmt } from '../core/format.js?v=20261009k';
+import { lastResults, pileList } from '../core/state.js?v=20261009k';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009k';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009k';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009k';
+import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009k';
+
+// The automatic V_u source follows the foundation type (a project file may carry the other one): piles <-> soil.
+const autoSrc = (src) => (src === 'manual' ? src : (isShallow() ? 'soil' : 'piles'));
+
+// ----- V_u from the soil pressure of the factored (LRFD) combinations — 5B shallow footing -----
+// Net pressure (soil pressure minus factored footing + backfill weight) beyond the critical section, from
+// footingLrfdActions() (js/tabs/footingSoil.js) and the lib section integrals (lib/foundation/shared/footingDesign.js).
+function oneWayVuFromSoil({ axis, h, cc, Dbar }) {
+  const fa = footingLrfdActions();
+  if (!fa.valid) return fa;
+  const d = (h - cc - Dbar) / 1000;
+  if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
+  const ax = axis === 'x' ? 'x' : 'z';
+  const half = (ax === 'x' ? fa.ped.c1 : fa.ped.c2) / 2, center = ax === 'x' ? fa.ped.x : fa.ped.z;
+  const per = fa.items.map(it => ({ combo: it.combo, it, invalid: it.invalid,
+    res: it.invalid ? null : footingOneWayShear({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, axis: ax, ref: center, half, d }) }));
+  const gov = governingOf(per);
+  if (!gov) return { valid: false, note: 'No soil pressure for any combination (net uplift or resultant outside the footing).' };
+  return { valid: true, soil: true, kind: 'one-way', axis, d, half, center, per, gov, Vu: gov.res.Vu, invalid: per.filter(p => p.invalid), fa };
+}
+// Punching V_u per LRFD combination from the soil pressure outside the d/2 perimeter, with that combination's unbalanced moments
+// at the base of the pedestal (Section 03 table 3.3.4) — governing = largest combined stress, as for the pile cap.
+function punchingVuFromSoil({ c1, c2, h, cc, Dbar, loc }) {
+  const fa = footingLrfdActions();
+  if (!fa.valid) return fa;
+  const d = (h - cc - Dbar) / 1000;
+  if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
+  const pedBase = buildPedestalComboBase();
+  const per = fa.items.map(it => {
+    const res = it.invalid ? null : footingPunchingShear({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, cx: fa.ped.x, cz: fa.ped.z, c1: c1 / 1000, c2: c2 / 1000, d });
+    const v = stdComboVector(it.combo.f, pedBase);
+    const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
+    const ecc = res && res.valid ? eccentricPunchingStress({ c1, c2, d: d * 1000, Vu: res.Vu, Mx, Mz, loc }) : null;
+    return { combo: it.combo, it, invalid: it.invalid || (res && !res.valid ? res.note : null), res, Mx, Mz, ecc };
+  });
+  const ok = per.filter(p => p.res && p.res.valid);
+  if (!ok.length) return { valid: false, note: per.find(p => p.invalid)?.invalid || 'No soil pressure for any combination.' };
+  const key = (p) => (p.ecc && p.ecc.valid ? p.ecc.vu : p.res.Vu);
+  const gov = ok.reduce((a, b) => (key(b) > key(a) ? b : a));
+  return { valid: true, soil: true, kind: 'punching', d, c1: c1 / 1000, c2: c2 / 1000, center: { x: fa.ped.x, y: fa.ped.z }, per, gov, Vu: gov.res.Vu,
+    Mx: gov.Mx, Mz: gov.Mz, invalid: per.filter(p => p.invalid), fa };
+}
+// Preview of the soil-pressure shear: section geometry + the design-pressure table with each combination's V_u.
+function soilShearHtml(pv) {
+  const one = pv.kind === 'one-way', g = pv.gov, cn = one ? (pv.axis === 'x' ? 'x' : 'z') : '';
+  let html = `<div class="lc-formula">
+    <div class="lc-formula-title">V<sub>u</sub> from the soil pressure — factored (LRFD) combinations, governing ${escapeHtml(comboLabel(g.combo))}</div>`;
+  html += one
+    ? `Critical sections at d from the pedestal face: ${cn}<sub>±</sub> = ${cn}<sub>p</sub> ± (${pv.axis === 'x' ? 'B' : 'L'}<sub>p</sub>/2 + d) = ${fmt(pv.center, 3)} ± (${fmt(pv.half, 3)} + ${fmt(pv.d, 3)}) → ${fmt(g.res.pos.plus, 3)} m / ${fmt(g.res.pos.minus, 3)} m<br>
+    V = ∫(q − w) dA over the part of the footing beyond the section (full width); V<sub>u</sub> = larger |V| of the two sides → <strong>${fmt(pv.Vu, 1)} kN</strong> (${g.res.side} side)`
+    : `Critical perimeter at d/2 from the pedestal faces: half-sizes h<sub>x</sub> = c<sub>1</sub>/2 + d/2 = ${fmt(g.res.hx, 3)} m, h<sub>z</sub> = c<sub>2</sub>/2 + d/2 = ${fmt(g.res.hz, 3)} m, centred at (${fmt(pv.center.x, 3)}, ${fmt(pv.center.y, 3)}) m<br>
+    V<sub>u</sub> = ∫(q − w) dA outside the perimeter = (${fmt(g.res.Fall, 1)} − ${fmt(g.res.Finside, 1)}) − w·${fmt(g.res.Aout, 3)} m² → <strong>${fmt(pv.Vu, 1)} kN</strong>`;
+  html += `<div class="lc-formula-where">Critical sections per ACI 318M-19 §13.2.7.2 (one-way at d, two-way at d/2 from the face of the pedestal).</div></div>`;
+  const byIt = new Map(pv.per.map(p => [p.it, p]));
+  const extra = one
+    ? { head: ['V<sub>+</sub> (kN)', 'V<sub>−</sub> (kN)', 'V<sub>u</sub> (kN)'], gov: g.it,
+        cells: (it) => { const p = byIt.get(it); return `<td class="num">${fmt(p.res.Vpos, 1)}</td><td class="num">${fmt(p.res.Vneg, 1)}</td><td class="num">${fmt(p.res.Vu, 1)}</td>`; } }
+    : { head: ['V<sub>u</sub> (kN)', 'M<sub>x,ped</sub> (kN·m)', 'M<sub>z,ped</sub> (kN·m)', 'v<sub>u</sub> (MPa)'], gov: g.it,
+        cells: (it) => { const p = byIt.get(it); return p.res && p.res.valid
+          ? `<td class="num">${fmt(p.res.Vu, 1)}</td><td class="num">${fmt(p.Mx, 1)}</td><td class="num">${fmt(p.Mz, 1)}</td><td class="num">${p.ecc && p.ecc.valid ? fmt(p.ecc.vu, 3) : '—'}</td>`
+          : `<td colspan="4">${escapeHtml(p.invalid || '—')}</td>`; } };
+  html += soilPressureHtml(pv.fa, extra);
+  return html;
+}
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group
@@ -95,7 +160,9 @@ function pileShearHtml(pv) {
 }
 
 // Preview structure of chapter 5B (shared by the three 5B panels: one-way, punching, flexure — see rebar.js for 5B.3).
-const OW_HEAD = () => chapterHeader('5B. Pile Cap Check', 'This chapter checks the pile cap for one-way shear, punching shear and flexure under the factored LRFD combinations (LC201+) of Section 03, with the shear from the pile reactions where selected. The status of each check is shown in the Design Status panel.')
+const OW_HEAD = () => (isShallow()
+  ? chapterHeader('5B. Footing Check', 'This chapter checks the footing for one-way shear, punching shear and flexure under the factored LRFD combinations (LC201+) of Section 03, with the actions from the soil pressure (net of the footing and backfill weight) where selected. The status of each check is shown in the Design Status panel.')
+  : chapterHeader('5B. Pile Cap Check', 'This chapter checks the pile cap for one-way shear, punching shear and flexure under the factored LRFD combinations (LC201+) of Section 03, with the shear from the pile reactions where selected. The status of each check is shown in the Design Status panel.'))
   + sectionHeader('5B.1', 'One-Way Shear', 'Shear at a distance d from the pedestal face — ACI 318M-19 §22.5.', true);
 const TW_HEAD = () => sectionHeader('5B.2', 'Punching Shear', 'Two-way shear on the critical perimeter at d/2 from the pedestal faces, including the unbalanced-moment shear stress — ACI 318M-19 §22.6 and §8.4.4.2.', true);
 
@@ -104,12 +171,16 @@ export function calcOneWay() {
   const bw = num('ow-bw'), h = num('ow-h'), cc = num('ow-cc'), Dbar = num('ow-D'), fc = num('gen-fc');
   let vu = num('ow-vu');
   // V_u source: typed in, or from the pile reactions of the factored LRFD combinations (written back into the field).
-  const fromPiles = getRadioVal('ow-vu-src') === 'piles';
-  document.getElementById('ow-vu').readOnly = fromPiles;
-  document.getElementById('ow-vu-piles-fields').style.display = fromPiles ? 'block' : 'none';
+  // ... or from the soil pressure (shallow footing). Only the source matching the foundation type is offered (setup.js).
+  const src = autoSrc(getRadioVal('ow-vu-src'));
+  const fromPiles = src === 'piles', fromSoil = src === 'soil';
+  document.getElementById('ow-vu').readOnly = fromPiles || fromSoil;
+  document.getElementById('ow-vu-piles-fields').style.display = (fromPiles || fromSoil) ? 'block' : 'none';
   const capW = (getRadioVal('ow-dir') === 'x' ? num('fs-Lf') : num('fs-Bf')) * 1000; // cap width ⟂ the section, mm
   document.getElementById('ow-bw-hint').textContent = fmt(capW, 0);
-  const pv = fromPiles ? oneWayVuFromPiles({ axis: getRadioVal('ow-dir'), h, cc, Dbar }) : null;
+  const pv = fromPiles ? oneWayVuFromPiles({ axis: getRadioVal('ow-dir'), h, cc, Dbar })
+    : fromSoil ? oneWayVuFromSoil({ axis: getRadioVal('ow-dir'), h, cc, Dbar }) : null;
+  const srcName = fromSoil ? 'soil pressure' : 'pile reactions';
   if (pv && pv.valid) { vu = pv.Vu; document.getElementById('ow-vu').value = vu.toFixed(1); }
   const rho = num('ow-rho') / 100;
   const lambda = parseFloat(getRadioVal('ow-lambda'));
@@ -127,14 +198,14 @@ export function calcOneWay() {
     return;
   }
   if (pv && !pv.valid) {
-    document.getElementById('calc-oneway').innerHTML = OW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from pile reactions not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
+    document.getElementById('calc-oneway').innerHTML = OW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from ${srcName} not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
     document.getElementById('opt-oneway').innerHTML = '';
-    lastResults.oneway = { label: 'One-Way Shear', status: 'ERROR', metric: '—', detail: 'V_u from pile reactions not available: ' + pv.note };
+    lastResults.oneway = { label: 'One-Way Shear', status: 'ERROR', metric: '—', detail: `V_u from ${srcName} not available: ` + pv.note };
     return;
   }
   const { d, sqrtfc, vc_lower, vc_upper, vc, lambdaS, detail, phiVc, uc, pass, simplifiedAllowed, hMinRounded } = r;
   lastResults.oneway = { label: 'One-Way Shear', status: pass ? 'PASS' : 'FAIL', metric: `UC = ${fmt(uc,3)}`,
-    detail: `b_w=${fmt(bw,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN${pv ? ` (piles, ${comboLabel(pv.gov.combo)})` : ''}, ${method}` };
+    detail: `b_w=${fmt(bw,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN${pv ? ` (${pv.soil ? 'soil' : 'piles'}, ${comboLabel(pv.gov.combo)})` : ''}, ${method}` };
   let suggestHtml = '';
   if (pass && hMinRounded !== null && h - hMinRounded >= 50) {
     suggestHtml = `<div class="suggest-box">
@@ -147,7 +218,7 @@ export function calcOneWay() {
     notices.push({ title: 'One-way shear: method not permitted', text: 'Table 22.5.5.1 allows the simplified Vc = 0.17λ√f\'c·bw·d only with Av ≥ Av,min or h ≤ 250 mm — neither is met, so the result may be non-conservative. Use the Detailed method or confirm Av ≥ Av,min.' });
   }
   if (pv && Math.abs(bw - capW) > 1) {
-    notices.push({ title: 'One-way shear: web width', text: `bw = ${fmt(bw,0)} mm differs from the pile cap width perpendicular to the section (${fmt(capW,0)} mm, Tab 02) — the capacity is for bw while Vu is the whole-cap shear.` });
+    notices.push({ title: 'One-way shear: web width', text: `bw = ${fmt(bw,0)} mm differs from the ${pv.soil ? 'footing' : 'pile cap'} width perpendicular to the section (${fmt(capW,0)} mm, Tab 02) — the capacity is for bw while Vu is the whole-width shear.` });
   }
   lastResults.oneway.notices = notices;
   let html = OW_HEAD();
@@ -165,9 +236,9 @@ export function calcOneWay() {
     <tr><td>V<sub>c,max</sub></td><td class="clause">0.42λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_upper/1000,1)} kN</td></tr>
     <tr class="governing"><td>V<sub>c</sub>, governing</td><td class="clause">${detail}</td><td class="num">${fmt(vc/1000,1)} kN</td></tr>
     <tr><td>φV<sub>c</sub></td><td class="clause">φ = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
-    <tr><td>V<sub>u</sub></td><td class="clause">${pv ? 'from pile reactions, LRFD' : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
+    <tr><td>V<sub>u</sub></td><td class="clause">${pv ? `from ${srcName}, LRFD` : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
   </table></div>`;
-  if (pv) html += pileShearHtml(pv);
+  if (pv) html += pv.soil ? soilShearHtml(pv) : pileShearHtml(pv);
   html += `<div class="limits-box">
     <strong>Applicability:</strong> Simplified method requires A<sub>v</sub> ≥ A<sub>v,min</sub> provided or overall height h ≤ 250 mm, per Table 22.5.5.1 (checked automatically above from the "Geometry" and "Method" inputs). Detailed method (22.5.5.1.1) governs for shallow, lightly-reinforced sections typical of thin slabs/mats where the simplified V<sub>c</sub> is unconservative.
   </div>`;
@@ -181,15 +252,17 @@ export function calcOneWay() {
 export function calcTwoWay() {
   const c1 = num('tw-c1'), c2 = num('tw-c2'), h = num('tw-h'), cc = num('tw-cc'), Dbar = num('tw-D'), fc = num('gen-fc');
   let vu = num('tw-vu');
-  const fromPiles = getRadioVal('tw-vu-src') === 'piles';
-  document.getElementById('tw-vu').readOnly = fromPiles;
-  document.getElementById('tw-vu-piles-fields').style.display = fromPiles ? 'block' : 'none';
+  const src = autoSrc(getRadioVal('tw-vu-src'));
+  const fromPiles = src === 'piles', fromSoil = src === 'soil', auto = fromPiles || fromSoil;
+  document.getElementById('tw-vu').readOnly = auto;
+  document.getElementById('tw-vu-piles-fields').style.display = auto ? 'block' : 'none';
   const loc = getRadioVal('tw-loc');
-  const pv = fromPiles ? punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) : null;
+  const pv = fromPiles ? punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) : fromSoil ? punchingVuFromSoil({ c1, c2, h, cc, Dbar, loc }) : null;
+  const srcName = fromSoil ? 'soil pressure' : 'pile reactions';
   // Unbalanced moments for the eccentric shear stress: from the governing LRFD combination at the pedestal base (piles mode,
   // written back into the fields) or typed in (manual mode).
   let Mx = num('tw-mux'), Mz = num('tw-muz');
-  document.getElementById('tw-mux').readOnly = fromPiles; document.getElementById('tw-muz').readOnly = fromPiles;
+  document.getElementById('tw-mux').readOnly = auto; document.getElementById('tw-muz').readOnly = auto;
   if (pv && pv.valid) {
     vu = pv.Vu; Mx = pv.Mx; Mz = pv.Mz;
     document.getElementById('tw-vu').value = vu.toFixed(1);
@@ -207,16 +280,16 @@ export function calcTwoWay() {
     return;
   }
   if (pv && !pv.valid) {
-    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from pile reactions not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
+    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from ${srcName} not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
     document.getElementById('opt-twoway').innerHTML = '';
-    lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: 'V_u from pile reactions not available: ' + pv.note };
+    lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: `V_u from ${srcName} not available: ` + pv.note };
     return;
   }
   const { d, alphaS, bo, boFormula, beta, sqrtfc, vc_vals, vc_gov, Vc, phiVc, hMinRounded, phi } = r;
   // Combined stress with the unbalanced moments — ACI 318M-19 §8.4.4.2 (interior pedestal); UC = v_u / (φ·v_c).
   const ecc = eccentricPunchingStress({ c1, c2, d, Vu: vu, Mx, Mz, loc });
   if (!ecc.valid) {
-    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  Unbalanced-moment shear not available:</strong> ${escapeHtml(ecc.note)} Use "Interior" for a pedestal on a pile cap.</div>`;
+    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  Unbalanced-moment shear not available:</strong> ${escapeHtml(ecc.note)} Use "Interior" for a pedestal away from the ${isShallow() ? 'footing' : 'pile cap'} edges.</div>`;
     document.getElementById('opt-twoway').innerHTML = '';
     lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: ecc.note };
     return;
@@ -225,7 +298,7 @@ export function calcTwoWay() {
   const uc = ecc.vu / phiVcStress, pass = uc <= 1.0;
   const hasMoment = ecc.terms.some(t => t.v > 0);
   lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: pass ? 'PASS' : 'FAIL', metric: `UC = ${fmt(uc,3)}`,
-    detail: `b_o=${fmt(bo,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN, M_ux=${fmt(Mx,1)}, M_uz=${fmt(Mz,1)}kN·m, v_u=${fmt(ecc.vu,3)}MPa${pv ? ` (piles, ${comboLabel(pv.gov.combo)})` : ''}, ${loc}` };
+    detail: `b_o=${fmt(bo,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN, M_ux=${fmt(Mx,1)}, M_uz=${fmt(Mz,1)}kN·m, v_u=${fmt(ecc.vu,3)}MPa${pv ? ` (${pv.soil ? 'soil' : 'piles'}, ${comboLabel(pv.gov.combo)})` : ''}, ${loc}` };
   let suggestHtml = '';
   if (pass && !hasMoment && hMinRounded !== null && h - hMinRounded >= 50) { // the depth search ignores the moment term
     suggestHtml = `<div class="suggest-box">
@@ -255,7 +328,7 @@ export function calcTwoWay() {
     <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
     <tr><td>V<sub>c</sub></td><td class="clause">v<sub>c,gov</sub> · b<sub>o</sub> · d</td><td class="num">${fmt(Vc/1000,1)} kN</td></tr>
     <tr><td>φV<sub>c</sub></td><td class="clause">φ = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>
-    <tr><td>V<sub>u</sub></td><td class="clause">${pv ? 'from pile reactions, LRFD' : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
+    <tr><td>V<sub>u</sub></td><td class="clause">${pv ? `from ${srcName}, LRFD` : 'input'}</td><td class="num">${fmt(vu,1)} kN</td></tr>
   </table></div>`;
   const [tz, tx] = ecc.terms;
   const termRows = (t, name, Mname) => `
@@ -274,9 +347,9 @@ export function calcTwoWay() {
     <tr><td>φ·v<sub>c</sub></td><td class="clause">0.75 × ${fmt(vc_gov,3)}</td><td class="num">${fmt(phiVcStress,3)} MPa</td></tr>
     <tr class="governing"><td>UC</td><td class="clause">v<sub>u</sub> / (φ·v<sub>c</sub>)</td><td class="num">${fmt(uc,3)}</td></tr>
   </table></div>`;
-  if (pv) html += pileShearHtml(pv);
+  if (pv) html += pv.soil ? soilShearHtml(pv) : pileShearHtml(pv);
   html += `<div class="limits-box">
-    <strong>Limitation:</strong> The unbalanced-moment shear (eccentric shear stress model, §8.4.4.2) is included for an interior pedestal, with the terms of both directions added at the most stressed corner (conservative). Edge and corner pedestal geometries are not implemented. With V<sub>u</sub> from the pile reactions, V<sub>u</sub> and the moments are taken from the same LRFD combination (moments at the base of the pedestal, incl. H·H<sub>p</sub>), and the governing combination is the one with the largest combined stress.
+    <strong>Limitation:</strong> The unbalanced-moment shear (eccentric shear stress model, §8.4.4.2) is included for an interior pedestal, with the terms of both directions added at the most stressed corner (conservative). Edge and corner pedestal geometries are not implemented. With V<sub>u</sub> from the pile reactions or the soil pressure, V<sub>u</sub> and the moments are taken from the same LRFD combination (moments at the base of the pedestal, incl. H·H<sub>p</sub>), and the governing combination is the one with the largest combined stress.
   </div>`;
   const effHtml = efficiencyBadge(uc, pass);
   document.getElementById('opt-twoway').innerHTML = (effHtml || suggestHtml)

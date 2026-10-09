@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261009j';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261009k';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -83,6 +83,8 @@ export const state = {
   // Backfill above the footing / pile cap (kN, footing area minus pedestal, over the pedestal depth below ground) — set by
   // calcFoundSize(); 4A places it at its own centroid when the pedestal is offset (pedestalOffsetMoments()).
   footSoilW: 0,
+  // Footing / pile cap concrete weight (kN, Wf of Tab 02) — 5B shallow footing design deducts it with the backfill (net pressure).
+  footW: 0,
   // Report header logos (data URLs from the logo uploads).
   rptLogo1: null, rptLogo2: null
 };

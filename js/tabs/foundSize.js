@@ -1,13 +1,13 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261009j';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009j';
-import { fmt } from '../core/format.js?v=20261009j';
-import { lastResults, pileList, state } from '../core/state.js?v=20261009j';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261009j';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009j';
-import { recalcAll } from '../workflow/recalc.js?v=20261009j';
-import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261009j';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261009k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009k';
+import { fmt } from '../core/format.js?v=20261009k';
+import { lastResults, pileList, state } from '../core/state.js?v=20261009k';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261009k';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009k';
+import { recalcAll } from '../workflow/recalc.js?v=20261009k';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261009k';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -90,7 +90,7 @@ export function calcFoundSize() {
   const sizing = foundationSizing({ type, Bf, Lf, Hf: Hf0, Df, gc, gs, Bp, Lp, pedGp, OffX, OffZ, blockGp,
     groutT: hasGrout ? groutT / 1000 : 0 }); // grout input in mm -> m
   if (!sizing.valid) {
-    state.pedHp = 0; state.pedW = 0; state.footSoilW = 0;
+    state.pedHp = 0; state.pedW = 0; state.footSoilW = 0; state.footW = 0;
     lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df }).issues };
     document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero and D<sub>f</sub> ≥ 0 (bottom not above ground). With a pedestal, D<sub>f</sub> ≥ H<sub>f</sub> as well (the footing must fit within the embedment depth); without a pedestal the footing / pile cap may project above ground.</div>`;
     document.getElementById('focus-foundsize').innerHTML = foundSizeFocusInvalidHTML();
@@ -102,6 +102,9 @@ export function calcFoundSize() {
   state.pedHp = sizing.hasPed ? Hp : 0;
   state.pedW = sizing.hasPed ? (Wp + Wg) * 9.80665 : 0;
   state.footSoilW = Ws * 9.80665; // tons -> kN (4A: centroid shifts with the pedestal offset)
+  // tons -> kN (5B shallow footing: deducted with the backfill from the design pressure); without a pedestal the grout layer
+  // covers the whole footing (Wg = gc·Af·groutT), so it is part of the footing load per unit area.
+  state.footW = (Wf + (sizing.hasPed ? 0 : Wg)) * 9.80665;
   const hasGroutT = hasGrout && sizing.groutT > 0; // grout is part of Hp (pedestal) or HfTot (block) geometry; weight reported as Wg
   const HfTot = sizing.HfTot;
   // Hf is a free input in every mode now (the "Only" mode no longer derives it from Df + Gp) — make sure a

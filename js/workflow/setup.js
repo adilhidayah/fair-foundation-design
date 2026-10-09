@@ -1,14 +1,15 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261009j';
-import { getRadioVal } from '../core/dom.js?v=20261009j';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261009j';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261009j';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261009k';
+import { getRadioVal } from '../core/dom.js?v=20261009k';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261009k';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261009k';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
 export const SHOW_BOTH_FOUNDATION_TABS = false;
 export function updateFoundationTabVisibility() {
+  sync5BSources();
   const fdTab = document.querySelector('.tab[data-tab="foundation"]');
   const plTab = document.querySelector('.tab[data-tab="pile"]');
   if (!fdTab || !plTab) return;
@@ -20,6 +21,25 @@ export function updateFoundationTabVisibility() {
   // the user on a blank panel.
   const active = document.querySelector('.tab.active');
   if (active && active.style.display === 'none') (isPile ? plTab : fdTab).click();
+}
+// 5B follows the foundation type: the V_u source "From pile reactions" is offered for a pile cap, "From soil pressure" for a
+// shallow footing (a hidden selection is moved to its counterpart; shear.js maps them the same way), and the tab is named
+// accordingly.
+export function sync5BSources() {
+  const isPile = getRadioVal('fs-support') === 'pile';
+  ['ow-vu-src', 'tw-vu-src'].forEach(id => {
+    const g = document.getElementById(id);
+    if (!g) return;
+    const show = { piles: isPile, soil: !isPile };
+    g.querySelectorAll('button').forEach(b => { if (b.dataset.val in show) b.style.display = show[b.dataset.val] ? '' : 'none'; });
+    const sel = g.querySelector('button.sel');
+    if (sel && sel.style.display === 'none') {
+      sel.classList.remove('sel');
+      g.querySelector(`button[data-val="${isPile ? 'piles' : 'soil'}"]`).classList.add('sel');
+    }
+  });
+  const lbl = document.querySelector('.tab[data-tab="capcheck"] .tab-label');
+  if (lbl) lbl.textContent = isPile ? 'PILE CAP CHECK' : 'FOOTING CHECK';
 }
 // "Support Reaction" mode hides the per-component worksheets (Equipment/Wind/Seismic direct entry + popup
 // generators) — those exist to help build up unfactored per-load-type values from mechanical/vendor datasheet
