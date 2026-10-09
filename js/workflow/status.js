@@ -1,21 +1,21 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009m';
-import { fmt } from '../core/format.js?v=20261009m';
-import { comboState, lastResults, state } from '../core/state.js?v=20261009m';
-import { calcAnchor } from '../tabs/anchor.js?v=20261009m';
-import { calcBearing } from '../tabs/bearing.js?v=20261009m';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261009m';
-import { calcFoundation } from '../tabs/foundation.js?v=20261009m';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261009m';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261009m';
-import { calcPile } from '../tabs/pile.js?v=20261009m';
-import { calcRebar } from '../tabs/rebar.js?v=20261009m';
-import { calcSettlement } from '../tabs/settlement.js?v=20261009m';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261009m';
-import { renderGoverningBadges } from '../ui/viewMode.js?v=20261009m';
-import { allowableBearing } from '../tabs/bearing.js?v=20261009m';
-import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20261009m';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009n';
+import { fmt } from '../core/format.js?v=20261009n';
+import { comboState, lastResults, state } from '../core/state.js?v=20261009n';
+import { calcAnchor } from '../tabs/anchor.js?v=20261009n';
+import { calcBearing } from '../tabs/bearing.js?v=20261009n';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261009n';
+import { calcFoundation } from '../tabs/foundation.js?v=20261009n';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261009n';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261009n';
+import { calcPile } from '../tabs/pile.js?v=20261009n';
+import { calcRebar } from '../tabs/rebar.js?v=20261009n';
+import { calcSettlement } from '../tabs/settlement.js?v=20261009n';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261009n';
+import { renderGoverningBadges } from '../ui/viewMode.js?v=20261009n';
+import { allowableBearing } from '../tabs/bearing.js?v=20261009n';
+import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20261009n';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -111,12 +111,15 @@ export function getWorkflowStepStatus(stepId) {
   if (stepId === '10') {
     if (!inScope('structural')) return { status: 'NA', metric: SCOPE_NA_LABEL.structural, note: 'Not in scope (Section 00 → Scope of Work)' };
     if (!hasCombos) return { status: 'FAIL', metric: '—', note: 'Butuh kombinasi beban di Tab 03' };
+    // Pedestal (5A) only when Tab 02 has one; the pile cap / footing flexure (5B.3) in both support modes — the shallow footing
+    // is designed from the soil pressure since 9 Oct 2026 (before, 5B.3 existed for pile caps only and was not counted here).
+    const hasPed = getRadioVal('fs-type') === 'pedestal';
     const p = lastResults.pedestalRebar, c = lastResults.pileCapRebar;
     if (!p && !c) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 5A/5B)' };
-    const pOk = p && p.status === 'PASS';
-    const cOk = support !== 'pile' || (c && c.status === 'PASS');
+    const pOk = !hasPed || (p && p.status === 'PASS');
+    const cOk = c && c.status === 'PASS';
     const ok = pOk && cOk;
-    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? 'PASS' : 'FAIL', note: (p ? p.detail : 'Pedestal') + (support === 'pile' ? (' | ' + (c ? c.detail : 'Cap')) : '') };
+    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? 'PASS' : 'FAIL', note: (hasPed ? (p ? p.detail : 'Pedestal') : 'No pedestal (footing only)') + ' | ' + (c ? c.detail : (support === 'pile' ? 'Cap' : 'Footing')) };
   }
   if (stepId === '11') {
     const arr = ['oneway','twoway','foundation','pile','bearing','settlement','anchor','pedestalRebar','pileCapRebar'].map(k => lastResults[k]).filter(Boolean);

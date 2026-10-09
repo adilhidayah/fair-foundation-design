@@ -1,15 +1,16 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261009m';
-import { getRadioVal } from '../core/dom.js?v=20261009m';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261009m';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261009m';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261009n';
+import { getRadioVal } from '../core/dom.js?v=20261009n';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261009n';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261009n';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
 export const SHOW_BOTH_FOUNDATION_TABS = false;
 export function updateFoundationTabVisibility() {
   sync5BSources();
+  syncPedestalTab();
   const fdTab = document.querySelector('.tab[data-tab="foundation"]');
   const plTab = document.querySelector('.tab[data-tab="pile"]');
   if (!fdTab || !plTab) return;
@@ -40,6 +41,18 @@ export function sync5BSources() {
   });
   const lbl = document.querySelector('.tab[data-tab="capcheck"] .tab-label');
   if (lbl) lbl.textContent = isPile ? 'PILE CAP CHECK' : 'FOOTING CHECK';
+}
+// "5A — Pedestal Check" only exists with a pedestal: hidden for "Footing Only" (Tab 02 fs-type = block); if it was the active tab,
+// move to 5B. Its result is NA then (calcRebar()), so it is left out of the status counts.
+export function syncPedestalTab() {
+  const tab = document.querySelector('.tab[data-tab="pedcheck"]');
+  if (!tab) return;
+  const hasPed = getRadioVal('fs-type') === 'pedestal';
+  tab.style.display = hasPed ? '' : 'none';
+  if (!hasPed && tab.classList.contains('active')) {
+    const cap = document.querySelector('.tab[data-tab="capcheck"]');
+    if (cap) cap.click();
+  }
 }
 // "Support Reaction" mode hides the per-component worksheets (Equipment/Wind/Seismic direct entry + popup
 // generators) — those exist to help build up unfactored per-load-type values from mechanical/vendor datasheet

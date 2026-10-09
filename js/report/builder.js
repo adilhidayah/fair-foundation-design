@@ -1,8 +1,8 @@
 // Printable report builder (sections, logos, document header).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml } from '../core/dom.js?v=20261009m';
-import { reportBlocks, state } from '../core/state.js?v=20261009m';
-import { buildQuickStatusHtml } from '../report/summary.js?v=20261009m';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261009n';
+import { reportBlocks, state } from '../core/state.js?v=20261009n';
+import { buildQuickStatusHtml } from '../report/summary.js?v=20261009n';
 
 export function renderBlockList() {
   document.getElementById('rpt-block-body').innerHTML = reportBlocks.map((b, i) => `
@@ -69,8 +69,11 @@ export function generateReport() {
     </div>`;
   }
   html += `<div class="section-label">Overall Status</div>` + buildQuickStatusHtml();
-  reportBlocks.filter(b => b.include).forEach(b => {
+  // 5A only with a pedestal (Tab 02); 5B blocks are named after the foundation type (pile cap / footing).
+  const hasPed = getRadioVal('fs-type') === 'pedestal', shallow = getRadioVal('fs-support') !== 'pile';
+  reportBlocks.filter(b => b.include && !(b.id === 'rebar' && !hasPed)).forEach(b => {
     let content;
+    const title = shallow ? b.title.replace('Pile Cap Check', 'Footing Check') : b.title;
     if (b.id === 'loadcomb') {
       const factorsEl = document.getElementById('std-combo-factors');
       const topEl = document.getElementById('lc-summary-top'), botEl = document.getElementById('lc-summary-bottom');
@@ -88,7 +91,7 @@ export function generateReport() {
       content = el ? el.innerHTML : '';
     }
     html += `<div class="report-block ${b.pageBreak ? 'page-break-before' : ''}">
-      <div class="section-label">${b.title}</div>
+      <div class="section-label">${title}</div>
       ${content || '<div class="note">(no result yet — open this tab at least once first)</div>'}
     </div>`;
   });

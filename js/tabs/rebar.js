@@ -1,21 +1,29 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009m';
-import { num } from '../core/dom.js?v=20261009m';
-import { fmt } from '../core/format.js?v=20261009m';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009m';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009m';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009m';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009m';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009m';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009m';
-import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009m';
+import { evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009n';
+import { getRadioVal, num } from '../core/dom.js?v=20261009n';
+import { fmt } from '../core/format.js?v=20261009n';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009n';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009n';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009n';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009n';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009n';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009n';
+import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009n';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
 export function calcRebar() {
   lastResults.pedestalRebar = { label: 'Pedestal Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   lastResults.pileCapRebar = { label: 'Pile Cap Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
+  // "Footing Only" (Tab 02, no pedestal): there is no pedestal to design — 5A is not applicable (NA: listed, not counted, tab
+  // hidden by syncPedestalTab()). The 5B flexure still runs, through the column / base-plate size of rb-Bp × rb-Lp.
+  if (getRadioVal('fs-type') !== 'pedestal') {
+    lastResults.pedestalRebar = { label: 'Pedestal Reinforcement', status: 'NA', metric: 'N/A (NO PEDESTAL)', detail: 'Footing only — no pedestal in 02 Foundation Dimension.' };
+    document.getElementById('calc-rebar').innerHTML = chapterHeader('5A. Pedestal Check') + `<div class="note">Not applicable — "Footing Only" is selected in "02 — FOUNDATION DIMENSION", so there is no pedestal to design.</div>`;
+    calcPileCapFlexure({ fc: num('gen-fc'), fy: num('gen-fy'), Bp: num('rb-Bp'), Lp: num('rb-Lp') });
+    return;
+  }
   if (comboState.lc.length === 0) {
     const noCombo = `<div class="warn-box"><strong>⚠  No load combinations:</strong> add at least one combination in the "03 — LOADING DATA" tab.</div>`;
     document.getElementById('calc-rebar').innerHTML = chapterHeader('5A. Pedestal Check') + noCombo;

@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261009m';
+import { fmt } from '../core/format.js?v=20261009n';
 
 // 02 — Foundation Dimension: isometric 2.5D view for the Focus Canvas viewport (js/tabs/foundSizeFocus.js).
 // Pure SVG string builder (no DOM access) — geometry in, markup out. Boxes are drawn as three visible <polygon> faces

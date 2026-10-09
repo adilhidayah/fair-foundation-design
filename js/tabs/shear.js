@@ -1,13 +1,13 @@
 // Pile cap / shallow footing one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009m';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009m';
-import { fmt } from '../core/format.js?v=20261009m';
-import { lastResults, pileList } from '../core/state.js?v=20261009m';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009m';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009m';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009m';
-import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009m';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261009n';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009n';
+import { fmt } from '../core/format.js?v=20261009n';
+import { lastResults, pileList } from '../core/state.js?v=20261009n';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009n';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009n';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009n';
+import { footingLrfdActions, isShallow, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009n';
 
 // The automatic V_u source follows the foundation type (a project file may carry the other one): piles <-> soil.
 const autoSrc = (src) => (src === 'manual' ? src : (isShallow() ? 'soil' : 'piles'));
