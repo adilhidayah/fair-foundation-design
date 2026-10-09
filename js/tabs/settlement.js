@@ -1,9 +1,9 @@
 // 08B — Settlement (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, settlementCheck } from '../../lib/foundation/index.js?v=20261009h';
-import { num } from '../core/dom.js?v=20261009h';
-import { fmt } from '../core/format.js?v=20261009h';
-import { lastResults } from '../core/state.js?v=20261009h';
+import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, settlementCheck } from '../../lib/foundation/index.js?v=20261009i';
+import { num } from '../core/dom.js?v=20261009i';
+import { fmt } from '../core/format.js?v=20261009i';
+import { lastResults } from '../core/state.js?v=20261009i';
 
 // correctSPT/phiFromSPT/cuFromSPT/esFromSPT live in shared/soilProperties.js;
 // elasticSettlement/consolidationSettlement/settlementCheck live in shared/settlementCheck.js.

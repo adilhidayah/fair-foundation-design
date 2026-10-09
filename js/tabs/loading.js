@@ -1,12 +1,12 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261009h';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009h';
-import { fmt } from '../core/format.js?v=20261009h';
-import { comboState, state } from '../core/state.js?v=20261009h';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261009h';
-import { buildStdComboBase, renderComboTable } from '../tabs/combos.js?v=20261009h';
-import { recalcAll } from '../workflow/recalc.js?v=20261009h';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261009i';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261009i';
+import { fmt } from '../core/format.js?v=20261009i';
+import { comboState, state } from '../core/state.js?v=20261009i';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261009i';
+import { buildStdComboBase, renderComboTable } from '../tabs/combos.js?v=20261009i';
+import { recalcAll } from '../workflow/recalc.js?v=20261009i';
 
 export const LC_LOADTYPE_DEFAULTS = {
   D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately
@@ -14,7 +14,7 @@ export const LC_LOADTYPE_DEFAULTS = {
   'EQX(E)': { H: 45, M: 70 }, 'EQZ(E)': { H: 45, M: 70 }, 'EQX(O)': { H: 45, M: 70 }, 'EQZ(O)': { H: 45, M: 70 },
   W: { H: 60, M: 90 }, E: { H: 45, M: 70 }
 };
-// Registers a load type if it isn't already present (used by generator buttons — Wind/Seismic Apply, ASCE 7-16
+// Registers a load type if it isn't already present (used by generator buttons — Wind/Seismic Apply, ASCE 7-22
 // generators, Pipe Rack/Vessel/Tank "Generate combos" — before they write into that type's lc-<code>-P/H/M
 // fields, so writing to a type that isn't in the default set doesn't throw on a missing element).
 export function ensureLoadType(code, label, kind) {
@@ -321,7 +321,7 @@ export function renderLoadSummary() {
   state.lcLoadTypes.forEach(lt => {
     if (lt.code === 'W') {
       if (!equipmentInserted) { rows.push(...equipmentRows); equipmentInserted = true; }
-      // Direction-specific Fx/Fz from the ASCE 7-16 generator (different Asx/Asz) take priority; falls back to
+      // Direction-specific Fx/Fz from the ASCE 7-22 generator (different Asx/Asz) take priority; falls back to
       // one symmetric H/M (direct-entry from a datasheet, which only ever gives a single magnitude) otherwise.
       if (state.windDirState) {
         rows.push(trans('Wind Load (WX)', state.windDirState.Fx, state.windDirState.Mz));

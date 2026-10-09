@@ -1,13 +1,13 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 537 checks, 537 pass, 0 fail** (14 files, run 9 Oct 2026).
+**Total: 563 checks, 563 pass, 0 fail** (15 files, run 9 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
 | validation_shared_part1.mjs | bearing capacity, load combinations, stability (shallow + legacy pile) | 21 |
 | validation_shared_part2.mjs | pedestal P-M, soil correlations, settlement | 17 |
 | validation_shared_part3.mjs | anchor bolts, footing one-way / punching shear, pile cap moment, flexure | 16 |
-| validation_shared_part4.mjs | wind, seismic, settlement check | 15 |
+| validation_shared_part4.mjs | seismic, settlement check | 15 |
 | validation_cat_part5.mjs | static / rotating / reciprocating / pipe rack categories, foundation sizing, load kinds | 91 |
 | validation_cat_part6.mjs | skid-mounted category | 23 |
 | validation_import_part7.mjs | text / OCR import parsers (incl. Tab 02 foundation dimensions) | 62 |
@@ -18,7 +18,8 @@ Date: 18 Sep 2026, last updated 9 Oct 2026. Method: independent hand-calculation
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
 | validation_shared_part13.mjs | shallow footing with an offset pedestal; biaxial kern / overturning in the governing UC | 22 |
 | validation_shared_part14.mjs | biaxial no-tension soil pressure (rigid footing); "no eccentricity limit" option; Meyerhof effective area | 43 |
-| **Total** | | **537** |
+| validation_shared_part15.mjs | wind force generator, ASCE 7-22 Ch. 29 (Table 26.11-1 constants, Kz with zmin, qz without Kd, Ke) | 26 |
+| **Total** | | **563** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -35,7 +36,13 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
 - footing: one-way vc = 0.17λ√fc·b·d, two-way bo interior, pile cap moment, flexure As,min.
 - soil: Cn = √(100/σv) capped, Peck φ, Stroud cu, Bowles Es, γsub = γsat − 9.81.
 - settlement: Se = qB(1 − ν²)/Es·If·0.8, Sc = H/(1 + e0)·C·log10 (NC + OC branches).
-- wind (force method) and seismic (Fa/Fv, SDS/SD1, Cs) generators.
+- seismic (Fa/Fv, SDS/SD1, Cs) generator. (Wind was listed here but had no vector; it is covered by part15 since 9 Oct 2026.)
+
+### part15 — wind generator (ASCE 7-22)
+- Table 26.11-1 constants B/C/D (α, z<sub>g</sub>, z<sub>min</sub>, ft → m), K<sub>z</sub> = 2.41(z/z<sub>g</sub>)<sup>2/α</sup> with z raised to z<sub>min</sub>,
+  q<sub>z</sub> = 0.613K<sub>z</sub>K<sub>zt</sub>K<sub>e</sub>V² (Eq. 26.10-1, no K<sub>d</sub>), F = q<sub>z</sub>K<sub>d</sub>GC<sub>f</sub>A<sub>f</sub> (Eq. 29.4-1), K<sub>e</sub> = e<sup>−0.000119z<sub>e</sub></sup>.
+- Hand-calc worked in US units (ft, mph, psf) — default popup data: q<sub>z</sub> 1117.45 Pa, F 8.2065 kN (ASCE 7-16 code: 8.19 kN);
+  Exposure B below z<sub>min</sub>, K<sub>zt</sub> 1.1, z<sub>e</sub> 500 m: F 6.4102 kN. Table 26.10-1 spot values for C (0.85 / 0.98 / 1.13).
 
 ### part5–6 — equipment categories and sizing
 - static / rotating / reciprocating / pipe rack / skid: lateral M = F·h, unbalance m·e·ω², fn = (1/2π)√(k/m),

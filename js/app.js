@@ -1,34 +1,34 @@
 import {
-  windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261009h'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261009h';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009h';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261009h';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009h';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009h';
-import { loadTesseract } from './ocr/tesseract.js?v=20261009h';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009h';
-import { renderSummaryReport } from './report/summary.js?v=20261009h';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009h';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009h';
-import { calcFoundation } from './tabs/foundation.js?v=20261009h';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261009h';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009h';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009h';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009h';
-import { calcRebar } from './tabs/rebar.js?v=20261009h';
-import { calcSettlement } from './tabs/settlement.js?v=20261009h';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009h';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009h';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009h';
-import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009h';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009h';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009h';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009h';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009h';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261009h';
-import { renderScopePanel } from './workflow/scope.js?v=20261009h';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261009h';
+  windForceASCE722, designSpectralAccel, seismicResponseCoefficient
+} from '../lib/foundation/index.js?v=20261009i'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261009i';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009i';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261009i';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009i';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009i';
+import { loadTesseract } from './ocr/tesseract.js?v=20261009i';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009i';
+import { renderSummaryReport } from './report/summary.js?v=20261009i';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009i';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009i';
+import { calcFoundation } from './tabs/foundation.js?v=20261009i';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261009i';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009i';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009i';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009i';
+import { calcRebar } from './tabs/rebar.js?v=20261009i';
+import { calcSettlement } from './tabs/settlement.js?v=20261009i';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009i';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009i';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009i';
+import { resolveCheckTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009i';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009i';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009i';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009i';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009i';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261009i';
+import { renderScopePanel } from './workflow/scope.js?v=20261009i';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261009i';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -408,15 +408,15 @@ document.getElementById('ab-add-bolt').addEventListener('click', () => {
 });
 renderBoltTable();
 
-// ---------- Wind load generator (ASCE 7-16 Ch. 29, force method for rigid "other structures") ----------
-// windForceASCE716() lives in lib/foundation/shared/windLoad.js.
+// ---------- Wind load generator (ASCE 7-22 Ch. 29, force method for rigid "other structures") ----------
+// windForceASCE722() lives in lib/foundation/shared/windLoad.js.
 selectRadio('wg-exp', () => {});
 document.getElementById('wg-generate').addEventListener('click', () => {
   const V = num('wg-V');
   const exp = getRadioVal('wg-exp');
-  const Kzt = num('wg-Kzt'), Kd = num('wg-Kd'), G = num('wg-G'), Cf = num('wg-Cf'), h = num('wg-h');
+  const Kzt = num('wg-Kzt'), Kd = num('wg-Kd'), Ke = num('wg-Ke'), G = num('wg-G'), Cf = num('wg-Cf'), h = num('wg-h');
   const Asx = num('wg-Asx'), Asz = num('wg-Asz');
-  const { alpha, zg, z, Kz, qz, Fx, Mz, Fz, Mx } = windForceASCE716({ V, exposure: exp, z: num('wg-z'), Kzt, Kd, G, Cf, h, Asx, Asz });
+  const { alpha, zg, z, Kz, qz, Fx, Mz, Fz, Mx } = windForceASCE722({ V, exposure: exp, z: num('wg-z'), Kzt, Kd, Ke, G, Cf, h, Asx, Asz });
   state.windDirState = { Fx, Mz, Fz, Mx };
   // Each direction fills its own WX/WZ row used by Load Combinations.
   ensureLoadType('WX', 'Wind Load, WX');
@@ -427,22 +427,22 @@ document.getElementById('wg-generate').addEventListener('click', () => {
   document.getElementById('lc-WZ-M').value = Mx.toFixed(2);
   const dirBlock = (dirLabel, sym, A, symA, F, Msym, M) => {
     let rows = '';
-    rows += dlWorksheetItem('Velocity pressure exposure coefficient,', 'K<sub>z</sub>', '2.01·(z / z<sub>g</sub>)<sup>2/α</sup>', `2.01×(${fmt(z,2)}/${fmt(zg,2)})^(2/${fmt(alpha,2)})`, Kz, '', 3, false);
-    rows += dlWorksheetItem('Velocity pressure,', 'q<sub>z</sub>', '0.613·K<sub>z</sub>·K<sub>zt</sub>·K<sub>d</sub>·V²', `0.613×${fmt(Kz,3)}×${fmt(Kzt,2)}×${fmt(Kd,2)}×${fmt(V,1)}²`, qz, 'Pa', 1, false);
+    rows += dlWorksheetItem('Velocity pressure exposure coefficient,', 'K<sub>z</sub>', '2.41·(z / z<sub>g</sub>)<sup>2/α</sup>', `2.41×(${fmt(z,2)}/${fmt(zg,2)})^(2/${fmt(alpha,2)})`, Kz, '', 3, false);
+    rows += dlWorksheetItem('Velocity pressure,', 'q<sub>z</sub>', '0.613·K<sub>z</sub>·K<sub>zt</sub>·K<sub>e</sub>·V²', `0.613×${fmt(Kz,3)}×${fmt(Kzt,2)}×${fmt(Ke,3)}×${fmt(V,1)}²`, qz, 'Pa', 1, false);
     rows += dlWorksheetItem(`Projected area,`, symA, 'input', fmt(A,2), A, 'm²', 2, false);
-    rows += dlWorksheetItem(`Wind force,`, sym, `q<sub>z</sub>·G·C<sub>f</sub>·${symA} / 1000`, `${fmt(qz,1)}×${fmt(G,2)}×${fmt(Cf,2)}×${fmt(A,2)} / 1000`, F, 'kN', 2, false);
+    rows += dlWorksheetItem(`Wind force,`, sym, `q<sub>z</sub>·K<sub>d</sub>·G·C<sub>f</sub>·${symA} / 1000`, `${fmt(qz,1)}×${fmt(Kd,2)}×${fmt(G,2)}×${fmt(Cf,2)}×${fmt(A,2)} / 1000`, F, 'kN', 2, false);
     rows += dlWorksheetItem(`Wind moment,`, Msym, `${sym}·h`, `${fmt(F,2)}×${fmt(h,2)}`, M, 'kN·m', 2, false);
     return rows;
   };
   const wgHtml = `<div class="overflow-x"><table class="dl-worksheet"><colgroup><col style="width:28%"><col style="width:8%"><col style="width:18px"><col style="width:20%"><col style="width:24%"><col style="width:17%"></colgroup>
-    <caption>Wind Load Generator (ASCE 7-16 Ch. 29) — X-direction</caption>
+    <caption>Wind Load Generator (ASCE 7-22 Ch. 29) — X-direction</caption>
     ${dirBlock('transversal', 'F<sub>x</sub>', Asx, 'A<sub>sx</sub>', Fx, 'M<sub>z</sub>', Mz)}
   </table></div>
   <div class="overflow-x"><table class="dl-worksheet"><colgroup><col style="width:28%"><col style="width:8%"><col style="width:18px"><col style="width:20%"><col style="width:24%"><col style="width:17%"></colgroup>
-    <caption>Wind Load Generator (ASCE 7-16 Ch. 29) — Z-direction</caption>
+    <caption>Wind Load Generator (ASCE 7-22 Ch. 29) — Z-direction</caption>
     ${dirBlock('longitudinal', 'F<sub>z</sub>', Asz, 'A<sub>sz</sub>', Fz, 'M<sub>x</sub>', Mx)}
   </table></div>
-  <div class="note">Fills the Design Load Summary's and Load Combinations' WX (F<sub>x</sub>=${fmt(Fx,2)} kN, M<sub>z</sub>=${fmt(Mz,2)} kN·m) and WZ (F<sub>z</sub>=${fmt(Fz,2)} kN, M<sub>x</sub>=${fmt(Mx,2)} kN·m) rows directly. K<sub>zt</sub>, K<sub>d</sub> and C<sub>f</sub> depend on structure shape and site — verify against ASCE 7-16 Tables 26.8-1, 26.6-1 and 29.4-1 before using the generated value.</div>`;
+  <div class="note">Fills the Design Load Summary's and Load Combinations' WX (F<sub>x</sub>=${fmt(Fx,2)} kN, M<sub>z</sub>=${fmt(Mz,2)} kN·m) and WZ (F<sub>z</sub>=${fmt(Fz,2)} kN, M<sub>x</sub>=${fmt(Mx,2)} kN·m) rows directly. K<sub>zt</sub>, K<sub>d</sub> and C<sub>f</sub> depend on structure shape and site — verify against ASCE 7-22 Tables 26.8-1, 26.6-1 and 29.4-1 before using the generated value. z below z<sub>min</sub> of the exposure (B 9.14 m, C 4.57 m, D 2.13 m) is raised to z<sub>min</sub>.</div>`;
   document.getElementById('wg-result').innerHTML = wgHtml;
   // Also persist the breakdown in the main "03 — LOADING DATA" results panel, so it stays visible after the popup closes.
   const wgPreview = document.getElementById('wind-calc-preview');

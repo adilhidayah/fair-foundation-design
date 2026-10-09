@@ -373,7 +373,7 @@
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <button type="button" id="wl-direct-apply" class="combo-add-btn">Apply → fill Wind (W) row</button>
-      <button type="button" id="wl-open-calc" class="combo-add-btn" style="background:transparent;">⧉ Calculate (ASCE 7-16 generator)</button>
+      <button type="button" id="wl-open-calc" class="combo-add-btn" style="background:transparent;">⧉ Calculate (ASCE 7-22 generator)</button>
     </div>
     </div>
     <div id="lc-case-S" data-lc-codes="EQX(O),EQZ(O),E,EQX(E),EQZ(E)">
@@ -402,7 +402,7 @@
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <button type="button" id="sg-direct-apply" class="combo-add-btn">Apply → fill Seismic (E) row</button>
-      <button type="button" id="sg-open-calc" class="combo-add-btn" style="background:transparent;">⧉ Calculate (ASCE 7-16 generator)</button>
+      <button type="button" id="sg-open-calc" class="combo-add-btn" style="background:transparent;">⧉ Calculate (ASCE 7-22 generator)</button>
     </div>
     </div>
     <div data-lc-codes="EQX(E),EQZ(E)">
@@ -1528,7 +1528,7 @@
 <div class="modal-overlay" id="wind-modal">
   <div class="modal-box">
     <button type="button" class="modal-close" data-close="wind-modal" aria-label="Close">×</button>
-    <div class="section-label">Wind Load Generator (ASCE 7-16 Ch. 29 — rigid equipment/vessel, force method)</div>
+    <div class="section-label">Wind Load Generator (ASCE 7-22 Ch. 29 — rigid equipment/vessel, force method)</div>
     <div class="field">
       <label for="wg-V">Basic wind speed, V <span class="unit">m/s</span></label>
       <input type="number" id="wg-V" value="45" min="0">
@@ -1554,6 +1554,11 @@
       <input type="number" id="wg-Kd" value="0.90" min="0" step="0.05">
     </div>
     <div class="field">
+      <label for="wg-Ke"><span>Ground elevation factor, K<sub>e</sub></span></label>
+      <input type="number" id="wg-Ke" value="1.0" min="0" max="1" step="0.01">
+    </div>
+    <div class="note">K<sub>e</sub> = e<sup>−0.000119·z<sub>e</sub></sup>, z<sub>e</sub> = ground elevation above sea level (m) — ASCE 7-22 Table 26.9-1. K<sub>e</sub> = 1.0 is permitted (conservative).</div>
+    <div class="field">
       <label for="wg-G">Gust effect factor, G</label>
       <input type="number" id="wg-G" value="0.85" min="0" step="0.05">
     </div>
@@ -1578,7 +1583,7 @@
     </div>
     <button type="button" id="wg-generate" class="combo-add-btn">Generate → fill Wind (W) row</button>
     <div id="wg-result">
-      <div class="note">K<sub>zt</sub>, K<sub>d</sub> and C<sub>f</sub> depend on structure shape and site — verify against ASCE 7-16 Tables 26.8-1, 26.6-1 and 29.4-1. Click "Generate" to see the step-by-step calculation.</div>
+      <div class="note">K<sub>zt</sub>, K<sub>d</sub> and C<sub>f</sub> depend on structure shape and site — verify against ASCE 7-22 Tables 26.8-1, 26.6-1 and 29.4-1. Click "Generate" to see the step-by-step calculation.</div>
     </div>
   </div>
 </div>
