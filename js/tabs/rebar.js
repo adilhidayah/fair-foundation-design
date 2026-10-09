@@ -1,15 +1,15 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009q';
-import { getRadioVal, num } from '../core/dom.js?v=20261009q';
-import { fmt } from '../core/format.js?v=20261009q';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009q';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009q';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009q';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009q';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009q';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009q';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009q';
+import { evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009r';
+import { getRadioVal, num } from '../core/dom.js?v=20261009r';
+import { fmt } from '../core/format.js?v=20261009r';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009r';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009r';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009r';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009r';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009r';
+import { pileComboLoads } from '../tabs/pile.js?v=20261009r';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009r';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.

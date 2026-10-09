@@ -1833,7 +1833,8 @@
   /* ===== 5B — shear Focus Canvas (#focus-capcheck, js/tabs/shearFocus.js + js/diagrams/shearFocusDiagram.js) =====
      Critical section / perimeter = --fail (red), tributary / punched area and soil-pressure vectors = --caution (amber),
      footing / pedestal outlines as in Section 02; theme tokens, so light and dark themes both work. */
-  #focus-capcheck .sh-modes { margin: 0 0 10px; }
+  #focus-capcheck .sh-block + .sh-block { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+  #focus-capcheck .sh-foot { margin-top: 10px; }
   #focus-capcheck .sh-viewport .sh-svg { display: none; width: 100%; height: auto; max-height: 64vh; margin: 0 auto; background: transparent; }
   #focus-capcheck .sh-viewport[data-view="plan"] .sh-plan,
   #focus-capcheck .sh-viewport[data-view="elev"] .sh-elev,

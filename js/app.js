@@ -1,35 +1,35 @@
 import {
   windForceASCE722, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261009q'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261009q';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009q';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261009q';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009q';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009q';
-import { loadTesseract } from './ocr/tesseract.js?v=20261009q';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009q';
-import { renderSummaryReport } from './report/summary.js?v=20261009q';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009q';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009q';
-import { calcFoundation } from './tabs/foundation.js?v=20261009q';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261009q';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009q';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009q';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009q';
-import { calcRebar } from './tabs/rebar.js?v=20261009q';
-import { calcSettlement } from './tabs/settlement.js?v=20261009q';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009q';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009q';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009q';
-import { resolveCheckTab, sync5BSources, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009q';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009q';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009q';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009q';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009q';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261009q';
-import { setShearFocusMode, setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261009q';
-import { renderScopePanel } from './workflow/scope.js?v=20261009q';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261009q';
+} from '../lib/foundation/index.js?v=20261009r'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261009r';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261009r';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261009r';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261009r';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261009r';
+import { loadTesseract } from './ocr/tesseract.js?v=20261009r';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261009r';
+import { renderSummaryReport } from './report/summary.js?v=20261009r';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261009r';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261009r';
+import { calcFoundation } from './tabs/foundation.js?v=20261009r';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261009r';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261009r';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261009r';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261009r';
+import { calcRebar } from './tabs/rebar.js?v=20261009r';
+import { calcSettlement } from './tabs/settlement.js?v=20261009r';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261009r';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261009r';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261009r';
+import { resolveCheckTab, sync5BSources, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261009r';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261009r';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261009r';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261009r';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261009r';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261009r';
+import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261009r';
+import { renderScopePanel } from './workflow/scope.js?v=20261009r';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261009r';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -871,15 +871,14 @@ document.addEventListener('click', (e) => {
 document.querySelectorAll('.sidebar-menu .tab').forEach((t) => t.addEventListener('click', syncSidebarRails));
 document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.radio-row button')) setTimeout(syncSidebarRails, 0); }, true);
 // 02 Focus Canvas viewport: Plan / Elevation / Isometric switch (in place, no re-render).
-// 5B shear Focus Canvas: check / view switches and the hover popover on the critical sections (js/tabs/shearFocus.js).
+// 5B shear Focus Canvas (6.1 one-way and 6.2 punching canvases): view switches and the hover popover (js/tabs/shearFocus.js).
 {
   const sh = document.getElementById('focus-capcheck');
   sh.addEventListener('click', (e) => {
-    const m = e.target.closest('[data-sh-mode]'); if (m) setShearFocusMode(m.dataset.shMode);
-    const v = e.target.closest('[data-sh-view]'); if (v) setShearFocusView(v.dataset.shView);
+    const v = e.target.closest('[data-sh-view]'); if (v) setShearFocusView(v.dataset.shBlock, v.dataset.shView);
   });
   sh.addEventListener('mousemove', shearFocusHover);
-  sh.addEventListener('mouseleave', () => { const t = sh.querySelector('.sh-tip'); if (t) t.hidden = true; });
+  sh.addEventListener('mouseleave', () => sh.querySelectorAll('.sh-tip').forEach((t) => { t.hidden = true; }));
 }
 document.getElementById('focus-foundsize').addEventListener('click', (e) => {
   const b = e.target.closest('[data-cad-view]');

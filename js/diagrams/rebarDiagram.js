@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261009q';
+import { fmt } from '../core/format.js?v=20261009r';
 
 // Reinforcement drawings for Section 5 — pure SVG string builders (no DOM access): values in, markup out.
 //   pedestalSectionSVG      5A  pedestal cross-section with the bars of the P-M design
