@@ -206,5 +206,26 @@ Mau ubah apa → buka file mana: lihat `PROJECT_MAP.md`. Aturan edit UI (modul h
 
 **Cara verifikasi yang dipakai:** validasi `lib/` part1–11 (semua PASS) + uji headless Edge (server statis + CDP) dengan pembanding hitung tangan independen untuk gaya per tiang, M_u, dan V_u.
 
+
+## 13. Catatan Sesi 9 Okt 2026 — fokus berikutnya: fondasi dangkal (shallow foundation)
+**Dikerjakan (commit `dbd3327` … `9f167cf`, branch `ui/focus-canvas-scope`, belum di-push — repo belum punya remote; rencana: repo GitHub **private**, folder `projects/` sudah di `.gitignore`):**
+- Wind Generator ke **ASCE 7-22** (Table 26.11-1, K<sub>z</sub> = 2,41(z/z<sub>g</sub>)<sup>2/α</sup> dengan z<sub>min</sub>, K<sub>d</sub> pindah ke gaya, input K<sub>e</sub>) — validasi part15.
+- Simbol rusak diperbaiki: φ (tertulis "π ") dan √ (tertulis "↓"); label diagram anchor Tab 09 tidak bertumpuk.
+- **5B footing dangkal**: lentur, geser satu arah dan punching dari **tekanan tanah linear tanpa tarik, net** (berat footing + urugan × k<sub>D</sub> dikurangkan) — part16; punching **tepi/sudut** otomatis dari geometri — part17; faktor ukuran **λ<sub>s</sub>** di v<sub>c</sub> punching (UC naik ×1/λ<sub>s</sub> bila d > 250 mm).
+- 5A disembunyikan untuk **Footing Only** (status NA); langkah status 10 kini menilai lentur footing dangkal.
+- Laporan: **bab 05 Pedestal Check / bab 06 Footing (Pile Cap) Check** mengikuti pola bab lain.
+- **Focus Canvas 5B**: kanvas 6.1 One-Way dan 6.2 Punching (plan / potongan / iso 2.5D, badge D/C, tooltip).
+- Validasi: 17 file, **627 cek, semua PASS**.
+
+**Keputusan user sesi ini (jangan diulang tanya):** tekanan tanah desain = linear tanpa tarik + net; kombinasi LRFD yang resultannya di luar footing → lentur 5B ERROR / langkah 10 FAIL (dipertahankan); penomoran laporan 05 / 06; kanvas punching terpisah dari one-way.
+
+**Perlu dicek user:** z<sub>min</sub> Exposure C = 15 ft di ASCE 7-22 (sumber sekunder hanya menyebut B dan D). Proyek pipe support (`projects/…fair.json`): V<sub>u</sub> 5B masih input manual bawaan (850 kN) dan set LRFD hanya berisi berat sendiri — isi kombinasi LRFD dan pilih "From soil pressure" sebelum 5B dipakai. Hasil lama yang perlu dihitung ulang: beban angin Exposure B, lentur footing dangkal 5B (dulu dari reaksi tiang bawaan), punching dengan d > 250 mm.
+
+**Langkah berikutnya (shallow foundation, usulan urutan):**
+1. Focus Canvas untuk lentur 6.3 (sekarang masih lembar laporan).
+2. Pemusatan tulangan pita tengah footing persegi panjang (ACI 318M-19 §13.3.3.3).
+3. Opsi bearing per arah σ = 2P/[3B(L/2 − e)] bila checker meminta.
+4. Lainnya yang masih terbuka: anchor bolt Tab 09 memakai beban LRFD (Ch.17), cap oktagon untuk vessel, tornado ASCE 7-22 Ch.32 (Risk Category III/IV).
+
 ---
 *Disimpan dari rangkuman diskusi user untuk ditempel ke Claude Code.*
