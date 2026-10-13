@@ -107,6 +107,13 @@ if not a.tanpa_pdf:
     gb = next((l for l in r.stdout.splitlines() if l.startswith("PDF:")), "GAMBAR BAJA: gagal " + r.stderr.strip()[-120:])
     brief = (brief + "\n" if brief else "") + gb
 
+# 3d. tipe pondasi standar (P#/Fot#/F#) dari semua laporan pondasi + konfirmasi dengan ukuran tipe dikunci
+if not a.tanpa_pdf:
+    r = run([sys.executable, os.path.join(HERE, "tipe_pondasi.py"), "--folder", ROOT, "--ps", ps_path, "--fondasi", fp_path])
+    tl = next((l for l in r.stdout.splitlines() if l.startswith("Tipe:")), "TIPE PONDASI: gagal " + r.stderr.strip()[-120:])
+    brief = (brief + "
+" if brief else "") + tl
+
 # 4. ringkasan (layar + file)
 f = lambda v: "-" if v is None else (f"{v:.3f}" if isinstance(v, float) else str(v))
 head = "| Tipe | STAAD err | UC tiang | UC lengan | KL/r maks | Baja | Simpangan | Footing (m) | Pedestal | Stabilitas penentu | Pondasi | PDF |"
