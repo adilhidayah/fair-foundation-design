@@ -1,18 +1,28 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261009r';
-import { getRadioVal, num } from '../core/dom.js?v=20261009r';
-import { fmt } from '../core/format.js?v=20261009r';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261009r';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261009r';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261009r';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261009r';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261009r';
-import { pileComboLoads } from '../tabs/pile.js?v=20261009r';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261009r';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261013b';
+import { getRadioVal, num } from '../core/dom.js?v=20261013b';
+import { fmt } from '../core/format.js?v=20261013b';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261013b';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261013b';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261013b';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261013b';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261013b';
+import { pileComboLoads } from '../tabs/pile.js?v=20261013b';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261013b';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
+// Minimum reinforcement rule of the pile cap / footing (select rb-asmin): 'slab' = ACI Table 8.6.1.1, 'beam' = project criterion.
+const asMinRule = () => (document.getElementById('rb-asmin')?.value === 'beam' ? 'beam' : 'slab');
+const asMinText = (fy) => (asMinRule() === 'beam'
+  ? 'A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>) (project criterion; 1.4·b·d/f<sub>y</sub> is the beam minimum of ACI 318M-19 §9.6.1.2)'
+  : `A<sub>s,min</sub> = ρ<sub>min</sub>·b·t, ρ<sub>min</sub> = ${fmt(slabMinSteelRatio(fy), 4)} (ACI 318M-19 §13.3 → Table 8.6.1.1: 0.0020 for f<sub>y</sub> &lt; 420 MPa, max(0.0018·420/f<sub>y</sub>, 0.0014) for f<sub>y</sub> ≥ 420 MPa)`);
+// Bars for a design: spacing in 25 mm steps, ≤ min(3t, 450) (barLayout(), lib) -> c.n, c.spacing, c.AsProv.
+function layBars(c, bar, t) {
+  const lay = barLayout(c.design.As, c.b, bar, t);
+  if (lay.valid) { c.n = lay.n; c.spacing = lay.s; c.AsProv = lay.AsProv; } else { c.n = 0; c.spacing = 0; c.AsProv = 0; }
+}
 export function calcRebar() {
   lastResults.pedestalRebar = { label: 'Pedestal Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   lastResults.pileCapRebar = { label: 'Pile Cap Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
@@ -146,13 +156,12 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     { key: 'xt', axis: 'x', lbl: 'x', face: 'top', title: 'x-direction — top', b: Lcap, dEff: d, half: halfX, ref: at.x, bName: 'L<sub>cap</sub>' },
     { key: 'yt', axis: 'y', lbl: 'z', face: 'top', title: 'z-direction — top', b: Bcap, dEff: d - capBar, half: halfY, ref: at.y, bName: 'B<sub>cap</sub>' }
   ];
-  const Abar = Math.PI / 4 * capBar * capBar;
   CASES.forEach(c => {
     c.gov = capResults.length ? capResults.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 }, pileForces: null };
     c.Mu = c.gov.m[c.key];
     c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel is only designed where the combinations produce hogging
-    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy) : null;
-    if (c.design && c.design.ok) { c.n = Math.ceil(c.design.As / Abar); c.spacing = c.b / (c.n + 1); }
+    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()) : null;
+    if (c.design && c.design.ok) layBars(c, capBar, t);
   });
   const tooSmall = CASES.filter(c => c.design && !c.design.ok);
   tooSmall.forEach(c => {
@@ -160,7 +169,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   });
 
   const status = tooSmall.length ? 'FAIL' : (invalidCap.length || items.length === 0 ? 'ERROR' : 'PASS'); // an undistributable combination is never silently dropped
-  const barTxt = (c) => (c.design && c.design.ok ? `${c.n} — D${fmt(capBar,0)} @ ~${fmt(c.spacing,0)}mm` : '—');
+  const barTxt = (c) => (c.design && c.design.ok ? (c.spacing > 0 ? `D${fmt(capBar,0)} @ ${fmt(c.spacing,0)} mm (${c.n} bars)` : `D${fmt(capBar,0)}: spacing < 25 mm`) : '—');
   const topCases = CASES.filter(c => c.face === 'top' && c.required);
   lastResults.pileCapRebar = {
     label: 'Pile Cap Reinforcement',
@@ -170,14 +179,14 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
       + (invalidCap.length ? ` | ${invalidCap.length} combination(s) invalid` : '') + (tooSmall.length ? ' | section too small: ' + tooSmall.map(c => c.title).join(', ') : '')
   };
 
-  html += introPara(`M<sub>u</sub> = Σ F<sub>i</sub>·(|c<sub>i</sub> − c<sub>p</sub>| − h<sub>p</sub>) over the piles beyond each pedestal face (c = x: h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(halfX,3)} m, c<sub>p</sub> = ${fmt(at.x,3)} m; c = z: h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(halfY,3)} m, c<sub>p</sub> = ${fmt(at.y,3)} m); net &gt; 0 = sagging (bottom steel), net &lt; 0 = hogging from uplift piles (top steel). A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, with A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>); b = cap width perpendicular to the bending, d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer) and ${fmt(d - capBar,0)} mm (z-direction, inner layer).`);
+  html += introPara(`M<sub>u</sub> = Σ F<sub>i</sub>·(|c<sub>i</sub> − c<sub>p</sub>| − h<sub>p</sub>) over the piles beyond each pedestal face (c = x: h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(halfX,3)} m, c<sub>p</sub> = ${fmt(at.x,3)} m; c = z: h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(halfY,3)} m, c<sub>p</sub> = ${fmt(at.y,3)} m); net &gt; 0 = sagging (bottom steel), net &lt; 0 = hogging from uplift piles (top steel). A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, with ${asMinText(fy)}; bars at a spacing rounded down to a multiple of 25 mm, s ≤ min(3t, 450 mm) (§7.7.2.3); b = cap width perpendicular to the bending, d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer) and ${fmt(d - capBar,0)} mm (z-direction, inner layer).`);
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Recommended reinforcement</caption>
     <tr><th>Section</th><th>Governing combination</th><th>M<sub>u</sub> (kN·m)</th><th>b (mm)</th><th>d (mm)</th><th>A<sub>s</sub> req. (mm²)</th><th>A<sub>s,min</sub> (mm²)</th><th>A<sub>s</sub> gov. (mm²)</th><th>Bars</th></tr>
     ${CASES.map(c => {
       if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment (no net uplift beyond the pedestal face). Provide the minimum / detailing top steel per the project.</td></tr>`;
       if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
-      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(Math.max(c.design.AsMinTS, c.design.AsMinFlex),0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
     }).join('')}
   </table></div>`;
   // Reinforcement drawings of what was designed above (only the layers that have a valid design), and the bar-spacing check:
@@ -255,21 +264,20 @@ function calcFootingFlexure({ fc, fy }) {
     { key: 'xt', lbl: 'x', face: 'top', title: 'x-direction — top', b: L * 1000, dEff: d },
     { key: 'yt', lbl: 'z', face: 'top', title: 'z-direction — top', b: B * 1000, dEff: d - bar }
   ];
-  const Abar = Math.PI / 4 * bar * bar;
   const okRes = res.filter(r => !r.invalid);
   CASES.forEach(c => {
     c.gov = okRes.length ? okRes.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 } };
     c.Mu = c.gov.m[c.key];
     c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel only where a combination produces hogging
-    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy) : null;
-    if (c.design && c.design.ok) { c.n = Math.ceil(c.design.As / Abar); c.spacing = c.b / (c.n + 1); }
+    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()) : null;
+    if (c.design && c.design.ok) layBars(c, bar, t);
   });
   const tooSmall = CASES.filter(c => c.design && !c.design.ok);
   tooSmall.forEach(c => {
     html += `<div class="warn-box"><strong>⚠  Section too small (${c.title}):</strong> M<sub>u</sub> = ${fmt(c.Mu,1)} kN·m exceeds what this thickness/width can resist even over-reinforced — increase H<sub>f</sub> or the footing width.</div>`;
   });
   const status = tooSmall.length ? 'FAIL' : (invalid.length || !okRes.length ? 'ERROR' : 'PASS');
-  const barTxt = (c) => (c.design && c.design.ok ? `${c.n} — D${fmt(bar,0)} @ ~${fmt(c.spacing,0)}mm` : '—');
+  const barTxt = (c) => (c.design && c.design.ok ? (c.spacing > 0 ? `D${fmt(bar,0)} @ ${fmt(c.spacing,0)} mm (${c.n} bars)` : `D${fmt(bar,0)}: spacing < 25 mm`) : '—');
   const topCases = CASES.filter(c => c.face === 'top' && c.required);
   Object.assign(lastResults.pileCapRebar, {
     status,
@@ -277,14 +285,14 @@ function calcFootingFlexure({ fc, fy }) {
     detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
       + (invalid.length ? ` | ${invalid.length} combination(s) without soil pressure` : '') + (tooSmall.length ? ' | section too small: ' + tooSmall.map(c => c.title).join(', ') : '')
   });
-  html += introPara(`M<sub>u</sub> = ∫(q − w)·(|c − c<sub>p</sub>| − h<sub>p</sub>) dA over the part of the footing beyond each pedestal face, full width (c = x: h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(ped.c1 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.x,3)} m; c = z: h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(ped.c2 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.z,3)} m); net &gt; 0 = sagging (bottom steel), net &lt; 0 = hogging on the uplift side (top steel). A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, with A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>); b = footing width perpendicular to the bending, d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer) and ${fmt(d - bar,0)} mm (z-direction, inner layer).`);
+  html += introPara(`M<sub>u</sub> = ∫(q − w)·(|c − c<sub>p</sub>| − h<sub>p</sub>) dA over the part of the footing beyond each pedestal face, full width (c = x: h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(ped.c1 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.x,3)} m; c = z: h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(ped.c2 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.z,3)} m); net &gt; 0 = sagging (bottom steel), net &lt; 0 = hogging on the uplift side (top steel). A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, with ${asMinText(fy)}; bars at a spacing rounded down to a multiple of 25 mm, s ≤ min(3t, 450 mm) (§7.7.2.3); b = footing width perpendicular to the bending, d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer) and ${fmt(d - bar,0)} mm (z-direction, inner layer).`);
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Recommended reinforcement</caption>
     <tr><th>Section</th><th>Governing combination</th><th>M<sub>u</sub> (kN·m)</th><th>b (mm)</th><th>d (mm)</th><th>A<sub>s</sub> req. (mm²)</th><th>A<sub>s,min</sub> (mm²)</th><th>A<sub>s</sub> gov. (mm²)</th><th>Bars</th></tr>
     ${CASES.map(c => {
       if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment beyond the pedestal faces. Provide the minimum / detailing top steel per the project.</td></tr>`;
       if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
-      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(Math.max(c.design.AsMinTS, c.design.AsMinFlex),0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
     }).join('')}
   </table></div>`;
   const drawLayers = {};

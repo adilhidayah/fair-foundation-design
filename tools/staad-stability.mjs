@@ -22,7 +22,12 @@
 //                           "failure": "general", "beta": 0 },                            //   (bearingCapacityCheck, γ = gs, Df of
 //                                                                                         //   each footing) instead of "qa"
 //                 "bearMethod": "rigid",                       // "rigid" (no tension) | "meyerhof" (effective area B'×L', q'a recomputed)
-//                 "minContact": 0.7 },                          // optional: min. share of the base in contact (statics, 4A §4.2), UC = min/ratio
+//                 "minContact": 0.7,                            // optional: min. share of the base in contact (statics, 4A §4.2), UC = min/ratio
+//                 "design": { "fc": 21.7, "fy": 420, "cover": 75, "bar": 13, "lambda": 1,       // optional: footing thickness + bars
+//                             "asMin": "slab",                         // "slab" (ACI Table 8.6.1.1) | "beam" (max(0.0018bt, 1.4bd/fy))
+//                             "spacingStep": 25,                       // bar spacing rounded down to this multiple (mm)
+//                             "autoThickness": { "to": 0.8, "step": 0.05 } } },              //   from the LRFD combos ("lc_lrfd")
+//   "lc_lrfd": "301-400",                                // factored combinations for the footing design (5B, chapter 06)
 //   "foundations": [ { "name": "PS-1.2 F1", "node": 1, "type": "pedestal",          // "pedestal" | "block"
 //                      "Bf": 1.0, "Lf": 1.0, "Hf": 0.3, "Df": 0.9,                    // footing (m), Df = bottom below grade
 //                      "Bp": 0.3, "Lp": 0.3, "pedGp": 0.3, "OffX": 0, "OffZ": 0,      // pedestal (m), Gp = top above grade
@@ -39,7 +44,8 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
   foundationSizing, evaluateFoundationCombo, evaluateBiaxialFooting, biaxialSoilPressure, combineFootingChecks,
-  pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
+  pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign,
+  footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
 } from '../lib/foundation/index.js';
 
 const G = 9.80665;
@@ -60,7 +66,8 @@ export function footingWeights(f, crit) {
     OffX: f.OffX || 0, OffZ: f.OffZ || 0, blockGp: 0, groutT: (f.groutT || 0) / 1000
   });
   if (!s.valid) throw new Error(`${f.name}: invalid footing geometry (B, L, H > 0, Df ≥ 0, with a pedestal Df ≥ Hf)`);
-  return { sizing: s, dW: s.totalWeightKN, dh: s.deltaH, Wped: s.hasPed ? (s.Wp + s.Wg) * G : 0, Wsoil: s.Ws * G };
+  return { sizing: s, dW: s.totalWeightKN, dh: s.deltaH, Wped: s.hasPed ? (s.Wp + s.Wg) * G : 0, Wsoil: s.Ws * G,
+    Wfoot: (s.Wf + (s.hasPed ? 0 : s.Wg)) * G, Hp: s.hasPed ? s.Hp : 0 };
 }
 
 // Allowable bearing for a footing B × L (shorter side as the width): Tab 08 formula when criteria.soil is given (as
@@ -158,11 +165,12 @@ export function renderReport(cfg, results) {
     'Sign convention (FAIR): P downward +, Fx = −FX, Fz = −FZ of the STAAD reaction; Mz = +MZ, Mx = +MX (Mz > 0 compresses +x, ' +
     'Mx > 0 compresses −z). Moved to the underside of the footing: P + kD·ΔW, Mz + Fx·Δh, Mx − Fz·Δh (+ pedestal offset). ' +
     'Torsion MY is not part of the shallow-footing checks.', '',
-    '## Summary', '', '| Foundation | Node | B × L (m) | ΔW (kN) | Δh (m) | q_a (kPa) | Governing L/C | Check | UC | Uplift (statics) | Status |', '|---|---|---|---|---|---|---|---|---|---|---|'];
+    '## Summary', '', '| Foundation | Node | B × L × H (m) | ΔW (kN) | Δh (m) | q_a (kPa) | Governing L/C | Check | UC | Uplift (statics) | Footing design | Status |', '|---|---|---|---|---|---|---|---|---|---|---|---|'];
   for (const r of results) {
     const g = r.gov;
-    out.push(`| ${r.f.name} | ${r.f.node} | ${n(r.B)} × ${n(r.L)} | ${n(r.w.dW, 2)} | ${n(r.w.dh, 3)} | ${n(r.qa0.qa, 1)} | ${g ? g.lc + ' ' + g.title : '-'} | ` +
-      `${g ? (g.valid ? g.governingCheck.name : g.note) : 'no reactions'} | ${g ? n(g.governingUC, 3) : '-'} | ${upliftText(r.upl)} | ${r.pass ? 'PASS' : 'FAIL'} |`);
+    const dz = r.design ? `${r.design.pass ? 'OK' : 'NOT OK'} — ${r.design.gov.name}, UC ${n(r.design.gov.uc, 3)}` : '-';
+    out.push(`| ${r.f.name} | ${r.f.node} | ${n(r.B)} × ${n(r.L)} × ${n(r.w.sizing.Hf)} | ${n(r.w.dW, 2)} | ${n(r.w.dh, 3)} | ${n(r.qa0.qa, 1)} | ${g ? g.lc + ' ' + g.title : '-'} | ` +
+      `${g ? (g.valid ? g.governingCheck.name : g.note) : 'no reactions'} | ${g ? n(g.governingUC, 3) : '-'} | ${upliftText(r.upl)} | ${dz} | ${r.pass ? 'PASS' : 'FAIL'} |`);
   }
   for (const r of results) {
     const f = r.f, s = r.w.sizing;
@@ -193,7 +201,134 @@ export function renderReport(cfg, results) {
         `${n(x.governingUC, 3)} | ${x.governingCheck.name} | ${x.overallPass ? 'PASS' : 'FAIL'} |`);
     }
   }
+  for (const r of results) if (r.design) out.push(...designReport(r));
   return out.join('\n') + '\n';
+}
+
+function designReport(r) {
+  const D = r.design, f = r.f, o = [];
+  o.push('', `## ${f.name} — footing thickness and reinforcement (LRFD, as 5B / chapter 06)`, '',
+    `Footing ${n(D.B)} × ${n(D.L)} m, H = ${n(D.t, 0)} mm, cover ${D.cc} mm, bars D${D.bar}: d = H − cover − d_b = ${n(D.d, 0)} mm (x-bars), ` +
+    `${n(D.d - D.bar, 0)} mm (z-bars); f'c = ${D.fc} MPa, f_y = ${D.fy} MPa. Pedestal ${n(f.Bp)} × ${n(f.Lp)} m. Net design pressure q − w, ` +
+    `w = kD × ${n(D.wUnit, 2)} kPa (footing + backfill). Rigid footing, linear pressure, no tension. ACI 318M-19: flexure at the pedestal ` +
+    `faces §13.2.7.1, ${r.f && D.asMinRule === 'beam' ? 'A_s,min = max(0.0018·b·h, 1.4·b·d/f_y) (project criterion)' : `A_s,min = ρ_min·b·h (§13.3 → Table 8.6.1.1, ρ_min ${D.fy < 420 ? '0.0020' : n(Math.max(0.0018 * 420 / D.fy, 0.0014), 4)})`}, ` +
+    `spacing rounded down to ${D.spacingStep} mm, s ≤ min(3h, 450) mm, clear ≥ max(25 mm, d_b); one-way shear at d §22.5.5.1 ` +
+    `(Eq. c, ρ_w of the bottom bars, λ_s); punching at d/2 §22.6 with the unbalanced moments at the pedestal base (§8.4.4.2).`);
+  if (r.thTrials) o.push('', 'Thickness trials (each with its own stability auto-size, pedestal depth below grade locked):', '',
+    '| H (m) | B = L (m) | Stability UC | Design governing | Design UC | Status |', '|---|---|---|---|---|---|',
+    ...r.thTrials.map(t => `| ${n(t.Hf)} | ${n(t.B)} | ${n(t.stabUC, 3)} | ${t.desGov} | ${n(t.desUC, 3)} | ${t.pass ? 'PASS' : 'FAIL'} |`));
+  if (D.missing.length) o.push('', `**No reaction for L/C ${D.missing.join(', ')} — not checked.**`);
+  const inv = D.items.filter(it => it.invalid);
+  if (inv.length) o.push('', `**No soil pressure: ${inv.map(it => it.lc + ' (' + it.invalid + ')').join('; ')}.**`);
+  o.push('', '| Check | L/C | Demand | Capacity | UC | Status |', '|---|---|---|---|---|---|');
+  o.push(`| Min. depth (§13.3.1.2) | - | d = ${n(D.d, 0)} mm | 150 mm | ${n(150 / D.d, 3)} | ${D.d >= 150 ? 'OK' : 'NOT OK'} |`);
+  for (const w of D.oneway || []) {
+    const c = w.chk;
+    o.push(`| One-way shear, sections ⟂ ${w.axis} (b_w ${n(w.bw, 0)} mm, ρ_w ${n(w.rho * 100, 3)} %) | ${w.lc} | V_u = ${n(w.Vu, 1)} kN | ` +
+      `φV_c = ${c.valid ? n(c.phiVc / 1000, 1) : '-'} kN | ${n(w.uc, 3)} | ${w.uc <= 1 ? 'OK' : 'NOT OK'} |`);
+  }
+  if (D.punch) o.push(D.punch.vu !== undefined
+    ? `| Punching (${D.punch.loc}, b_o ${n(D.punch.bo * 1000, 0)} mm) | ${D.punch.lc} | v_u = ${n(D.punch.vu, 3)} MPa (V_u ${n(D.punch.Vu, 1)} kN) | ` +
+      `φv_c = ${n(D.punch.cap.phiVc_stress, 3)} MPa | ${n(D.punch.uc, 3)} | ${D.punch.uc <= 1 ? 'OK' : 'NOT OK'} |`
+    : `| Punching | - | ${D.punch.note} | - | - | - |`);
+  o.push('', '| Reinforcement | L/C | M_u (kN·m) | b (mm) | d (mm) | A_s,req (mm²) | A_s,min (mm²) | Bars | A_s,prov (mm²) | Status |',
+    '|---|---|---|---|---|---|---|---|---|---|');
+  for (const c of D.flex || []) {
+    if (!c.required) { o.push(`| ${c.key} | - | 0 (no hogging) | ${n(c.b, 0)} | ${n(c.dEff, 0)} | - | - | not required (detailing) | - | - |`); continue; }
+    if (!c.des || !c.des.ok) { o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | section too small | - | - | - | NOT OK |`); continue; }
+    o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
+      `${c.s ? `D${D.bar} @ ${n(c.s, 0)} (${c.n} bars)` : 'spacing < step'} | ${n(c.AsProv, 0)} | ${c.ok ? 'OK' : 'NOT OK'} |`);
+  }
+  o.push('', `Footing design: **${D.pass ? 'OK' : 'NOT OK'}** — governing ${D.gov.name}, UC ${n(D.gov.uc, 3)}.`);
+  return o;
+}
+
+// ---------------- footing thickness and reinforcement (as 5B shallow: js/tabs/footingSoil.js, shear.js, rebar.js) ----------------
+// LRFD loads at the underside of the footing (same statics as the stability check), no-tension pressure plane under each, net
+// design pressure q − w with w = kD·(W_f/A_f + W_s/(A_f − A_p)). Flexure at the pedestal faces, one-way shear at d, punching at
+// d/2 (edge / corner cut by the footing edges, unbalanced moments at the pedestal base). ACI 318M-19 §13.2.7, §22.5, §22.6.
+export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
+  const D = crit.design, w0 = footingWeights(f, crit);
+  const B = f.Bf, L = f.Lf, t = f.Hf * 1000, cc = D.cover ?? 75, bar = D.bar ?? 13, fc = D.fc, fy = D.fy, lambda = D.lambda ?? 1;
+  const hasPed = f.type !== 'block';
+  const c1 = (hasPed ? f.Bp : (f.c1 ?? f.Bp)) || 0, c2 = (hasPed ? f.Lp : (f.c2 ?? f.Lp)) || 0;
+  const ped = { x: hasPed ? f.OffX || 0 : 0, z: hasPed ? f.OffZ || 0 : 0, c1, c2 };
+  const Af = B * L, Ap = hasPed ? c1 * c2 : 0;
+  const wUnit = w0.Wfoot / Af + (Af - Ap > 1e-9 ? w0.Wsoil / (Af - Ap) : 0);
+  const dead = deadCase ?? Math.min(...Object.entries(loads.primary).filter(([, p]) => /^dead$/i.test(p.type)).map(([n]) => +n));
+  const d = t - cc - bar;                                       // mm, outer layer (x-bars); z-bars d − bar
+  const out = { f, B, L, t, cc, bar, fc, fy, d, wUnit, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25,
+    items: [], missing: [], checks: [], notes: [] };
+  if (!(c1 > 0 && c2 > 0)) { out.notes.push('Pedestal / column size B_p × L_p must be > 0.'); out.pass = false; out.gov = { name: 'input', uc: Infinity }; return out; }
+  for (const lc of lcList) {
+    const r = reac[`${f.node}:${lc}`];
+    if (!r) { out.missing.push(lc); continue; }
+    const top = reactionToFoundationLoad(r), fac = primaryFactors(loads, lc), kD = fac[dead] || 0;
+    const off = (ped.x || ped.z) ? pedestalOffsetMoments({ Ptop: top.P, kD, Wped: w0.Wped, Wsoil: w0.Wsoil, OffX: ped.x, OffZ: ped.z, Af, Ap }) : { dMx: 0, dMz: 0 };
+    const Pu = top.P + kD * w0.dW, Mz = top.Mz + top.Fx * w0.dh + off.dMz, Mx = top.Mx - top.Fz * w0.dh + off.dMx;
+    const it = { lc, title: loads.combos[lc]?.title || '', Pu, Mx, Mz, kD, w: kD * wUnit,
+      Mzped: top.Mz + top.Fx * w0.Hp, Mxped: top.Mx - top.Fz * w0.Hp };          // at the pedestal base (punching)
+    if (!(Pu > 0)) it.invalid = 'Net uplift (P_u ≤ 0) — no soil pressure.';
+    else {
+      const pl = signedSoilPressure(B, L, Pu, Mz / Pu, -Mx / Pu);
+      if (!pl.valid) it.invalid = pl.note || 'Resultant outside the footing.'; else it.pl = pl;
+    }
+    out.items.push(it);
+  }
+  const ok = out.items.filter(it => !it.invalid);
+  if (!ok.length) { out.notes.push('No soil pressure for any LRFD combination.'); out.pass = false; out.gov = { name: 'no soil pressure', uc: Infinity }; return out; }
+  // flexure: x-sections (bars along x, width L, outer layer d), z-sections (bars along z, width B, inner layer d − bar)
+  ok.forEach(it => {
+    it.mx = footingFlexureAxis({ pl: it.pl, w: it.w, B, L, axis: 'x', ref: ped.x, half: c1 / 2 });
+    it.mz = footingFlexureAxis({ pl: it.pl, w: it.w, B, L, axis: 'z', ref: ped.z, half: c2 / 2 });
+  });
+  const minClear = Math.max(25, bar), step = D.spacingStep ?? 25, rule = D.asMin === 'beam' ? 'beam' : 'slab';
+  const CASES = [
+    { key: 'x-bottom', get: it => it.mx.bottom, b: L * 1000, dEff: d, face: 'bottom' },
+    { key: 'z-bottom', get: it => it.mz.bottom, b: B * 1000, dEff: d - bar, face: 'bottom' },
+    { key: 'x-top', get: it => it.mx.top, b: L * 1000, dEff: d, face: 'top' },
+    { key: 'z-top', get: it => it.mz.top, b: B * 1000, dEff: d - bar, face: 'top' }
+  ].map(c => {
+    const gov = ok.reduce((a, b2) => (c.get(b2) > c.get(a) ? b2 : a));
+    const Mu = c.get(gov), required = c.face === 'bottom' || Mu > 1e-6;   // top steel only where a combination gives hogging
+    const des = required ? flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, rule) : null;
+    // spacing in `step` mm steps, rounded down, ≤ min(3t, 450) (barLayout(), as the app's 5B)
+    const lay = des && des.ok ? barLayout(des.As, c.b, bar, t, step) : null;
+    const n = lay && lay.valid ? lay.n : null, s = lay && lay.valid ? lay.s : null;
+    return { ...c, lc: gov.lc, Mu, required, des, n, s, AsProv: lay && lay.valid ? lay.AsProv : 0,
+      ok: !required || (!!des && des.ok && !!lay && lay.valid && s - bar >= minClear - 1e-9) };
+  });
+  out.flex = CASES;
+  // one-way shear, detailed Eq. 22.5.5.1(c) (no Av,min in a footing): ρw from the bottom bars of that direction
+  out.oneway = ['x', 'z'].map(ax => {
+    const per = ok.map(it => ({ it, r: footingOneWayShear({ pl: it.pl, w: it.w, B, L, axis: ax, ref: ax === 'x' ? ped.x : ped.z,
+      half: (ax === 'x' ? c1 : c2) / 2, d: d / 1000 }) }));
+    const g = per.reduce((a, b2) => (b2.r.Vu > a.r.Vu ? b2 : a));
+    const fl = CASES.find(c => c.key === `${ax}-bottom`), bw = (ax === 'x' ? L : B) * 1000;
+    const rho = fl.AsProv > 0 ? fl.AsProv / (bw * d) : 0.0018;
+    const chk = oneWayShearCheck({ bw, h: t, cc, Dbar: bar, fc, vu: g.r.Vu, rho, lambda, method: 'detailed', avOk: false });
+    return { axis: ax, lc: g.it.lc, Vu: g.r.Vu, bw, rho, chk, uc: chk.valid ? chk.uc : Infinity };
+  });
+  // punching with the unbalanced moments at the pedestal base; governing = largest combined stress
+  const pp = ok.map(it => {
+    const res = footingPunchingShear({ pl: it.pl, w: it.w, B, L, cx: ped.x, cz: ped.z, c1, c2, d: d / 1000 });
+    const st = res.valid ? footingPunchingStress({ sec: res.sec, Vu: res.Vu, Mx: it.Mxped, Mz: it.Mzped }) : null;
+    return { it, res, st };
+  });
+  const pv = pp.filter(p => p.res.valid);
+  if (pv.length) {
+    const g = pv.reduce((a, b2) => (b2.st.vu > a.st.vu ? b2 : a)), cap = footingPunchingCapacity({ sec: g.res.sec, fc, lambda });
+    out.punch = { lc: g.it.lc, Vu: g.res.Vu, vu: g.st.vu, loc: g.res.sec.loc, bo: g.res.sec.bo, cap, uc: g.st.vu / cap.phiVc_stress };
+  } else out.punch = { note: pp[0] ? pp[0].res.note : 'not evaluated', uc: 0 };   // section spans the footing -> one-way governs
+  out.checks = [
+    { name: 'Min. depth d ≥ 150 mm (§13.3.1.2)', uc: 150 / Math.max(d, 1e-9) },
+    ...out.oneway.map(o => ({ name: `One-way shear ${o.axis} (§22.5.5)`, uc: o.uc })),
+    { name: 'Punching shear (§22.6)', uc: out.punch.uc },
+    ...CASES.filter(c => c.required).map(c => ({ name: `Flexure ${c.key}`, uc: c.ok ? (c.des.AsCalc / c.AsProv) : Infinity }))
+  ];
+  out.gov = out.checks.reduce((a, b2) => (b2.uc > a.uc ? b2 : a));
+  out.pass = out.checks.every(c => c.uc <= 1.0) && !out.missing.length && !out.items.some(it => it.invalid);
+  return out;
 }
 
 // Smallest square footing (Bf = Lf, from..to by step) that passes every check; the trials are kept for the report.
@@ -257,7 +392,22 @@ export function runConfig(cfgPath) {
     }
     const { loads, reac } = cache[key];
     const lcs = f.lc ? parseCaseList(f.lc) : lcList, dc = f.dead_case ?? cfg.dead_case;
-    return f.autosize ? autosizeFoundation(f, cfg.criteria, loads, reac, lcs, dc) : evaluateStaadFoundation(f, cfg.criteria, loads, reac, lcs, dc);
+    const crit = cfg.criteria;
+    const stab = (g) => (g.autosize ? autosizeFoundation(g, crit, loads, reac, lcs, dc) : evaluateStaadFoundation(g, crit, loads, reac, lcs, dc));
+    if (!(crit.design && cfg.lc_lrfd)) return stab(f);
+    const lcU = parseCaseList(f.lc_lrfd || cfg.lc_lrfd), at = crit.design.autoThickness;
+    const thTrials = [];
+    let g = f, r, des;
+    for (;;) {
+      r = stab(g);
+      des = footingDesignCheck({ ...g, Bf: r.B, Lf: r.L }, crit, loads, reac, lcU, dc);
+      thTrials.push({ Hf: g.Hf, B: r.B, stabUC: r.gov ? r.gov.governingUC : Infinity, stabPass: r.pass, desUC: des.gov.uc, desGov: des.gov.name, pass: r.pass && des.pass });
+      if ((r.pass && des.pass) || !at) break;
+      const Hn = Math.round((g.Hf + (at.step ?? 0.05)) * 1000) / 1000;
+      if (Hn > (at.to ?? 1.0) + 1e-9) break;
+      g = resolveFoundation(cfg)({ ...g, Hf: Hn, Df: g.Dp != null ? undefined : g.Df });
+    }
+    return { ...r, design: des, thTrials: at ? thTrials : null, pass: r.pass && des.pass };
   });
   return { cfg, results, md: renderReport(cfg, results) };
 }
@@ -272,7 +422,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   for (const r of results) {
     const g = r.gov;
     console.log(`${r.f.name}: ${r.pass ? 'PASS' : 'FAIL'}` + (g ? ` — L/C ${g.lc}, ${g.valid ? g.governingCheck.name : g.note}, UC ${n(g.governingUC, 3)}` : ' — no reactions') +
-      ` — uplift: ${upliftText(r.upl)}` + (r.missing.length ? ` (missing L/C ${r.missing.join(',')})` : ''));
+      ` — uplift: ${upliftText(r.upl)}` + (r.design ? ` — footing ${n(r.B)} × ${n(r.L)} × ${n(r.w.sizing.Hf)} m: ${r.design.pass ? 'OK' : 'NOT OK'} (${r.design.gov.name}, UC ${n(r.design.gov.uc, 3)})` : '') + (r.missing.length ? ` (missing L/C ${r.missing.join(',')})` : ''));
   }
   console.log(`Report: ${outP}`);
   process.exit(results.every(r => r.pass) ? 0 : 1);
