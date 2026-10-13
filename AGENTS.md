@@ -26,7 +26,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - UI: `FAIR Foundation Design.html` (markup), `css/app.css` (style), `js/app.js` (event wiring + startup).
 - Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`). `lastResults` di `js/core/state.js`.
 - `lib/foundation/index.js` — ENTRY POINT + dispatcher. Import dari sini, jangan deep-import dari UI.
-- `lib/foundation/shared/` — `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `footingDesign`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
+- `lib/foundation/shared/` — `anchorGroup` (grup anchor ACI 17 + tulangan pengangkuran), `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `footingDesign`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
 - `lib/foundation/static/` — vessel/tank/heat-exchanger: `loadingData`, `foundationSizing`.
 - `lib/foundation/rotating/` — `loadingData`, `vibrationCheck`, `foundationSizing` (mass ratio >= 3).
 - `lib/foundation/reciprocating/` — `loadingData`, `dynamicForceCheck` (1x + 2x rpm), `foundationSizing` (mass ratio >= 5).
@@ -35,7 +35,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan), `staadOutput` (STAAD .std load case/REPEAT LOAD + .ANL support reactions → konvensi tanda FAIR).
 - `tools/foundation-drawing.mjs` — gambar pondasi per tipe dari hasil staad-stability (plan, potongan, potongan pedestal, tulangan footing) → DXF R12 (layer CONCRETE/REBAR/DIM/TEXT/AXIS/HIDDEN/STEEL, mm) + SVG; tanpa hitungan.
 - `tools/staad-stability.mjs` — CLI Node batch: reaksi STAAD per kombinasi → stabilitas fondasi dangkal (cek 4A, rumus dari lib) → laporan Markdown. `node tools/staad-stability.mjs <config.json> [--out report.md]`; format config di header file.
-- `lib/foundation/validation/` — 18 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = offset pedestal on a shallow footing + biaxial governing, 22 checks; part14 = biaxial no-tension soil pressure + no-e-limit option + Meyerhof effective area, 43 checks; part15 = wind generator ASCE 7-22, 26 checks; part16 = shallow footing M_u / V_u from net soil pressure, 33 checks; part17 = footing punching at edge / corner + two-way size effect λs, 31 checks; part18 = STAAD import + batch stability + Meyerhof bearing + FS temp + auto-size + project file + static uplift + min contact + footing thickness / bars, 65 checks) + `VALIDATION_REPORT.md` (738 checks, 738 pass @ 13 Oct 2026).
+- `lib/foundation/validation/` — 19 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = offset pedestal on a shallow footing + biaxial governing, 22 checks; part14 = biaxial no-tension soil pressure + no-e-limit option + Meyerhof effective area, 43 checks; part15 = wind generator ASCE 7-22, 26 checks; part16 = shallow footing M_u / V_u from net soil pressure, 33 checks; part17 = footing punching at edge / corner + two-way size effect λs, 31 checks; part18 = STAAD import + batch stability + Meyerhof bearing + FS temp + auto-size + project file + static uplift + min contact + footing thickness / bars, 65 checks) + `VALIDATION_REPORT.md` (757 checks, 757 pass @ 13 Oct 2026).
 
 ## 4. Kontrak Pure Function (harga mati di lib/)
 - `lib/` = no DOM, no `document`, no `window`, no `fmt()`, no Tesseract. Input plain numbers/objects, output plain objects.
@@ -73,6 +73,7 @@ node lib/foundation/validation/validation_shared_part15.mjs
 node lib/foundation/validation/validation_shared_part16.mjs
 node lib/foundation/validation/validation_shared_part17.mjs
 node lib/foundation/validation/validation_import_part18.mjs
+node lib/foundation/validation/validation_shared_part19.mjs
 ```
 - Exit 0 = pass, 1 = ada fail. Toleransi: integer 1e-9, textbook 0.05-0.08. Jangan tambah jest/vitest tanpa izin.
 

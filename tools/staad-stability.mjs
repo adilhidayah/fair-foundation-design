@@ -28,6 +28,9 @@
 //                             "spacingStep": 25,                       // bar spacing rounded down to this multiple (mm)
 //                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
 //                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
+//                                                                          //   "anchor": { "Ase", "futa", "hef", "Abrg", "omega0", "reinforcement": true,
+//                                                                          //   "spacings": [150, 140, ...] } -> ACI 318M-19 Ch. 17 check of the 4 anchors
+//                                                                          //   (anchorGroupCheck, lib); spacings tried from large to small per size
 //                                                                          //   "autoSize": { "step": 0.05, "to": 0.8 }: enlarge the pedestal (m) until
 //                                                                          //   the bolts are inside the ties and clear of the bars (whole foundation re-run)
 //                                                                          //   P-M (5A) + shear with ties, LRFD (fc / fy from "design")
@@ -55,7 +58,7 @@ import { buildFoundationDrawing, toDXF, toSVG } from './foundation-drawing.mjs';
 import {
   foundationSizing, evaluateFoundationCombo, evaluateBiaxialFooting, biaxialSoilPressure, combineFootingChecks,
   pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign,
-  footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, searchPedestalBars, pedestalShearCheck, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
+  footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, searchPedestalBars, pedestalShearCheck, anchorGroupCheck, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
 } from '../lib/foundation/index.js';
 
 const G = 9.80665;
@@ -229,7 +232,8 @@ function reportTables(r) {
     `| Reinforcement top (x / z) | ${bars('x-top')} / ${bars('z-top')} | - |`);
   if (P && P.pm && P.pm.found) o.push('| **Pedestal** | | |', `| Width | ${n(f.Bp)} | m |`, `| Length | ${n(f.Lp)} | m |`,
     `| Height (below + above grade) | ${n(s.Dp + (f.pedGp || 0))} | m |`, `| Flexural reinforcement | ${P.pm.n * 2} D${P.bar} | - |`,
-    `| Stirrups | Ø${P.tie}-${P.tieS}${P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} within ${P.topTies.within} mm of top` : ''} | - |`);
+    `| Stirrups | Ø${P.tie}-${P.tieS}${P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} within ${P.topTies.within} mm of top` : ''} | - |`,
+    ...(P.topTies ? [`| Anchor bolts | ${P.topTies.bolts}${P.anchor ? ` (UC ${n(P.anchor.res.uc, 2)}${P.anchor.A.reinforcement ? ', with anchor reinforcement' : ''})` : ''} | - |`] : []));
   const rows = r.rows.filter(x => x.valid), grp = (tmp) => rows.filter(x => x.temporary === tmp);
   const line = (label, tmp, val, lim, good, unit = '') => {
     const g = grp(tmp);
@@ -289,8 +293,22 @@ function pedestalReport(r) {
       `| Clear distance anchor bolt / longitudinal bar | - | ${n(T.clear, 0)} mm | ≥ ${n(T.minClear, 0)} mm | - | ${T.clearOk ? 'OK' : 'NOT OK'} |`);
   }
   const sx = P.shear.map(s => `${s.axis}: shear ${Number.isFinite(s.gov.s.sShear) ? n(s.gov.s.sShear, 0) : '—'}, minimum ${Number.isFinite(s.gov.s.sMin) ? n(s.gov.s.sMin, 0) : '—'}, detailing ${n(s.gov.s.sDetail, 0)} mm`).join('; ');
-  if (r.pedTrials) o.push('', `Pedestal size steps (anchor bolts inside the ties and clear distance to the bars ≥ ${n(P.topTies.minClear, 0)} mm): ` +
-    r.pedTrials.map(t => `${n(t.Bp * 1000, 0)} × ${n(t.Lp * 1000, 0)} → clear ${n(t.clear, 0)} mm${t.enclosed ? '' : ', bolts outside the ties'} ${t.ok ? 'OK' : 'NOT OK'}`).join('; ') + '.');
+  if (r.pedTrials) o.push('', `Pedestal size / anchor spacing steps (anchors inside the ties, clear distance to the bars ≥ ${n(P.topTies.minClear, 0)} mm` +
+    `${P.anchor ? ', anchor group UC ≤ 1' : ''}): ` +
+    r.pedTrials.map(t => `${n(t.Bp * 1000, 0)} × ${n(t.Lp * 1000, 0)}${t.s ? ` @ ${t.s}` : ''} → clear ${n(t.clear, 0)} mm${t.enclosed ? '' : ', bolts outside the ties'}` +
+      `${t.anchorUC !== null && t.anchorUC !== undefined ? `, anchors UC ${n(t.anchorUC, 2)}` : ''} ${t.ok ? 'OK' : 'NOT OK'}`).join('; ') + '.');
+  if (P.anchor) {
+    const R = P.anchor.res, A = P.anchor.A;
+    o.push('', `**Anchor bolts — ACI 318M-19 Chapter 17** (${P.topTies.bolts}, cast-in headed, A_se ${A.Ase} mm², f_uta ${A.futa} MPa, h_ef ${A.hef} mm, ` +
+      `A_brg ${A.Abrg} mm²; cracked concrete; seismic: concrete strengths × 0.75 and the seismic M, H × Ω0 = ${P.anchor.omega0}` +
+      `${A.reinforcement ? '; tension breakout replaced by anchor reinforcement = the pedestal bars within 0.5 h_ef of the anchors in tension, 90° hooks at the top (§17.5.2.1, l_dh §25.4.3)' : ''}). ` +
+      `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
+      `h_ef' = ${n(R.hefE, 1)} mm (edges).`, '',
+      '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
+      `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
+    if (R.ar) o.push('', `Anchor reinforcement: ${R.ar.n} × D${P.bar} (A_s ${n(R.ar.As, 0)} mm²) within 0.5 h_ef of the anchors in tension, nearest at ${n(R.ar.r, 0)} mm; ` +
+      `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (hooked).`);
+  }
   if (P.topTies) o.push('', `Top ties (anchor bolts in the top of the pedestal, ACI 318M-19 §10.7.6.1.6): **${P.topTies.n} × Ø${P.topTies.dia} within ` +
     `${P.topTies.within} mm of the top**, enclosing the anchor bolts and the longitudinal bars (at least 2 × D13 or 3 × D10).`);
   o.push('', `Ties: D${P.tie} (${P.legs} legs) @ **${P.tieS} mm** (governing of ${sx}). Longitudinal: **${pm.n * 2} D${P.bar}** ` +
@@ -477,6 +495,22 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     const minClear = P0.boltBarClearMin ?? Math.max(25, bar, bo.dia);            // clear bar / bolt: default as §25.2.1, project option
     out.topTies = { n: nTop, dia: tie, within: 125, enclosed: reach <= tieIn + 1e-9, reach, tieIn, clear, minClear,
       clearOk: clear >= minClear - 1e-9, bolts: `${bo.n || 4}-M${bo.dia} @ ${bo.sx} × ${bo.sz}` };
+    // anchors, ACI 318M-19 Chapter 17 (anchorGroupCheck, lib): LRFD actions at the top of the pedestal, seismic combinations with
+    // M and H × Ω0 (§17.10.5.3(d) / §17.10.6.3(c)); anchor reinforcement = the longitudinal bars (hooked at the top) when enabled
+    const A = P0.anchor;
+    if (A) {
+      const om = A.omega0 ?? 1.0;
+      let gov = null;
+      for (const row of out.rows) {
+        const fac = primaryFactors(loads, row.lc), seis = Object.entries(fac).some(([p, v]) => v && /seismic/i.test(loads.primary[p]?.type || ''));
+        const k = seis ? om : 1, t0 = row.top;
+        const res = anchorGroupCheck({ Bp, Lp, sx: bo.sx, sz: bo.sz, da: bo.dia, Ase: A.Ase, futa: A.futa, hef: A.hef, Abrg: A.Abrg, fc, lambda,
+          seismic: A.seismic !== false, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
+          reinf: A.reinforcement ? { bars, db: bar, fy, topCover: A.topCover ?? 50 } : null });
+        if (!gov || res.uc > gov.res.uc) gov = { lc: row.lc, seis, res };
+      }
+      out.anchor = { ...gov, A, omega0: om };
+    }
   }
   out.checks = [
     { name: 'P-M (5A, resultant moment)', uc: pm.maxUC },
@@ -484,7 +518,8 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     { name: 'Bar clear spacing (§25.2.3)', uc: out.barSpacing.ok ? 0 : Infinity },
     { name: `Tie spacing ≥ ${step} mm`, uc: out.tieS >= step ? 0 : Infinity },
     ...(out.topTies ? [{ name: 'Anchor bolts inside the ties (§10.7.6.1.6)', uc: out.topTies.enclosed ? 0 : Infinity },
-      { name: 'Clear distance anchor bolt / bar', uc: out.topTies.clearOk ? 0 : Infinity }] : [])
+      { name: 'Clear distance anchor bolt / bar', uc: out.topTies.clearOk ? 0 : Infinity }] : []),
+    ...(out.anchor ? [{ name: `Anchor bolts (ACI 17, ${out.anchor.res.govT.uc >= out.anchor.res.govV.uc ? out.anchor.res.govT.name : out.anchor.res.govV.name})`, uc: out.anchor.res.uc }] : [])
   ];
   out.gov = out.checks.reduce((a, b) => (b.uc > a.uc ? b : a));
   out.pass = out.checks.every(c => c.uc <= 1) && !out.missing.length;
@@ -592,14 +627,35 @@ export function runConfig(cfgPath, outP = null) {
     const pa = crit.pedestal && crit.pedestal.autoSize;
     let fc = f, res = evalAll(fc);
     const pedTrials = [];
-    const bad = (x) => x.pedestal && x.pedestal.topTies && !(x.pedestal.topTies.enclosed && x.pedestal.topTies.clearOk);
+    const bad = (x) => !!x.pedestal && ((x.pedestal.topTies ? !(x.pedestal.topTies.enclosed && x.pedestal.topTies.clearOk) : false)
+      || (x.pedestal.anchor ? !x.pedestal.anchor.res.pass : false));
+    // anchor spacing (project option pedestal.anchor.spacings, mm, large -> small): the pedestal check is repeated per spacing on the
+    // same foundation; the first spacing that passes is kept (bolts written into the result for the report and the drawing)
+    const tryS = (x) => {
+      const sp = crit.pedestal && crit.pedestal.anchor && crit.pedestal.anchor.spacings;
+      if (!sp || !x.pedestal || !x.f.bolts || !bad(x)) return x;
+      for (const s of sp) {
+        const gS = { ...x.f, bolts: { ...x.f.bolts, sx: s, sz: s } };
+        const pS = pedestalDesignCheck({ ...gS, Bf: x.B, Lf: x.L }, crit, loads, reac, lcU, dc);
+        const y = { ...x, f: gS, pedestal: pS };
+        y.pass = stabOk(x) && (x.design ? x.design.pass : true) && pS.pass;
+        pedTrials.push({ Bp: gS.Bp, Lp: gS.Lp, s, clear: pS.topTies ? pS.topTies.clear : null, enclosed: pS.topTies ? pS.topTies.enclosed : true,
+          anchorUC: pS.anchor ? pS.anchor.res.uc : null, ok: !bad(y) });
+        if (!bad(y)) return y;
+      }
+      return x;
+    };
+    const stabOk = (x) => !!x.gov && x.gov.valid !== false && x.gov.overallPass !== false && !(x.missing && x.missing.length);
+    res = tryS(res);
     for (;;) {
-      if (res.pedestal && res.pedestal.topTies) pedTrials.push({ Bp: fc.Bp, Lp: fc.Lp, clear: res.pedestal.topTies.clear, enclosed: res.pedestal.topTies.enclosed, ok: !bad(res) });
+      if (res.pedestal && res.pedestal.topTies && !pedTrials.some(t => t.Bp === fc.Bp && t.s === (res.f.bolts && res.f.bolts.sx)))
+        pedTrials.push({ Bp: fc.Bp, Lp: fc.Lp, s: res.f.bolts && res.f.bolts.sx, clear: res.pedestal.topTies.clear, enclosed: res.pedestal.topTies.enclosed,
+          anchorUC: res.pedestal.anchor ? res.pedestal.anchor.res.uc : null, ok: !bad(res) });
       if (!pa || !bad(res)) break;
       const Bn = Math.round((fc.Bp + (pa.step ?? 0.05)) * 1000) / 1000, Ln = Math.round((fc.Lp + (pa.step ?? 0.05)) * 1000) / 1000;
       if (Bn > (pa.to ?? 0.8) + 1e-9) break;
       fc = { ...fc, Bp: Bn, Lp: Ln };
-      res = evalAll(fc);
+      res = tryS(evalAll(fc));
     }
     return { ...res, pedTrials: pa && pedTrials.length > 1 ? pedTrials : null };
   });

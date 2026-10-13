@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 738 checks, 738 pass, 0 fail** (18 files, run 13 Oct 2026).
+**Total: 757 checks, 757 pass, 0 fail** (19 files, run 13 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -22,7 +22,8 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
 | validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift; two-way size effect λs | 31 |
 | validation_import_part18.mjs | STAAD import (.std load cases / REPEAT LOAD, .ANL support reactions, reaction → FAIR signs) + batch shallow-footing stability + footing and pedestal design + drawing + anchor-bolt top ties + pedestal auto-size + depth above the bottom mat (tools/staad-stability.mjs, tools/foundation-drawing.mjs) | 85 |
-| **Total** | | **738** |
+| validation_shared_part19.mjs | anchor group ACI 318M-19 Ch. 17: forces on a rigid plate, breakout with edges and hef', pullout, side-face blowout, steel, shear, anchor reinforcement + l_dh | 19 |
+| **Total** | | **757** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
