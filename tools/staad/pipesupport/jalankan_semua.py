@@ -4,7 +4,7 @@
 Jalankan TANPA -I (laporan_pdf butuh paket user-site `markdown`):
   python jalankan_semua.py --folder <folder Kalkulasi> [--ps x.ps.json] [--fondasi y.Fondasi.proyek.json] [--tipe "T-POST 1.2" ...]
                            [--tanpa-staad] [--tanpa-pdf]
-Pondasi: tipe dipetakan ke preset lewat "preset_per_tipe" di file proyek pondasi (kunci = nomor tipe, mis. "1.2" dari "T-POST 1.2");
+Pondasi: tipe dipetakan ke preset lewat "preset_per_tipe" di file proyek pondasi (kunci = kasus "1.2-C", atau nomor tipe "1.2");
 tipe tanpa preset (di platform / slab) dilewati. Node tumpuan STAAD = 1 (dasar tiang dari pipesupport.py)."""
 import argparse, glob, importlib.util, json, os, re, subprocess, sys
 
@@ -67,8 +67,8 @@ def kolom_gambar(t):
 pre = fp.get("preset_per_tipe", {})
 for t in pilih:
     h = hasil[t]
-    num = re.search(r"(\d+\.\d+)", t)
-    preset = pre.get(num.group(1)) if num else None
+    num = re.search(r"(\d+\.\d+)(-\w+)?", t)
+    preset = (pre.get(num.group(0)) or pre.get(num.group(1))) if num else None   # kasus ("1.2-C") lalu tipe ("1.2")
     if not preset:
         h["fondasi"] = "- (tanpa pondasi sendiri)"; continue
     os.makedirs(tdir(t), exist_ok=True)

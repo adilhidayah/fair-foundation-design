@@ -36,8 +36,8 @@ for t in (a.tipe or [x["nama"] for x in ps["tipe"]]):
     md = open(mdp, encoding="utf-8").read()
     v = kv(md)
     tp = next(x for x in ps["tipe"] if x["nama"] == t)
-    num = re.search(r"(\d+\.\d+)", t)
-    pr = fp.get("presets", {}).get(fp.get("preset_per_tipe", {}).get(num.group(1) if num else "", ""), {})
+    num = re.search(r"(\d+\.\d+)(-\w+)?", t)
+    pr = fp.get("presets", {}).get((fp.get("preset_per_tipe", {}).get(num.group(0)) or fp.get("preset_per_tipe", {}).get(num.group(1), "")) if num else "", {})
     bp, bo = pr.get("baseplate"), pr.get("bolts")
     Gp = pr.get("pedGp", 0); gr = pr.get("groutT", 0) / 1000
     g = lambda k: v.get(k, ("-",))[0]

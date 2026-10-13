@@ -86,8 +86,8 @@ def gambar_tipe(tp, um, folder, fp):
     dg = tp.get("dasar_gambar") or PS.berhenti(f"{nama}: 'dasar_gambar' belum diisi di config")
     jenis, EL0 = dg["jenis"], float(dg["el"])
     fd = pondasi_md(folder, nama)
-    num = re.search(r"(\d+\.\d+)", nama)
-    pre = fp.get("presets", {}).get(fp.get("preset_per_tipe", {}).get(num.group(1) if num else "", ""), {})
+    num = re.search(r"(\d+\.\d+)(-\w+)?", nama)
+    pre = fp.get("presets", {}).get((fp.get("preset_per_tipe", {}).get(num.group(0)) or fp.get("preset_per_tipe", {}).get(num.group(1), "")) if num else "", {})
     if jenis == "pedestal":
         bp = dict(B=pre.get("baseplate", {}).get("B", 0.25) * 1000, L=pre.get("baseplate", {}).get("L", 0.25) * 1000,
                   t=pre.get("baseplate", {}).get("t", 12))
