@@ -29,7 +29,8 @@
 //                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
 //                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
 //                                                                          //   "anchor": { "Ase", "futa", "hef", "Abrg", "omega0", "reinforcement": true,
-//                                                                          //   "spacings": [150, 140, ...] } -> ACI 318M-19 Ch. 17 check of the 4 anchors
+//                                                                          //   "spacings": [...] or "spacingStep": 10, "sMin": 100 (from the drawing
+//                                                                          //   spacing down) } -> ACI 318M-19 Ch. 17 check of the 4 anchors
 //                                                                          //   (anchorGroupCheck, lib); spacings tried from large to small per size
 //                                                                          //   "autoSize": { "step": 0.05, "to": 0.8 }: enlarge the pedestal (m) until
 //                                                                          //   the bolts are inside the ties and clear of the bars (whole foundation re-run)
@@ -632,7 +633,10 @@ export function runConfig(cfgPath, outP = null) {
     // anchor spacing (project option pedestal.anchor.spacings, mm, large -> small): the pedestal check is repeated per spacing on the
     // same foundation; the first spacing that passes is kept (bolts written into the result for the report and the drawing)
     const tryS = (x) => {
-      const sp = crit.pedestal && crit.pedestal.anchor && crit.pedestal.anchor.spacings;
+      const An = crit.pedestal && crit.pedestal.anchor;
+      // spacings: explicit list, or from the drawing spacing down by spacingStep (default 10 mm) to sMin (default 4·d_a, §17.9.2)
+      const sp = An && (An.spacings || (x.f.bolts ? (() => { const o = [], st = An.spacingStep ?? 10, lo = An.sMin ?? 4 * x.f.bolts.dia;
+        for (let v = x.f.bolts.sx; v >= lo - 1e-9; v = Math.round(v - st)) o.push(v); return o; })() : null));
       if (!sp || !x.pedestal || !x.f.bolts || !bad(x)) return x;
       for (const s of sp) {
         const gS = { ...x.f, bolts: { ...x.f.bolts, sx: s, sz: s } };
