@@ -25,6 +25,8 @@ MASTER CALCULATOR/
 │   ├── import/                ← parser teks OCR/paste
 │   └── validation/            ← test hand-calc (node ...mjs)
 ├── patch.js                   ← fixer marker SVG (idempotent)
+├── tools/
+│   └── staad-stability.mjs    ← CLI: reaksi STAAD → stabilitas fondasi dangkal (laporan .md)
 ├── AGENTS.md                  ← aturan kerja AI assistant (harus di root)
 └── docs/                      ← catatan proyek: filosofi, instruksi, peta, rencana AI
 ```
@@ -48,6 +50,7 @@ MASTER CALCULATOR/
 | Summary / laporan cetak | [js/report/summary.js](../js/report/summary.js), [js/report/builder.js](../js/report/builder.js) | — |
 | Status workflow / live bar | [js/workflow/status.js](../js/workflow/status.js) | — |
 | OCR / paste import | [js/ocr/review.js](../js/ocr/review.js), [js/ocr/tesseract.js](../js/ocr/tesseract.js) | [import/textParsers.js](../lib/foundation/import/textParsers.js) |
+| Batch stabilitas dari STAAD (CLI, tanpa UI) | [tools/staad-stability.mjs](../tools/staad-stability.mjs) | [import/staadOutput.js](../lib/foundation/import/staadOutput.js) + [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) |
 | Tombol, event listener, urutan startup | [js/app.js](../js/app.js) | — |
 | Warna, layout, font | [css/app.css](../css/app.css) | — |
 | Teks / field di halaman | [FAIR Foundation Design.html](../FAIR%20Foundation%20Design.html) | — |
@@ -132,6 +135,7 @@ MASTER CALCULATOR/
 | [piperack/](../lib/foundation/piperack/) | 6 KB | Pipe rack: arah L/T, sizing iteratif |
 | [skidMounted/](../lib/foundation/skidMounted/) | 3 KB | Skid: reaksi bolt, footprint |
 | [import/textParsers.js](../lib/foundation/import/textParsers.js) | 6 KB | Parser teks OCR/paste (tanpa konversi satuan) |
+| [import/staadOutput.js](../lib/foundation/import/staadOutput.js) | 6 KB | Parser STAAD: load case / REPEAT LOAD (.std), SUPPORT REACTIONS (.ANL), reaksi → konvensi tanda FAIR |
 | [validation/](../lib/foundation/validation/) | — | 7 file test + [VALIDATION_REPORT.md](../lib/foundation/validation/VALIDATION_REPORT.md) |
 
 ### Lain-lain
