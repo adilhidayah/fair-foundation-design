@@ -222,12 +222,21 @@ def gambar_tipe(tp, um, folder, fp):
 
     # ================= judul & catatan =================
     n_rev = -(-len(tp.get("revisi", "")) // 150)
-    yT = ytop + 330 + 36 + 4 * 22 + 10 + n_rev * 22 + 40; x0 = -kiri - 150
-    S.text("TEXT", x0, yT, f"STEEL SUPPORT {nama} — AS DESIGNED IN STAAD ({nama}.std)", TXT * 1.9)
-    baris = [f"Location: {tp.get('lokasi', '-')}", tp.get("tos_catatan", ""),
-             f"Base: {jenis} - y=0 of the model at EL {elv(EL0)}" + (f"; grout {gr} mm" if gr else ""),
+    pl_ = tp.get("ps") or []
+    if pl_:      # nomor pipe support (qty) dari jadwal, dipecah per baris ~120 karakter
+        item = [f"{x['no']} ({x['qty']} EA)" for x in pl_]; lok = [""]
+        for it in item:
+            if lok[-1] and len(lok[-1]) + len(it) > 120: lok.append("")
+            lok[-1] += (", " if lok[-1] else "") + it
+        lok[-1] += f" — total {sum(int(x['qty']) for x in pl_)} EA"
+    else: lok = [tp.get("lokasi", "-")]
+    baris = [("Pipe support no.: " if i == 0 else "    ") + s for i, s in enumerate(lok)] + [
+             tp.get("tos_catatan", ""), f"Base: {jenis} - y=0 of the model at EL {elv(EL0)}" + (f"; grout {gr} mm" if gr else ""),
              "Profiles: JIS (STAAD JAPANESE table); dimensions in mm, elevations in m."]
-    for i, s in enumerate(b for b in baris if b): S.text("TEXT", x0, yT - 36 - i * 22, s, TXT * 0.9)
+    baris = [b for b in baris if b]
+    yT = ytop + 330 + 36 + len(baris) * 22 + 10 + n_rev * 22 + 40; x0 = -kiri - 150
+    S.text("TEXT", x0, yT, f"STEEL SUPPORT {nama} — AS DESIGNED IN STAAD ({nama}.std)", TXT * 1.9)
+    for i, s in enumerate(baris): S.text("TEXT", x0, yT - 36 - i * 22, s, TXT * 0.9)
     if tp.get("revisi"):
         r = tp["revisi"]; w = 150
         for i in range(0, len(r), w): S.text("REV", x0, yT - 36 - len(baris) * 22 - 10 - (i // w) * 22, ("REVISED: " if i == 0 else "") + r[i:i + w], TXT * 0.9)

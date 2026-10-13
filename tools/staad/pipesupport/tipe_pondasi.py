@@ -99,19 +99,29 @@ def main():
     for k, n in sorted(Fo.items(), key=lambda x: int(x[1][3:])):
         cnt = next(d for _, d in kasus if kf(d) == k)
         md.append(f"| **{n}** | {k[0]:.2f} × {k[1]:.2f} × {k[2]:.2f} | {k[3]:.2f} | {cnt['bot_n']} | {cnt['top_n']} |")
-    md += ["", "## Foundation types", "", "| Type | Pedestal | Footing | Pipe supports (case: location) | Check with type sizes (max UC, governing case) | Drawing |", "|---|---|---|---|---|---|"]
+    # nomor pipe support per kasus (config "ps": [{no, qty, pipa, tos}] dari jadwal); tanpa daftar -> lokasi teks
+    psl = {tp["nama"]: tp.get("ps") or [] for tp, _ in kasus}
+    qty = lambda t: sum(int(x.get("qty", 1)) for x in psl[t])
+    psno = lambda t: ", ".join(x["no"] for x in psl[t]) if psl[t] else lok[t]
+    md += ["", "## Foundation types", "", "| Type | Pedestal | Footing | Pipe support no. (per case) | Qty (EA) | Check with type sizes (max UC, governing case) | Drawing |",
+           "|---|---|---|---|---|---|---|"]
     for c, F in Ft.items():
         anggota = [t for t, m in peta.items() if m["F"] == F]
         st = [hasil[t] for t in anggota]; ok = all(s[0] in ("PASS", "-") for s in st)
         ucm = max((s[1] or 0) for s in st); gov = max(anggota, key=lambda t: hasil[t][1] or 0)
-        md.append(f"| **{F}** | {c[1]} | {c[0]} | " + "<br>".join(f"{t}: {lok[t]}" for t in anggota) +
-                  f" | {'OK' if ok else 'NOT OK'} — {ucm:.3f} ({gov}) | `Tipe Pondasi/{F} ({c[1]}-{c[0]}).dxf` |")
-    md += ["", "## Pipe support → foundation type", "", "| Pipe support case | Foundation | Pedestal | Footing | Check | UC |", "|---|---|---|---|---|---|"]
+        md.append(f"| **{F}** | {c[1]} | {c[0]} | " + "<br>".join(f"{t}: {psno(t)}" for t in anggota) +
+                  f" | {sum(qty(t) for t in anggota) or '-'} | {'OK' if ok else 'NOT OK'} — {ucm:.3f} ({gov}) | `Tipe Pondasi/{F} ({c[1]}-{c[0]}).dxf` |")
+    md += ["", "## Pipe support → foundation type", "",
+           "| Pipe support no. | Qty (EA) | Pipe | T.O.S. (EL) | Case | Foundation | Pedestal | Footing | Check | UC |", "|---|---|---|---|---|---|---|---|---|---|"]
     for tp, d in kasus:
         t = tp["nama"]; m = peta[t]; s = hasil[t]
-        md.append(f"| {t} | {m['F']} | {m['P']} | {m['Fot']} | {s[0]} | {s[1] if s[1] is not None else '-'} |")
-    md += ["", "Types without own foundation (platform / slab / other drawing): " +
-           ", ".join(tp["nama"] for tp in ps["tipe"] if tp["nama"] not in peta) + "."]
+        for x in (psl[t] or [dict(no=lok[t], qty="-", pipa="-", tos="-")]):
+            md.append(f"| {x['no']} | {x['qty']} | {x['pipa']} | {x['tos']} | {t} | {m['F']} | {m['P']} | {m['Fot']} | {s[0]} | "
+                      f"{s[1] if s[1] is not None else '-'} |")
+    md += ["", f"Total pipe supports on own foundation: **{sum(qty(t) for t in peta)} EA**."]
+    tanpa = [tp for tp in ps["tipe"] if tp["nama"] not in peta] + list(ps.get("kantilever", []))
+    md += ["", "Without own foundation (existing platform / slab / foundation by another drawing / cantilever on the platform): " +
+           "; ".join(f"{tp['nama']} ({', '.join(x['no'] for x in tp.get('ps') or []) or '-'})" for tp in tanpa) + "."]
     open(os.path.join(ROOT, "Jadwal Tipe Pondasi.md"), "w", encoding="utf-8").write("\n".join(md) + "\n")
     json.dump({"pedestal": {n: dict(B=k[0], L=k[1], bars=k[2], ties=k[3], anchor=json.loads(k[4]), Gp=k[5], Dp=k[6]) for k, n in P.items()},
                "footing": {n: dict(B=k[0], L=k[1], H=k[2], Df=k[3], bottom=k[4], top=k[5]) for k, n in Fo.items()},
