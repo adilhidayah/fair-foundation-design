@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 661 checks, 661 pass, 0 fail** (18 files, run 13 Oct 2026).
+**Total: 679 checks, 679 pass, 0 fail** (18 files, run 13 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -21,8 +21,8 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part15.mjs | wind force generator, ASCE 7-22 Ch. 29 (Table 26.11-1 constants, Kz with zmin, qz without Kd, Ke) | 26 |
 | validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
 | validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift; two-way size effect λs | 31 |
-| validation_import_part18.mjs | STAAD import (.std load cases / REPEAT LOAD, .ANL support reactions, reaction → FAIR signs) + batch shallow-footing stability (tools/staad-stability.mjs) | 34 |
-| **Total** | | **661** |
+| validation_import_part18.mjs | STAAD import (.std load cases / REPEAT LOAD, .ANL support reactions, reaction → FAIR signs) + batch shallow-footing stability (tools/staad-stability.mjs) | 52 |
+| **Total** | | **679** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -53,7 +53,7 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
 - Browser: default footing interior result unchanged (UC 0.078); Off X 0.5 -> edge b<sub>o</sub> 4,582 mm, (0.5, −0.5) -> corner 2,991 mm.
 
 ### part18 — STAAD import and batch stability (import/staadOutput.js, tools/staad-stability.mjs)
-Parser vectors on a synthetic .std / .ANL (continuation lines, nested REPEAT LOAD, LOAD COMB, page breaks in the reaction table, units). Reaction signs from the statics of a fixed column base (load F at height h: FX = −F, MZ = +F·h; FZ = −F, MX = −F·h) against loadTypeVector()'s convention. Footing self-weight and Δh by hand (pedestal and block), P = R_Y + kD·ΔW with kD from the dead-case factor, Mz + Fx·Δh, FS sliding μP/H, overturning P·(B/2)/Mz; net uplift → not valid. q_a from soil with the Meyerhof (1963) formula against an independent hand calc (shape / depth factors, Nγ = (Nq − 1)tan1.4φ); Meyerhof effective area beyond the kern: B′ = B − 2e_x, L′ = L − 2e_z, q′ = P/(B′L′), q′_a recomputed for B′ × L′; full contact keeps the rigid formula.
+Parser vectors on a synthetic .std / .ANL (continuation lines, nested REPEAT LOAD, LOAD COMB, page breaks in the reaction table, units). Reaction signs from the statics of a fixed column base (load F at height h: FX = −F, MZ = +F·h; FZ = −F, MX = −F·h) against loadTypeVector()'s convention. Footing self-weight and Δh by hand (pedestal and block), P = R_Y + kD·ΔW with kD from the dead-case factor, Mz + Fx·Δh, FS sliding μP/H, overturning P·(B/2)/Mz; net uplift → not valid. q_a from soil with the Meyerhof (1963) formula against an independent hand calc (shape / depth factors, Nγ = (Nq − 1)tan1.4φ); Meyerhof effective area beyond the kern: B′ = B − 2e_x, L′ = L − 2e_z, q′ = P/(B′L′), q′_a recomputed for B′ × L′; full contact keeps the rigid formula. Bearing FS permanent / temporary (q_a,temp = q_u/FS_temp); auto-size returns the first passing square size and every smaller trial fails. Project file: "extends" deep merge, presets, locked pedestal depth Dp (Df = Dp + Hf, Δh = Gp + Dp + grout + Hf). Static uplift classification (rigid footing, no tension): none inside the kern (6ex/B + 6ez/L ≤ 1), partial outside it, net uplift P ≤ 0, base separation e ≥ B/2. Optional minimum contact area: UC = minContact / contact ratio (statics), governs below the limit.
 
 ### part16 — shallow footing design actions (footingDesign.js)
 - Uniform pressure (B = L = 2, P = 400, pedestal 0.5, d 0.3): M = qLc²/2 = 56.25, V = 90, punching 336; net with w = 20 kPa: 45 / 72 / 268.8.

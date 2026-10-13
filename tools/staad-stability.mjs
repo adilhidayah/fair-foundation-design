@@ -18,14 +18,20 @@
 //   "criteria": { "gc": 24, "gs": 18, "qa": 100, "mu": 0.4, "ecc": "1/6",           // kN/m3, kPa; ecc "1/6" | "1/4" | 0 (no limit)
 //                 "fsSlidePerm": 1.5, "fsSlideTemp": 1.5, "fsOTPerm": 1.5, "fsOTTemp": 1.5,
 //                 "soil": { "c": 6.865, "phi": 18.81, "method": "meyerhof", "FS": 3,       // optional: q_a from Tab 08 formula
+//                           "FSTemp": 2,                                                  //   FS for wind / seismic combos (default FS)
 //                           "failure": "general", "beta": 0 },                            //   (bearingCapacityCheck, γ = gs, Df of
 //                                                                                         //   each footing) instead of "qa"
-//                 "bearMethod": "rigid" },                     // "rigid" (no tension) | "meyerhof" (effective area B'×L', q'a recomputed)
+//                 "bearMethod": "rigid",                       // "rigid" (no tension) | "meyerhof" (effective area B'×L', q'a recomputed)
+//                 "minContact": 0.7 },                          // optional: min. share of the base in contact (statics, 4A §4.2), UC = min/ratio
 //   "foundations": [ { "name": "PS-1.2 F1", "node": 1, "type": "pedestal",          // "pedestal" | "block"
 //                      "Bf": 1.0, "Lf": 1.0, "Hf": 0.3, "Df": 0.9,                    // footing (m), Df = bottom below grade
 //                      "Bp": 0.3, "Lp": 0.3, "pedGp": 0.3, "OffX": 0, "OffZ": 0,      // pedestal (m), Gp = top above grade
-//                      "groutT": 25 } ]                                               // mm
+//                      "groutT": 25,                                                  // mm
+//                      "autosize": { "from": 0.6, "to": 2.5, "step": 0.1 } } ]        // optional: smallest square Bf = Lf that passes
 // }
+// Project-specific inputs can live in a separate file: "extends": "<project>.json" is merged under this config (objects deep-merged,
+// this file wins), and a foundation "preset": "<name>" takes its fields from "presets": { "<name>": { ... } } (the foundation wins).
+// "Dp" (pedestal height below grade) locks the embedment: Df = Dp + Hf, so changing the footing thickness keeps Dp.
 // Units of the .ANL reaction table must be KN / METER (put UNIT METER KN before PRINT SUPPORT REACTION).
 // ==========================================================================
 import fs from 'node:fs';
@@ -59,14 +65,15 @@ export function footingWeights(f, crit) {
 
 // Allowable bearing for a footing B × L (shorter side as the width): Tab 08 formula when criteria.soil is given (as
 // allowableBearing() / allowableBearingAt(), js/tabs/bearing.js), else the given criteria.qa (cannot be recomputed).
-export function allowableBearingFor(crit, B, L, Df) {
+export function allowableBearingFor(crit, B, L, Df, temporary = false) {
   const s = crit.soil;
-  if (!s) return { qa: crit.qa, recomputed: false };
+  if (!s) return { qa: temporary ? crit.qaTemp ?? crit.qa : crit.qa, recomputed: false };
+  const FS = temporary ? s.FSTemp ?? s.FS ?? 3 : s.FS ?? 3;
   const Bs = Math.min(B, L), Ls = Math.max(B, L);
   if (!(Bs > 0)) return { qa: null, recomputed: true };
   const r = bearingCapacityCheck({ c: s.c, phiDeg: s.phi, gamma: s.gamma ?? crit.gs, shape: Math.abs(Bs - Ls) < 1e-9 ? 'square' : 'rectangular',
-    B: Bs, L: Ls, Df: s.Df ?? Df, method: s.method || 'meyerhof', FS: s.FS ?? 3, failure: s.failure || 'general', beta: s.beta ?? 0 });
-  return { qa: r.qa, qu: r.qu, methodNote: r.methodNote, recomputed: true };
+    B: Bs, L: Ls, Df: s.Df ?? Df, method: s.method || 'meyerhof', FS, failure: s.failure || 'general', beta: s.beta ?? 0 });
+  return { qa: r.qa, qu: r.qu, FS, methodNote: r.methodNote, recomputed: true };
 }
 
 // One foundation over the listed combinations. loads = parseStaadLoads(std), reac = parseStaadReactions(anl).reactions.
@@ -75,7 +82,7 @@ export function evaluateStaadFoundation(f, crit, loads, reac, lcList, deadCase) 
   const B = f.Bf, L = f.Lf, Ap = (f.type === 'block' ? 0 : (f.Bp || 0) * (f.Lp || 0));
   const OffX = f.type === 'block' ? 0 : (f.OffX || 0), OffZ = f.type === 'block' ? 0 : (f.OffZ || 0);
   const eSel = eccRatio(crit.ecc ?? '1/6'), eccLimit = eSel > 0, eccRatioAllow = eccLimit ? eSel : 1 / 6;
-  const qa0 = allowableBearingFor(crit, B, L, f.Df), qa = qa0.qa;
+  const qa0 = allowableBearingFor(crit, B, L, f.Df), qaT0 = allowableBearingFor(crit, B, L, f.Df, true);
   const bearMey = String(crit.bearMethod || 'rigid').toLowerCase() === 'meyerhof';
   const dead = deadCase ?? Math.min(...Object.entries(loads.primary).filter(([, p]) => /^dead$/i.test(p.type)).map(([n]) => +n));
   const rows = [], missing = [];
@@ -96,6 +103,7 @@ export function evaluateStaadFoundation(f, crit, loads, reac, lcList, deadCase) 
     const H = Math.hypot(top.Fx, top.Fz), M = Math.hypot(Mx, Mz);
     const fsSlideMin = temporary ? crit.fsSlideTemp ?? crit.fsSlidePerm : crit.fsSlidePerm;
     const fsOTMin = temporary ? crit.fsOTTemp ?? crit.fsOTPerm : crit.fsOTPerm;
+    const qa = (temporary ? qaT0 : qa0).qa;
     const uni = evaluateFoundationCombo(B, L, P, H, M, qa, crit.mu, eccRatioAllow, fsSlideMin, fsOTMin);
     const bi = evaluateBiaxialFooting(B, L, P, Mx, Mz, eccRatioAllow, fsOTMin);
     const bp = P > 0 ? biaxialSoilPressure(B, L, P, Mz / P, Mx / P) : { valid: false, qmax: Infinity, qmin: 0, contactRatio: 0, note: 'P ≤ 0' };
@@ -103,62 +111,137 @@ export function evaluateStaadFoundation(f, crit, loads, reac, lcList, deadCase) 
     let qBear = bp.qmax, qaBear = qa, meyUsed = false, mey = null;
     if (bearMey && P > 0 && !(bp.valid && bp.fullContact)) {
       mey = meyerhofEffectiveArea(B, L, P, Mz / P, Mx / P);
-      if (mey.valid) { qBear = mey.qeff; qaBear = allowableBearingFor(crit, mey.Beff, mey.Leff, f.Df).qa ?? 0; meyUsed = true; }
+      if (mey.valid) { qBear = mey.qeff; qaBear = allowableBearingFor(crit, mey.Beff, mey.Leff, f.Df, temporary).qa ?? 0; meyUsed = true; }
       else qBear = Infinity;
     }
     const ucBearingBiaxial = Number.isFinite(qBear) && qaBear > 0 ? qBear / qaBear : Infinity;
-    const comb = combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial });
-    rows.push({ lc, title: loads.combos[lc]?.title || loads.primary[lc]?.title || '', temporary, kD, top, P, H, Mx, Mz, M,
+    let comb = combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial });
+    // minimum contact area (project criterion): share of the base still pressed, rigid footing without tension (4A §4.2)
+    if (crit.minContact > 0 && comb && comb.checks) {
+      const ratio = bp.valid ? bp.contactRatio : 0;
+      const checks = [...comb.checks, { name: `Contact area (min ${n(crit.minContact * 100, 0)} %)`, uc: ratio > 0 ? crit.minContact / ratio : Infinity }];
+      const governingCheck = checks.reduce((a, b) => (b.uc > a.uc ? b : a));
+      comb = { checks, governingCheck, governingUC: governingCheck.uc, overallPass: checks.every(c => c.uc <= 1.0) };
+    }
+    // statics of a rigid footing on soil that cannot pull (biaxialSoilPressure): none = full contact (inside the kern),
+    // partial = part of the base lifts off (outside the kern), net = P ≤ 0 (whole footing pulled up),
+    // separation = P > 0 but the resultant at / outside the base edge (no equilibrium -> overturns)
+    const uplift = !(P > 0) ? 'net' : !bp.valid ? 'separation' : bp.fullContact ? 'none' : 'partial';
+    rows.push({ lc, uplift, eccRatioAllowUsed: eccRatioAllow, title: loads.combos[lc]?.title || loads.primary[lc]?.title || '', temporary, kD, top, P, H, Mx, Mz, M,
       fsSlideMin, fsOTMin, bp, qBear, qaBear, meyUsed, mey, ...uni, ...bi, ...comb, valid: uni.valid, note: uni.note });
   }
   const gov = rows.length ? rows.reduce((a, b) => ((b.governingUC ?? Infinity) > (a.governingUC ?? Infinity) ? b : a)) : null;
-  return { f, w, B, L, qa0, bearMey, eccLimit, eccRatioAllow, dead, rows, missing, gov, pass: !!gov && gov.valid && gov.overallPass && !missing.length };
+  const upl = { partial: rows.filter(x => x.uplift === 'partial'), net: rows.filter(x => x.uplift === 'net'),
+    sep: rows.filter(x => x.uplift === 'separation') };
+  upl.minContact = rows.filter(x => x.uplift !== 'net').reduce((m, x) => Math.min(m, x.bp.contactRatio ?? 1), 1);
+  upl.worst = upl.net[0] || upl.partial.reduce((a, b) => ((b.bp.contactRatio ?? 1) < (a?.bp.contactRatio ?? 2) ? b : a), null);
+  return { f, w, B, L, qa0, qaT0, bearMey, upl, eccLimit, eccRatioAllow, dead, rows, missing, gov, pass: !!gov && gov.valid && gov.overallPass && !missing.length };
 }
 
 const n = (v, d = 2) => (v === undefined || v === null || Number.isNaN(v) ? '-' : (!Number.isFinite(v) ? '∞' : v.toFixed(d)));
+
+function upliftText(u) {
+  if (u.net.length) return `NET UPLIFT P ≤ 0 (${u.net.length} L/C, e.g. ${u.net[0].lc})`;
+  if (u.sep.length) return `base separation, resultant outside the base (${u.sep.length} L/C, e.g. ${u.sep[0].lc})`;
+  if (u.partial.length) return `Partial uplift in ${u.partial.length} L/C, min ${n(u.minContact * 100, 0)} % in contact (L/C ${u.worst.lc})`;
+  return 'Full contact';
+}
 
 export function renderReport(cfg, results) {
   const c = cfg.criteria;
   const out = [`# Foundation stability from STAAD reactions${cfg.project ? ' — ' + cfg.project : ''}`, '',
     `Generated by tools/staad-stability.mjs (FAIR Foundation Design lib, same checks as 4A). Combinations: ${cfg.lc}.`, '',
-    `Criteria: q_a = ${c.soil ? 'from soil (' + (c.soil.method || 'meyerhof') + ', c = ' + c.soil.c + ' kPa, φ = ' + c.soil.phi + '°, FS ' + (c.soil.FS ?? 3) + '), per footing' : c.qa + ' kPa (given)'}, ` +
+    `Criteria: q_a = ${c.soil ? 'from soil (' + (c.soil.method || 'meyerhof') + ', c = ' + c.soil.c + ' kPa, φ = ' + c.soil.phi + '°, γ = ' + (c.soil.gamma ?? c.gs) + ' kN/m³, FS ' + (c.soil.FS ?? 3) + ' permanent / ' + (c.soil.FSTemp ?? c.soil.FS ?? 3) + ' temporary), per footing' : c.qa + ' kPa (given)'}, ` +
     `bearing beyond the kern: ${String(c.bearMethod || 'rigid').toLowerCase() === 'meyerhof' ? "Meyerhof effective area B' × L', q'a " + (c.soil ? 'recomputed for B′ × L′' : 'as given') : 'rigid footing, linear pressure, no tension'}, μ = ${c.mu}, e/B allowable ${eccRatio(c.ecc ?? '1/6') > 0 ? c.ecc ?? '1/6' : 'none (partial uplift accepted)'}, ` +
     `FS sliding ${c.fsSlidePerm} / ${c.fsSlideTemp ?? c.fsSlidePerm} (permanent / temporary), FS overturning ${c.fsOTPerm} / ${c.fsOTTemp ?? c.fsOTPerm}; ` +
     `γc = ${c.gc} kN/m³, γs = ${c.gs} kN/m³. Temporary = combination containing a STAAD LOADTYPE Wind or Seismic case.`, '',
     'Sign convention (FAIR): P downward +, Fx = −FX, Fz = −FZ of the STAAD reaction; Mz = +MZ, Mx = +MX (Mz > 0 compresses +x, ' +
     'Mx > 0 compresses −z). Moved to the underside of the footing: P + kD·ΔW, Mz + Fx·Δh, Mx − Fz·Δh (+ pedestal offset). ' +
     'Torsion MY is not part of the shallow-footing checks.', '',
-    '## Summary', '', '| Foundation | Node | B × L (m) | ΔW (kN) | Δh (m) | q_a (kPa) | Governing L/C | Check | UC | Status |', '|---|---|---|---|---|---|---|---|---|---|'];
+    '## Summary', '', '| Foundation | Node | B × L (m) | ΔW (kN) | Δh (m) | q_a (kPa) | Governing L/C | Check | UC | Uplift (statics) | Status |', '|---|---|---|---|---|---|---|---|---|---|---|'];
   for (const r of results) {
     const g = r.gov;
     out.push(`| ${r.f.name} | ${r.f.node} | ${n(r.B)} × ${n(r.L)} | ${n(r.w.dW, 2)} | ${n(r.w.dh, 3)} | ${n(r.qa0.qa, 1)} | ${g ? g.lc + ' ' + g.title : '-'} | ` +
-      `${g ? (g.valid ? g.governingCheck.name : g.note) : 'no reactions'} | ${g ? n(g.governingUC, 3) : '-'} | ${r.pass ? 'PASS' : 'FAIL'} |`);
+      `${g ? (g.valid ? g.governingCheck.name : g.note) : 'no reactions'} | ${g ? n(g.governingUC, 3) : '-'} | ${upliftText(r.upl)} | ${r.pass ? 'PASS' : 'FAIL'} |`);
   }
   for (const r of results) {
     const f = r.f, s = r.w.sizing;
-    out.push('', `## ${f.name} (STAAD node ${f.node})`, '',
+    out.push('', `## ${f.name} (STAAD node ${f.node})${f.preset ? ' — preset ' + f.preset : ''}`, '',
       `Footing ${f.type === 'block' ? 'block' : 'with pedestal'}: B × L × H = ${n(f.Bf)} × ${n(f.Lf)} × ${n(f.Hf)} m, Df = ${n(f.Df)} m` +
-      (f.type === 'block' ? '' : `, pedestal ${n(f.Bp)} × ${n(f.Lp)} m, top ${n(f.pedGp)} m above grade, offset (${n(f.OffX || 0)}, ${n(f.OffZ || 0)}) m`) +
+      (f.type === 'block' ? '' : `, pedestal ${n(f.Bp)} × ${n(f.Lp)} m, top ${n(f.pedGp, 3)} m above grade, ${n(f.Df - f.Hf, 3)} m below grade${f.Dp !== undefined ? ' (locked)' : ''}, offset (${n(f.OffX || 0)}, ${n(f.OffZ || 0)}) m`) +
       `, grout ${f.groutT || 0} mm. Self-weight ΔW = ${n(r.w.dW)} kN (footing ${n(s.Wf * G)}, pedestal + grout ${n(r.w.Wped)}, ` +
       `backfill ${n(r.w.Wsoil)} kN), Δh = ${n(r.w.dh, 3)} m (top of pedestal to underside of footing). kD = factor of STAAD case ${r.dead}. ` +
-      (r.qa0.recomputed ? `q_a = q_u/FS = ${n(r.qa0.qu, 1)}/${c.soil.FS ?? 3} = ${n(r.qa0.qa, 1)} kPa — ${r.qa0.methodNote}, B × L = ${n(Math.min(r.B, r.L))} × ${n(Math.max(r.B, r.L))} m, Df = ${n(c.soil.Df ?? f.Df)} m.`
-        : `q_a = ${n(r.qa0.qa, 1)} kPa (given).`));
+      (r.qa0.recomputed ? `q_a = q_u/FS = ${n(r.qa0.qu, 1)}/${r.qa0.FS} = ${n(r.qa0.qa, 1)} kPa (permanent), ${n(r.qaT0.qu, 1)}/${r.qaT0.FS} = ${n(r.qaT0.qa, 1)} kPa (temporary) — ` +
+        `${r.qa0.methodNote}, B × L = ${n(Math.min(r.B, r.L))} × ${n(Math.max(r.B, r.L))} m, Df = ${n(c.soil.Df ?? f.Df)} m.`
+        : `q_a = ${n(r.qa0.qa, 1)} kPa (permanent), ${n(r.qaT0.qa, 1)} kPa (temporary), given.`));
+    if (r.trials) out.push('', `Auto-size (square, ${f.autosize.from}–${f.autosize.to} m, step ${f.autosize.step} m): ` +
+      (r.autosizeFailed ? `**no size in the range passes** — results shown for ${n(f.autosize.to)} m.` : `smallest passing size **${n(r.B)} × ${n(r.L)} m**.`), '',
+      '| B = L (m) | Governing L/C | Check | UC | Status |', '|---|---|---|---|---|',
+      ...r.trials.map(t => `| ${n(t.B)} | ${t.lc ?? '-'} | ${t.check} | ${n(t.uc, 3)} | ${t.pass ? 'PASS' : 'FAIL'} |`));
+    out.push('', `Eccentricity and contact area (as 4A §4.2): ${upliftText(r.upl)}. Kern ratio 6e_x/B + 6e_z/L ≤ 1 → full contact; ` +
+      `> 1 → partial uplift (rigid footing, soil without tension, biaxialSoilPressure()); ${c.minContact > 0 ? `minimum contact ${n(c.minContact * 100, 0)} % of the base (check, UC = ${c.minContact} / contact ratio); ` : ''}${r.eccLimit ? 'kern limit e/B = ' + n(r.eccRatioAllow, 3) + ' checked' : 'no eccentricity limit (project criterion), information only'}. ` +
+      'Net uplift (P ≤ 0) or a resultant outside the base fails.');
     if (r.missing.length) out.push('', `**No reaction in the .ANL for L/C ${r.missing.join(', ')} — not checked (status FAIL until printed).**`);
-    out.push('', '| L/C | Combination | T/P | kD | P (kN) | Hx (kN) | Hz (kN) | Mx (kN·m) | Mz (kN·m) | e_x (m) | e_z (m) | q (kPa) | q_a (kPa) | Contact | FS slide (min) | FS OT (min) | UC | Governing | Status |',
-      '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+    out.push('', '| L/C | Combination | T/P | kD | P (kN) | Hx (kN) | Hz (kN) | Mx (kN·m) | Mz (kN·m) | e_x (m) | e_z (m) | Kern ratio | Contact | q (kPa) | q_a (kPa) | FS slide (min) | FS OT (min) | UC | Governing | Status |',
+      '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
     for (const x of r.rows) {
-      if (!x.valid) { out.push(`| ${x.lc} | ${x.title} | ${x.temporary ? 'T' : 'P'} | ${n(x.kD, 3)} | ${n(x.P)} | ${n(x.top.Fx)} | ${n(x.top.Fz)} | ${n(x.Mx)} | ${n(x.Mz)} | - | - | - | - | - | - | - | ∞ | ${x.note} | FAIL |`); continue; }
+      if (!x.valid) { out.push(`| ${x.lc} | ${x.title} | ${x.temporary ? 'T' : 'P'} | ${n(x.kD, 3)} | ${n(x.P)} | ${n(x.top.Fx)} | ${n(x.top.Fz)} | ${n(x.Mx)} | ${n(x.Mz)} | - | - | - | ${x.uplift === 'net' ? 'Net uplift (P ≤ 0)' : 'Resultant outside the base'} | - | - | - | - | ∞ | ${x.note} | FAIL |`); continue; }
       const fsOT = Math.min(x.SF1 ?? Infinity, x.SF2 ?? Infinity);
       out.push(`| ${x.lc}${x === r.gov ? ' ◄' : ''} | ${x.title} | ${x.temporary ? 'T' : 'P'} | ${n(x.kD, 3)} | ${n(x.P)} | ${n(x.top.Fx)} | ${n(x.top.Fz)} | ${n(x.Mx)} | ${n(x.Mz)} | ` +
-        `${n(x.ex, 3)} | ${n(x.ez, 3)} | ${n(x.qBear, 1)}${x.meyUsed ? " (B'L')" : ''} | ${n(x.qaBear, 1)} | ${x.meyUsed ? `B' ${n(x.mey.Beff)} × L' ${n(x.mey.Leff)}` : n((x.bp.contactRatio ?? 0) * 100, 0) + '%'} | ${n(x.fsSliding)} (${x.fsSlideMin}) | ${n(fsOT)} (${x.fsOTMin}) | ` +
+        `${n(x.ex, 3)} | ${n(x.ez, 3)} | ${n(x.ucKernBiaxial * x.eccRatioAllowUsed * 6, 3)} | ${x.uplift === 'none' ? 'Full contact' : `Partial uplift (${n((x.bp.contactRatio ?? 0) * 100, 0)} % in contact)`} | ` +
+        `${n(x.qBear, 1)}${x.meyUsed ? ` (B' ${n(x.mey.Beff)} × L' ${n(x.mey.Leff)})` : ''} | ${n(x.qaBear, 1)} | ${n(x.fsSliding)} (${x.fsSlideMin}) | ${n(fsOT)} (${x.fsOTMin}) | ` +
         `${n(x.governingUC, 3)} | ${x.governingCheck.name} | ${x.overallPass ? 'PASS' : 'FAIL'} |`);
     }
   }
   return out.join('\n') + '\n';
 }
 
+// Smallest square footing (Bf = Lf, from..to by step) that passes every check; the trials are kept for the report.
+export function autosizeFoundation(f, crit, loads, reac, lcList, deadCase) {
+  const a = f.autosize, trials = [];
+  for (let B = a.from; B <= a.to + 1e-9; B = Math.round((B + a.step) * 1000) / 1000) {
+    const r = evaluateStaadFoundation({ ...f, Bf: B, Lf: B }, crit, loads, reac, lcList, deadCase);
+    trials.push({ B, uc: r.gov ? r.gov.governingUC : Infinity, check: r.gov ? (r.gov.valid ? r.gov.governingCheck.name : r.gov.note) : '-', lc: r.gov?.lc, pass: r.pass });
+    if (r.pass) return { ...r, trials };
+  }
+  const last = evaluateStaadFoundation({ ...f, Bf: a.to, Lf: a.to }, crit, loads, reac, lcList, deadCase);
+  return { ...last, trials, autosizeFailed: true };
+}
+
+const isObj = (v) => v && typeof v === 'object' && !Array.isArray(v);
+export function deepMerge(base, over) {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(over || {})) out[k] = isObj(v) && isObj(base?.[k]) ? deepMerge(base[k], v) : v;
+  return out;
+}
+// Config with "extends" (chain allowed, paths relative to the file that names them) and foundation presets resolved.
+export function loadConfig(cfgPath, depth = 0) {
+  if (depth > 10) throw new Error('extends: chain too deep');
+  const p = path.resolve(cfgPath);
+  let cfg = JSON.parse(fs.readFileSync(p, 'utf8'));
+  if (cfg.extends) {
+    const baseP = path.resolve(path.dirname(p), cfg.extends);
+    const base = loadConfig(baseP, depth + 1);
+    // relative std / anl in the base file are relative to the base file
+    for (const k of ['std', 'anl']) if (base[k] && !path.isAbsolute(base[k])) base[k] = path.resolve(path.dirname(baseP), base[k]);
+    cfg = deepMerge(base, cfg);
+  }
+  if (depth === 0 && Array.isArray(cfg.foundations)) cfg.foundations = cfg.foundations.map(resolveFoundation(cfg));
+  return cfg;
+}
+export const resolveFoundation = (cfg) => (f) => {
+  let g = f;
+  if (f.preset) {
+    const pr = cfg.presets?.[f.preset];
+    if (!pr) throw new Error(`${f.name}: preset "${f.preset}" not found`);
+    g = { ...pr, ...f };
+  }
+  if (g.Dp !== undefined && g.Dp !== null) g = { ...g, Df: g.Dp + g.Hf };   // pedestal below grade locked
+  return g;
+};
+
 export function runConfig(cfgPath) {
-  const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+  const cfg = loadConfig(cfgPath);
   const dir = path.dirname(path.resolve(cfgPath));
   const rd = (p) => fs.readFileSync(path.resolve(dir, p), 'latin1');
   const lcList = parseCaseList(cfg.lc);
@@ -173,7 +256,8 @@ export function runConfig(cfgPath) {
       cache[key] = { loads: parseStaadLoads(rd(stdP)), reac: reac.reactions };
     }
     const { loads, reac } = cache[key];
-    return evaluateStaadFoundation(f, cfg.criteria, loads, reac, f.lc ? parseCaseList(f.lc) : lcList, f.dead_case ?? cfg.dead_case);
+    const lcs = f.lc ? parseCaseList(f.lc) : lcList, dc = f.dead_case ?? cfg.dead_case;
+    return f.autosize ? autosizeFoundation(f, cfg.criteria, loads, reac, lcs, dc) : evaluateStaadFoundation(f, cfg.criteria, loads, reac, lcs, dc);
   });
   return { cfg, results, md: renderReport(cfg, results) };
 }
@@ -188,7 +272,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   for (const r of results) {
     const g = r.gov;
     console.log(`${r.f.name}: ${r.pass ? 'PASS' : 'FAIL'}` + (g ? ` — L/C ${g.lc}, ${g.valid ? g.governingCheck.name : g.note}, UC ${n(g.governingUC, 3)}` : ' — no reactions') +
-      (r.missing.length ? ` (missing L/C ${r.missing.join(',')})` : ''));
+      ` — uplift: ${upliftText(r.upl)}` + (r.missing.length ? ` (missing L/C ${r.missing.join(',')})` : ''));
   }
   console.log(`Report: ${outP}`);
   process.exit(results.every(r => r.pass) ? 0 : 1);
