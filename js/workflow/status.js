@@ -1,21 +1,21 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013b';
-import { fmt } from '../core/format.js?v=20261013b';
-import { comboState, lastResults, state } from '../core/state.js?v=20261013b';
-import { calcAnchor } from '../tabs/anchor.js?v=20261013b';
-import { calcBearing } from '../tabs/bearing.js?v=20261013b';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261013b';
-import { calcFoundation } from '../tabs/foundation.js?v=20261013b';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261013b';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261013b';
-import { calcPile } from '../tabs/pile.js?v=20261013b';
-import { calcRebar } from '../tabs/rebar.js?v=20261013b';
-import { calcSettlement } from '../tabs/settlement.js?v=20261013b';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261013b';
-import { renderGoverningBadges } from '../ui/viewMode.js?v=20261013b';
-import { allowableBearing } from '../tabs/bearing.js?v=20261013b';
-import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20261013b';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013c';
+import { fmt } from '../core/format.js?v=20261013c';
+import { comboState, lastResults, state } from '../core/state.js?v=20261013c';
+import { calcAnchor } from '../tabs/anchor.js?v=20261013c';
+import { calcBearing } from '../tabs/bearing.js?v=20261013c';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261013c';
+import { calcFoundation } from '../tabs/foundation.js?v=20261013c';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261013c';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261013c';
+import { calcPile } from '../tabs/pile.js?v=20261013c';
+import { calcRebar } from '../tabs/rebar.js?v=20261013c';
+import { calcSettlement } from '../tabs/settlement.js?v=20261013c';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261013c';
+import { renderGoverningBadges } from '../ui/viewMode.js?v=20261013c';
+import { allowableBearing } from '../tabs/bearing.js?v=20261013c';
+import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20261013c';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');

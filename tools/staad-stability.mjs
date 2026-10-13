@@ -26,8 +26,13 @@
 //                 "design": { "fc": 21.7, "fy": 420, "cover": 75, "bar": 13, "lambda": 1,       // optional: footing thickness + bars
 //                             "asMin": "slab",                         // "slab" (ACI Table 8.6.1.1) | "beam" (max(0.0018bt, 1.4bd/fy))
 //                             "spacingStep": 25,                       // bar spacing rounded down to this multiple (mm)
+//                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
+//                                                                          //   P-M (5A) + shear with ties, LRFD (fc / fy from "design")
 //                             "autoThickness": { "to": 0.8, "step": 0.05 } } },              //   from the LRFD combos ("lc_lrfd")
 //   "lc_lrfd": "301-400",                                // factored combinations for the footing design (5B, chapter 06)
+//   "drawings": true,                                    // optional: <report> - <foundation>.dxf / .svg (plan, section, pedestal
+//                                                        //   section, footing bars); per foundation "baseplate": { "B", "L", "t" }
+//                                                        //   (m, m, mm) and "bolts": { "n", "dia", "sx", "sz" } (mm) for the plan
 //   "foundations": [ { "name": "PS-1.2 F1", "node": 1, "type": "pedestal",          // "pedestal" | "block"
 //                      "Bf": 1.0, "Lf": 1.0, "Hf": 0.3, "Df": 0.9,                    // footing (m), Df = bottom below grade
 //                      "Bp": 0.3, "Lp": 0.3, "pedGp": 0.3, "OffX": 0, "OffZ": 0,      // pedestal (m), Gp = top above grade
@@ -42,10 +47,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { buildFoundationDrawing, toDXF, toSVG } from './foundation-drawing.mjs';
 import {
   foundationSizing, evaluateFoundationCombo, evaluateBiaxialFooting, biaxialSoilPressure, combineFootingChecks,
   pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign,
-  footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
+  footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, searchPedestalBars, pedestalShearCheck, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
 } from '../lib/foundation/index.js';
 
 const G = 9.80665;
@@ -165,12 +171,12 @@ export function renderReport(cfg, results) {
     'Sign convention (FAIR): P downward +, Fx = −FX, Fz = −FZ of the STAAD reaction; Mz = +MZ, Mx = +MX (Mz > 0 compresses +x, ' +
     'Mx > 0 compresses −z). Moved to the underside of the footing: P + kD·ΔW, Mz + Fx·Δh, Mx − Fz·Δh (+ pedestal offset). ' +
     'Torsion MY is not part of the shallow-footing checks.', '',
-    '## Summary', '', '| Foundation | Node | B × L × H (m) | ΔW (kN) | Δh (m) | q_a (kPa) | Governing L/C | Check | UC | Uplift (statics) | Footing design | Status |', '|---|---|---|---|---|---|---|---|---|---|---|---|'];
+    '## Summary', '', '| Foundation | Node | B × L × H (m) | ΔW (kN) | Δh (m) | q_a (kPa) | Governing L/C | Check | UC | Uplift (statics) | Footing design | Pedestal | Status |', '|---|---|---|---|---|---|---|---|---|---|---|---|---|'];
   for (const r of results) {
     const g = r.gov;
     const dz = r.design ? `${r.design.pass ? 'OK' : 'NOT OK'} — ${r.design.gov.name}, UC ${n(r.design.gov.uc, 3)}` : '-';
     out.push(`| ${r.f.name} | ${r.f.node} | ${n(r.B)} × ${n(r.L)} × ${n(r.w.sizing.Hf)} | ${n(r.w.dW, 2)} | ${n(r.w.dh, 3)} | ${n(r.qa0.qa, 1)} | ${g ? g.lc + ' ' + g.title : '-'} | ` +
-      `${g ? (g.valid ? g.governingCheck.name : g.note) : 'no reactions'} | ${g ? n(g.governingUC, 3) : '-'} | ${upliftText(r.upl)} | ${dz} | ${r.pass ? 'PASS' : 'FAIL'} |`);
+      `${g ? (g.valid ? g.governingCheck.name : g.note) : 'no reactions'} | ${g ? n(g.governingUC, 3) : '-'} | ${upliftText(r.upl)} | ${dz} | ${pedText(r.pedestal)} | ${r.pass ? 'PASS' : 'FAIL'} |`);
   }
   for (const r of results) {
     const f = r.f, s = r.w.sizing;
@@ -201,8 +207,81 @@ export function renderReport(cfg, results) {
         `${n(x.governingUC, 3)} | ${x.governingCheck.name} | ${x.overallPass ? 'PASS' : 'FAIL'} |`);
     }
   }
+  out.push('', '## Summary per foundation (report format)');
+  for (const r of results) out.push(...reportTables(r));
   for (const r of results) if (r.design) out.push(...designReport(r));
+  for (const r of results) if (r.pedestal) out.push(...pedestalReport(r));
   return out.join('\n') + '\n';
+}
+
+// Summary in the format of the calculation report (concrete design + foundation stability, permanent / temporary).
+function reportTables(r) {
+  const o = [], f = r.f, s = r.w.sizing, D = r.design, P = r.pedestal, ok = (b) => (b ? 'Safe' : 'Not Safe');
+  const fl = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
+  const bars = (k) => (fl[k] && fl[k].required && fl[k].s ? `D${D.bar}-${fl[k].s}` : '-');
+  o.push('', `### ${f.name} — summary (report format)`, '', '| Description | Value | Unit |', '|---|---|---|', '| **Footing** | | |',
+    `| Width (x) | ${n(r.B)} | m |`, `| Length (z) | ${n(r.L)} | m |`, `| Thickness | ${n(s.Hf)} | m |`, `| Depth (FGL to bottom) | ${n(s.Df)} | m |`,
+    `| Reinforcement bottom (x / z) | ${bars('x-bottom')} / ${bars('z-bottom')} | - |`,
+    `| Reinforcement top (x / z) | ${bars('x-top')} / ${bars('z-top')} | - |`);
+  if (P && P.pm && P.pm.found) o.push('| **Pedestal** | | |', `| Width | ${n(f.Bp)} | m |`, `| Length | ${n(f.Lp)} | m |`,
+    `| Height (below + above grade) | ${n(s.Dp + (f.pedGp || 0))} | m |`, `| Flexural reinforcement | ${P.pm.n * 2} D${P.bar} | - |`, `| Stirrups | Ø${P.tie}-${P.tieS} | - |`);
+  const rows = r.rows.filter(x => x.valid), grp = (tmp) => rows.filter(x => x.temporary === tmp);
+  const line = (label, tmp, val, lim, good, unit = '') => {
+    const g = grp(tmp);
+    if (!g.length) return `| ${label} | N/A | - | - |`;
+    const v = val(g), L = lim(g);
+    return `| ${label} | ${n(v, 2)}${unit} | ${n(L, 2)}${unit} | ${ok(good(v, L))} |`;
+  };
+  const maxQ = (g) => Math.max(...g.map(x => x.qBear)), qaOf = (g) => Math.min(...g.map(x => x.qaBear));
+  const bearUC = (g) => Math.max(...g.map(x => x.qBear / x.qaBear));
+  const minOT = (g) => Math.min(...g.map(x => Math.min(x.SF1 ?? Infinity, x.SF2 ?? Infinity, x.fsOT ?? Infinity)));
+  const minSl = (g) => Math.min(...g.map(x => x.fsSliding));
+  const c = r.crit;
+  o.push('', '| Parameter | Actual | Allowable / required | Remarks |', '|---|---|---|---|',
+    line('Bearing pressure, permanent (kN/m²)', false, maxQ, qaOf, (v, L) => grp(false).length && bearUC(grp(false)) <= 1),
+    line('Bearing pressure, temporary (kN/m²)', true, maxQ, qaOf, (v, L) => grp(true).length && bearUC(grp(true)) <= 1),
+    line('Overturning SF, permanent', false, minOT, () => c.fsOTPerm, (v, L) => v >= L),
+    line('Overturning SF, temporary', true, minOT, () => c.fsOTTemp ?? c.fsOTPerm, (v, L) => v >= L),
+    line('Sliding SF, permanent', false, minSl, () => c.fsSlidePerm, (v, L) => v >= L),
+    line('Sliding SF, temporary', true, minSl, () => c.fsSlideTemp ?? c.fsSlidePerm, (v, L) => v >= L));
+  if (c.minContact > 0) o.push(`| Minimum contact area | ${n(r.upl.minContact * 100, 1)} % | ${n(c.minContact * 100, 0)} % | ${ok(r.upl.minContact >= c.minContact - 1e-9)} |`);
+  if (r.upl.net.length || r.upl.sep.length) o.push(`| Net uplift / base separation | ${r.upl.net.length + r.upl.sep.length} L/C | 0 | Not Safe |`);
+  o.push('', 'Bearing: q (rigid footing / Meyerhof effective area beyond the kern) against q_a of that combination; settlement is not part of this check.');
+  if (r.drawing) o.push('', `![${f.name}](${encodeURI(r.drawing.svg)})`, '', `Drawing for the drafter: \`${r.drawing.dxf}\` (DXF R12, mm; layers CONCRETE, REBAR, DIM, TEXT, AXIS, HIDDEN, STEEL).`);
+  return o;
+}
+
+function pedText(p) {
+  if (!p) return '-';
+  if (!p.pm || !p.pm.found) return `NOT OK — ${p.note || 'no bars found'}`;
+  return `${p.pass ? 'OK' : 'NOT OK'} — ${p.pm.n * 2} D${p.bar}, ties D${p.tie} @ ${p.tieS}; ${p.gov.name} UC ${n(p.gov.uc, 3)}`;
+}
+
+function pedestalReport(r) {
+  const P = r.pedestal, f = r.f, o = [];
+  o.push('', `## ${f.name} — pedestal reinforcement (LRFD, as 5A + shear)`, '',
+    `Pedestal ${n(P.Bp, 0)} × ${n(P.Lp, 0)} mm, height H_p = ${n(P.Hp, 3)} m (incl. grout), self-weight ${n(P.Wped, 2)} kN; bars D${P.bar}, ties ` +
+    `D${P.tie} (${P.legs} legs), d′ = clear cover + tie + d_b/2 = ${n(P.dPrime, 0)} mm; f'c = ${P.fc} MPa, f_y = ${P.fy} MPa, f_yt = ${P.fyt} MPa. ` +
+    `Critical section at the base: P_u = R_Y + kD·W_ped, M = M_top + H·H_p, M_u = √(M_x² + M_z²) on a symmetric 2-layer section ` +
+    `(pmInteractionCurve, ACI 318M-19 §22.4), ρ ≥ ${P.rhoMin} and ≤ 0.08. Shear (§22.5.5.1, Table 22.5.5.1 Eq. c with N_u/(6A_g), ` +
+    `λ_s; ties if V_u > φV_c, §22.5.8.5.3; minimum ties if V_u > 0.5φV_c, §10.6.2.1; tie spacing ≤ min(16d_b, 48d_tie, least ` +
+    `dimension), §25.7.2.1), spacing rounded down to 25 mm.`);
+  if (P.missing.length) o.push('', `**No reaction for L/C ${P.missing.join(', ')}.**`);
+  if (!P.pm || !P.pm.found) { o.push('', `**${P.note}**`); return o; }
+  const pm = P.pm, g = pm.perCombo.reduce((a, b) => (b.uc > a.uc ? b : a));
+  o.push('', '| Check | L/C | Demand | Capacity | UC | Status |', '|---|---|---|---|---|---|',
+    `| P-M, ${pm.n * 2} D${P.bar} (${pm.n} per face), ρ = ${n(pm.rho * 100, 2)} % | ${g.combo.lc} | P_u ${n(g.Pu, 1)} kN, M_u ${n(g.Mu, 2)} kN·m | ` +
+    `φM_n ${n(g.phiMn, 2)} kN·m | ${n(pm.maxUC, 3)} | ${pm.maxUC <= 1 ? 'OK' : 'NOT OK'} |`);
+  for (const s of P.shear) {
+    const c = s.govUC.s;
+    o.push(`| Shear ${s.axis} (b_w ${n(s.bw, 0)}, d ${n(c.d, 0)} mm) | ${s.govUC.x.lc} | V_u ${n(Math.abs(s.axis === 'x' ? s.govUC.x.top.Fx : s.govUC.x.top.Fz), 2)} kN | ` +
+      `φV_n = φ(V_c + V_s) = ${n(c.phiVn / 1000, 1)} kN (φV_c ${n(c.phiVc / 1000, 1)} kN${c.needTies ? ', ties required' : ''}) | ${n(c.uc, 3)} | ${c.sectionOk && c.uc <= 1 ? 'OK' : 'NOT OK'} |`);
+  }
+  o.push(`| Bar clear spacing along the face | - | ${P.barSpacing.clear === null ? '-' : n(P.barSpacing.clear, 0) + ' mm'} | ≥ ${n(P.barSpacing.minClear, 0)} mm | - | ${P.barSpacing.ok ? 'OK' : 'NOT OK'} |`);
+  const sx = P.shear.map(s => `${s.axis}: shear ${Number.isFinite(s.gov.s.sShear) ? n(s.gov.s.sShear, 0) : '—'}, minimum ${Number.isFinite(s.gov.s.sMin) ? n(s.gov.s.sMin, 0) : '—'}, detailing ${n(s.gov.s.sDetail, 0)} mm`).join('; ');
+  o.push('', `Ties: D${P.tie} (${P.legs} legs) @ **${P.tieS} mm** (governing of ${sx}). Longitudinal: **${pm.n * 2} D${P.bar}** ` +
+    `(A_st ${n(pm.Ast, 0)} mm²). Pedestal: **${P.pass ? 'OK' : 'NOT OK'}** — governing ${P.gov.name}, UC ${n(P.gov.uc, 3)}.`);
+  return o;
 }
 
 function designReport(r) {
@@ -331,6 +410,53 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
   return out;
 }
 
+// ---------------- pedestal: longitudinal bars (P-M, as 5A) and shear with ties (ACI 318M-19 §22.5) ----------------
+// LRFD actions at the BASE of the pedestal (critical section, as 5A): P = R_Y + kD·W_ped (concrete + grout), M = M_top + H·H_p
+// (both axes, resultant Mu for the 2-layer P-M design as searchPedestalBars()). Shear per direction: V = |F_x| (section depth
+// B_p, width L_p) and |F_z| (depth L_p, width B_p), axial N_u = P at the top (less compression -> lower V_c, conservative).
+export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
+  const P0 = crit.pedestal || {}, D = crit.design || {};
+  const fc = P0.fc ?? D.fc, fy = P0.fy ?? D.fy, bar = P0.bar ?? 16, tie = P0.tie ?? 10, legs = P0.legs ?? 2;
+  const fyt = P0.fyt ?? fy, rhoMin = P0.rhoMin ?? 0.01, step = P0.spacingStep ?? D.spacingStep ?? 25, lambda = P0.lambda ?? D.lambda ?? 1;
+  const dPrime = (P0.clearCover ?? 50) + tie + bar / 2;                     // mm, cover to the bar centre
+  const Bp = f.Bp * 1000, Lp = f.Lp * 1000, w0 = footingWeights(f, crit);
+  const dead = deadCase ?? Math.min(...Object.entries(loads.primary).filter(([, p]) => /^dead$/i.test(p.type)).map(([n]) => +n));
+  const out = { f, Bp, Lp, dPrime, bar, tie, legs, fc, fy, fyt, rhoMin, Hp: w0.Hp, Wped: w0.Wped, rows: [], missing: [] };
+  for (const lc of lcList) {
+    const r = reac[`${f.node}:${lc}`];
+    if (!r) { out.missing.push(lc); continue; }
+    const top = reactionToFoundationLoad(r), kD = primaryFactors(loads, lc)[dead] || 0;
+    const Pu = top.P + kD * w0.Wped, Mx = top.Mx - top.Fz * w0.Hp, Mz = top.Mz + top.Fx * w0.Hp;
+    out.rows.push({ lc, title: loads.combos[lc]?.title || '', Pu, Mx, Mz, Mu: Math.hypot(Mx, Mz), top });
+  }
+  if (!out.rows.length) { out.pass = false; out.note = 'No reactions.'; return out; }
+  const pm = searchPedestalBars(Bp, Lp, dPrime, fc, fy, bar, out.rows.map(x => ({ combo: x, Ptop: x.Pu, Mtop: x.Mu })), 25, rhoMin);
+  out.pm = pm;
+  if (!pm.found) { out.pass = false; out.note = pm.reason; return out; }
+  const sFace = pm.n > 1 ? (Lp - 2 * dPrime) / (pm.n - 1) : null, minClear = Math.max(1.5 * bar, 40);
+  out.barSpacing = { s: sFace, clear: sFace === null ? null : sFace - bar, minClear, ok: sFace === null || sFace - bar >= minClear - 1e-9 };
+  // shear per direction and combination; governing tie spacing over all of them
+  out.shear = ['x', 'z'].map(ax => {
+    const bw = ax === 'x' ? Lp : Bp, h = ax === 'x' ? Bp : Lp;
+    const per = out.rows.map(x => ({ x, s: pedestalShearCheck({ bw, h, dPrime, fc, AsLayer: pm.AsLayer, Nu: x.top.P, Vu: ax === 'x' ? x.top.Fx : x.top.Fz,
+      lambda, tieDia: tie, legs, fyt, barDia: bar }) }));
+    const g = per.reduce((a, b) => (b.s.sReq < a.s.sReq || (b.s.sReq === a.s.sReq && b.s.ucConcrete > a.s.ucConcrete) ? b : a));
+    const gUC = per.reduce((a, b) => (b.s.uc > a.s.uc ? b : a));
+    return { axis: ax, bw, h, gov: g, govUC: gUC, sReq: g.s.sReq };
+  });
+  const sReq = Math.min(...out.shear.map(s => s.sReq));
+  out.tieS = Math.floor(sReq / step + 1e-9) * step;                          // ties at a spacing rounded down to `step`
+  out.checks = [
+    { name: 'P-M (5A, resultant moment)', uc: pm.maxUC },
+    ...out.shear.map(s => ({ name: `Shear ${s.axis} (§22.5)`, uc: s.govUC.s.sectionOk ? s.govUC.s.uc : Infinity })),
+    { name: 'Bar clear spacing (§25.2.3)', uc: out.barSpacing.ok ? 0 : Infinity },
+    { name: `Tie spacing ≥ ${step} mm`, uc: out.tieS >= step ? 0 : Infinity }
+  ];
+  out.gov = out.checks.reduce((a, b) => (b.uc > a.uc ? b : a));
+  out.pass = out.checks.every(c => c.uc <= 1) && !out.missing.length;
+  return out;
+}
+
 // Smallest square footing (Bf = Lf, from..to by step) that passes every check; the trials are kept for the report.
 export function autosizeFoundation(f, crit, loads, reac, lcList, deadCase) {
   const a = f.autosize, trials = [];
@@ -375,7 +501,9 @@ export const resolveFoundation = (cfg) => (f) => {
   return g;
 };
 
-export function runConfig(cfgPath) {
+const safeName = (s) => String(s).replace(/[\\/:*?"<>|]+/g, '-').trim();
+
+export function runConfig(cfgPath, outP = null) {
   const cfg = loadConfig(cfgPath);
   const dir = path.dirname(path.resolve(cfgPath));
   const rd = (p) => fs.readFileSync(path.resolve(dir, p), 'latin1');
@@ -407,7 +535,16 @@ export function runConfig(cfgPath) {
       if (Hn > (at.to ?? 1.0) + 1e-9) break;
       g = resolveFoundation(cfg)({ ...g, Hf: Hn, Df: g.Dp != null ? undefined : g.Df });
     }
-    return { ...r, design: des, thTrials: at ? thTrials : null, pass: r.pass && des.pass };
+    const ped = crit.pedestal && g.type !== 'block' ? pedestalDesignCheck({ ...g, Bf: r.B, Lf: r.L }, crit, loads, reac, lcU, dc) : null;
+    return { ...r, design: des, pedestal: ped, thTrials: at ? thTrials : null, pass: r.pass && des.pass && (!ped || ped.pass) };
+  });
+  results.forEach(r => { r.crit = cfg.criteria; });
+  if (cfg.drawings && outP) results.forEach(r => {
+    const base = outP.replace(/\.md$/i, '') + ' - ' + safeName(r.f.name);
+    const E = buildFoundationDrawing(r);
+    fs.writeFileSync(base + '.dxf', toDXF(E, r.f.name), 'latin1');
+    fs.writeFileSync(base + '.svg', toSVG(E, r.f.name), 'utf8');
+    r.drawing = { dxf: path.basename(base + '.dxf'), svg: path.basename(base + '.svg') };
   });
   return { cfg, results, md: renderReport(cfg, results) };
 }
@@ -417,12 +554,12 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   if (!args[0]) { console.error('Usage: node tools/staad-stability.mjs <config.json> [--out <report.md>]'); process.exit(2); }
   const oi = args.indexOf('--out');
   const outP = oi >= 0 ? args[oi + 1] : args[0].replace(/\.json$/i, '') + ' - Stability.md';
-  const { results, md } = runConfig(args[0]);
+  const { results, md } = runConfig(args[0], outP);
   fs.writeFileSync(outP, md, 'utf8');
   for (const r of results) {
     const g = r.gov;
     console.log(`${r.f.name}: ${r.pass ? 'PASS' : 'FAIL'}` + (g ? ` — L/C ${g.lc}, ${g.valid ? g.governingCheck.name : g.note}, UC ${n(g.governingUC, 3)}` : ' — no reactions') +
-      ` — uplift: ${upliftText(r.upl)}` + (r.design ? ` — footing ${n(r.B)} × ${n(r.L)} × ${n(r.w.sizing.Hf)} m: ${r.design.pass ? 'OK' : 'NOT OK'} (${r.design.gov.name}, UC ${n(r.design.gov.uc, 3)})` : '') + (r.missing.length ? ` (missing L/C ${r.missing.join(',')})` : ''));
+      ` — uplift: ${upliftText(r.upl)}` + (r.pedestal ? ` — pedestal: ${pedText(r.pedestal)}` : '') + (r.design ? ` — footing ${n(r.B)} × ${n(r.L)} × ${n(r.w.sizing.Hf)} m: ${r.design.pass ? 'OK' : 'NOT OK'} (${r.design.gov.name}, UC ${n(r.design.gov.uc, 3)})` : '') + (r.missing.length ? ` (missing L/C ${r.missing.join(',')})` : ''));
   }
   console.log(`Report: ${outP}`);
   process.exit(results.every(r => r.pass) ? 0 : 1);

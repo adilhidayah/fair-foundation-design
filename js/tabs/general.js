@@ -1,19 +1,19 @@
 // 01 — General Input Data: design standards register + general summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013b';
-import { fmt } from '../core/format.js?v=20261013b';
-import { designStandards } from '../core/state.js?v=20261013b';
-import { calcAnchor } from '../tabs/anchor.js?v=20261013b';
-import { allowableBearing, calcBearing } from '../tabs/bearing.js?v=20261013b';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261013b';
-import { calcFoundation } from '../tabs/foundation.js?v=20261013b';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261013b';
-import { calcPile } from '../tabs/pile.js?v=20261013b';
-import { calcRebar } from '../tabs/rebar.js?v=20261013b';
-import { calcSettlement } from '../tabs/settlement.js?v=20261013b';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261013b';
-import { getWorkflowStepStatus, renderWorkflowLive } from '../workflow/status.js?v=20261013b';
-import { generalFocusHTML } from '../tabs/generalFocus.js?v=20261013b';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013c';
+import { fmt } from '../core/format.js?v=20261013c';
+import { designStandards } from '../core/state.js?v=20261013c';
+import { calcAnchor } from '../tabs/anchor.js?v=20261013c';
+import { allowableBearing, calcBearing } from '../tabs/bearing.js?v=20261013c';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261013c';
+import { calcFoundation } from '../tabs/foundation.js?v=20261013c';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261013c';
+import { calcPile } from '../tabs/pile.js?v=20261013c';
+import { calcRebar } from '../tabs/rebar.js?v=20261013c';
+import { calcSettlement } from '../tabs/settlement.js?v=20261013c';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261013c';
+import { getWorkflowStepStatus, renderWorkflowLive } from '../workflow/status.js?v=20261013c';
+import { generalFocusHTML } from '../tabs/generalFocus.js?v=20261013c';
 
 // Rows are editable in place (✎ -> Save/Cancel); the editing row index lives on window since this renders at startup.
 export function renderDesignStandardsTable() {

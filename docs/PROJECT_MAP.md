@@ -26,7 +26,8 @@ MASTER CALCULATOR/
 │   └── validation/            ← test hand-calc (node ...mjs)
 ├── patch.js                   ← fixer marker SVG (idempotent)
 ├── tools/
-│   └── staad-stability.mjs    ← CLI: reaksi STAAD → stabilitas fondasi dangkal (laporan .md)
+│   ├── staad-stability.mjs    ← CLI: reaksi STAAD → stabilitas + desain footing/pedestal (laporan .md)
+│   └── foundation-drawing.mjs ← gambar pondasi (DXF R12 + SVG) dari hasil staad-stability
 ├── AGENTS.md                  ← aturan kerja AI assistant (harus di root)
 └── docs/                      ← catatan proyek: filosofi, instruksi, peta, rencana AI
 ```
