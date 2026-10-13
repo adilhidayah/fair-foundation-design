@@ -28,6 +28,8 @@
 //                             "spacingStep": 25,                       // bar spacing rounded down to this multiple (mm)
 //                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
 //                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
+//                                                                          //   "autoSize": { "step": 0.05, "to": 0.8 }: enlarge the pedestal (m) until
+//                                                                          //   the bolts are inside the ties and clear of the bars (whole foundation re-run)
 //                                                                          //   P-M (5A) + shear with ties, LRFD (fc / fy from "design")
 //                             "autoThickness": { "to": 0.8, "step": 0.05 } } },              //   from the LRFD combos ("lc_lrfd")
 //   "lc_lrfd": "301-400",                                // factored combinations for the footing design (5B, chapter 06)
@@ -286,6 +288,8 @@ function pedestalReport(r) {
       `| Clear distance anchor bolt / longitudinal bar | - | ${n(T.clear, 0)} mm | ≥ ${n(T.minClear, 0)} mm | - | ${T.clearOk ? 'OK' : 'NOT OK'} |`);
   }
   const sx = P.shear.map(s => `${s.axis}: shear ${Number.isFinite(s.gov.s.sShear) ? n(s.gov.s.sShear, 0) : '—'}, minimum ${Number.isFinite(s.gov.s.sMin) ? n(s.gov.s.sMin, 0) : '—'}, detailing ${n(s.gov.s.sDetail, 0)} mm`).join('; ');
+  if (r.pedTrials) o.push('', `Pedestal size steps (anchor bolts inside the ties and clear distance to the bars ≥ ${n(P.topTies.minClear, 0)} mm): ` +
+    r.pedTrials.map(t => `${n(t.Bp * 1000, 0)} × ${n(t.Lp * 1000, 0)} → clear ${n(t.clear, 0)} mm${t.enclosed ? '' : ', bolts outside the ties'} ${t.ok ? 'OK' : 'NOT OK'}`).join('; ') + '.');
   if (P.topTies) o.push('', `Top ties (anchor bolts in the top of the pedestal, ACI 318M-19 §10.7.6.1.6): **${P.topTies.n} × Ø${P.topTies.dia} within ` +
     `${P.topTies.within} mm of the top**, enclosing the anchor bolts and the longitudinal bars (at least 2 × D13 or 3 × D10).`);
   o.push('', `Ties: D${P.tie} (${P.legs} legs) @ **${P.tieS} mm** (governing of ${sx}). Longitudinal: **${pm.n * 2} D${P.bar}** ` +
@@ -550,8 +554,10 @@ export function runConfig(cfgPath, outP = null) {
     const stab = (g) => (g.autosize ? autosizeFoundation(g, crit, loads, reac, lcs, dc) : evaluateStaadFoundation(g, crit, loads, reac, lcs, dc));
     if (!(crit.design && cfg.lc_lrfd)) return stab(f);
     const lcU = parseCaseList(f.lc_lrfd || cfg.lc_lrfd), at = crit.design.autoThickness;
+    // whole foundation for one pedestal size: stability (+ auto-size), footing design (+ thickness steps), pedestal
+    const evalAll = (f0) => {
     const thTrials = [];
-    let g = f, r, des;
+    let g = f0, r, des;
     for (;;) {
       r = stab(g);
       des = footingDesignCheck({ ...g, Bf: r.B, Lf: r.L }, crit, loads, reac, lcU, dc);
@@ -563,6 +569,22 @@ export function runConfig(cfgPath, outP = null) {
     }
     const ped = crit.pedestal && g.type !== 'block' ? pedestalDesignCheck({ ...g, Bf: r.B, Lf: r.L }, crit, loads, reac, lcU, dc) : null;
     return { ...r, design: des, pedestal: ped, thTrials: at ? thTrials : null, pass: r.pass && des.pass && (!ped || ped.pass) };
+    };
+    // pedestal size steps (project option pedestal.autoSize { step, to }, m): enlarge Bp = Lp while the anchor bolts are not inside
+    // the ties or their clear distance to the bars is below the limit; every size re-runs the whole foundation
+    const pa = crit.pedestal && crit.pedestal.autoSize;
+    let fc = f, res = evalAll(fc);
+    const pedTrials = [];
+    const bad = (x) => x.pedestal && x.pedestal.topTies && !(x.pedestal.topTies.enclosed && x.pedestal.topTies.clearOk);
+    for (;;) {
+      if (res.pedestal && res.pedestal.topTies) pedTrials.push({ Bp: fc.Bp, Lp: fc.Lp, clear: res.pedestal.topTies.clear, enclosed: res.pedestal.topTies.enclosed, ok: !bad(res) });
+      if (!pa || !bad(res)) break;
+      const Bn = Math.round((fc.Bp + (pa.step ?? 0.05)) * 1000) / 1000, Ln = Math.round((fc.Lp + (pa.step ?? 0.05)) * 1000) / 1000;
+      if (Bn > (pa.to ?? 0.8) + 1e-9) break;
+      fc = { ...fc, Bp: Bn, Lp: Ln };
+      res = evalAll(fc);
+    }
+    return { ...res, pedTrials: pa && pedTrials.length > 1 ? pedTrials : null };
   });
   results.forEach(r => { r.crit = cfg.criteria; });
   if (cfg.drawings && outP) results.forEach(r => {
