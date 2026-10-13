@@ -26,6 +26,7 @@
 //                 "design": { "fc": 21.7, "fy": 420, "cover": 75, "bar": 13, "lambda": 1,       // optional: footing thickness + bars
 //                             "asMin": "slab",                         // "slab" (ACI Table 8.6.1.1) | "beam" (max(0.0018bt, 1.4bd/fy))
 //                             "spacingStep": 25,                       // bar spacing rounded down to this multiple (mm)
+//                             "sameBothWays": true,                    // optional: same bars in x and z per face (larger steel / m governs)
 //                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
 //                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
 //                                                                          //   "anchor": { "Ase", "futa", "hef", "Abrg", "omega0", "reinforcement": true,
@@ -326,6 +327,7 @@ function designReport(r) {
     `${n(D.d - D.bar, 0)} mm (z-bars); f'c = ${D.fc} MPa, f_y = ${D.fy} MPa. Pedestal ${n(f.Bp)} × ${n(f.Lp)} m. Net design pressure q − w, ` +
     `w = kD × ${n(D.wUnit, 2)} kPa (footing + backfill). Rigid footing, linear pressure, no tension. ACI 318M-19: flexure at the pedestal ` +
     `faces §13.2.7.1, ${r.f && D.asMinRule === 'beam' ? 'A_s,min = max(0.0018·b·h, 1.4·b·d/f_y) (project criterion)' : `A_s,min = ρ_min·b·h (§13.3 → Table 8.6.1.1, ρ_min ${D.fy < 420 ? '0.0020' : n(Math.max(0.0018 * 420 / D.fy, 0.0014), 4)})`}, ` +
+    (D.sameBothWays ? 'same bars in x and z per face (the larger required steel per metre governs, project option), ' : '') +
     `spacing rounded down to ${D.spacingStep} mm (written), bar count rounded up over the width between the covers (drawn, A_s,prov = n·A_bar), s ≤ min(3h, 450) mm, clear ≥ max(25 mm, d_b); one-way shear at d §22.5.5.1 ` +
     `(Eq. c, ρ_w of the bottom bars, λ_s); punching at d/2 §22.6 with the unbalanced moments at the pedestal base (§8.4.4.2).`);
   const opt = r.thTrials && r.thTrials.some(t => t.chosen !== undefined);
@@ -414,6 +416,17 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     return { ...c, lc: gov.lc, Mu, required, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
       ok: !required || (!!des && des.ok && !!lay && lay.valid && s - bar >= minClear - 1e-9) };
   });
+  // project option design.sameBothWays: the same bars in x and z per face (the larger required steel per metre width governs)
+  if (D.sameBothWays) for (const face of ['bottom', 'top']) {
+    const pair = CASES.filter(c => c.face === face && c.required && c.des && c.des.ok);
+    if (pair.length < 2) continue;
+    const q = Math.max(...pair.map(c => c.des.As / c.b));
+    pair.forEach(c => {
+      const lay = barLayout(q * c.b, c.b, bar, t, step, cc);
+      Object.assign(c, { n: lay.valid ? lay.n : null, s: lay.valid ? lay.s : null, sAct: lay.valid ? lay.sAct : null, AsProv: lay.valid ? lay.AsProv : 0,
+        ok: lay.valid && lay.s - bar >= minClear - 1e-9, same: true });
+    });
+  }
   out.flex = CASES;
   // one-way shear, detailed Eq. 22.5.5.1(c) (no Av,min in a footing): ρw from the bottom bars of that direction
   out.oneway = ['x', 'z'].map(ax => {
