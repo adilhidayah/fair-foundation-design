@@ -93,6 +93,10 @@ def gambar_tipe(tp, um, folder, fp):
                   t=pre.get("baseplate", {}).get("t", 12))
         bt = fd.get("baut") or dict(jenis="anchor bolt", **{k: pre.get("bolts", {}).get(k) for k in ("n", "dia", "sx", "sz")})
         gr = fd.get("grout", pre.get("groutT", 25)); Bp = fd.get("Bp", pre.get("Bp", 0.3) * 1000)
+        if dg.get("base_plate"): bp = dict(dg["base_plate"])          # config menimpa preset (mis. pondasi oleh gambar lain)
+        if dg.get("baut"): bt = dict(dg["baut"])
+        if dg.get("grout") is not None: gr = dg["grout"]
+        if dg.get("pedestal_ref") and not fd: Bp = max(bp["B"], bp["L"]) + 150
     else:
         bp = dict(dg["base_plate"]); bt = dict(dg.get("baut", {})); gr = dg.get("grout", 0); Bp = 0
     y_bob = gr if jenis == "slab" else 0.0          # slab: y=0 model = T.O.C., plat di atas grouting
@@ -119,7 +123,8 @@ def gambar_tipe(tp, um, folder, fp):
     S.line("AXIS", 0, -180, 0, ytop + 260)
     if jenis == "pedestal":
         S.rect("CONCRETE", -Bp / 2, -gr - 320, Bp, 320); S.rect("HIDDEN", -bp["B"] / 2, -gr, bp["B"], gr)
-        S.text("TEXT", Bp / 2 + 20, -gr - 160, f"PEDESTAL {Bp:.0f}×{Bp:.0f} (see foundation drawing)")
+        S.text("TEXT", Bp / 2 + 20, -gr - 160, f"PEDESTAL - see {dg['pedestal_ref']}" if dg.get("pedestal_ref") and not fd
+               else f"PEDESTAL {Bp:.0f}×{Bp:.0f} (see foundation drawing)")
     elif jenis == "slab":
         S.line("CONCRETE", -max(kiri, 250) - 150, 0, max(kanan, 250) + 150, 0); S.line("CONCRETE", -max(kiri, 250) - 150, -150, max(kanan, 250) + 150, -150)
         S.rect("HIDDEN", -bp["B"] / 2, 0, bp["B"], gr); S.text("TEXT", max(kanan, 250) + 20, -90, "CONCRETE SLAB (existing)")

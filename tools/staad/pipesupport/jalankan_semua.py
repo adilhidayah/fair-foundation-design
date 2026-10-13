@@ -105,8 +105,7 @@ if not a.tanpa_pdf:
 if not a.tanpa_pdf:
     r = run([sys.executable, os.path.join(HERE, "gambar_baja.py"), "--folder", ROOT, "--ps", ps_path, "--fondasi", fp_path])
     gb = next((l for l in r.stdout.splitlines() if l.startswith("PDF:")), "GAMBAR BAJA: gagal " + r.stderr.strip()[-120:])
-    brief = (brief + "
-" if brief else "") + gb
+    brief = (brief + "\n" if brief else "") + gb
 
 # 4. ringkasan (layar + file)
 f = lambda v: "-" if v is None else (f"{v:.3f}" if isinstance(v, float) else str(v))
