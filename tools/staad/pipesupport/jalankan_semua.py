@@ -101,6 +101,13 @@ if not a.tanpa_pdf:
     r = run([sys.executable, os.path.join(HERE, "brief_drafter.py"), "--folder", ROOT, "--ps", ps_path, "--fondasi", fp_path])   # brief always covers every type
     brief = (r.stdout.strip().splitlines() or ["BRIEF: gagal " + r.stderr.strip()[-120:]])[-1]
 
+# 3c. gambar baja (elevasi / potongan / base plate dari config model STAAD), satu PDF untuk semua tipe
+if not a.tanpa_pdf:
+    r = run([sys.executable, os.path.join(HERE, "gambar_baja.py"), "--folder", ROOT, "--ps", ps_path, "--fondasi", fp_path])
+    gb = next((l for l in r.stdout.splitlines() if l.startswith("PDF:")), "GAMBAR BAJA: gagal " + r.stderr.strip()[-120:])
+    brief = (brief + "
+" if brief else "") + gb
+
 # 4. ringkasan (layar + file)
 f = lambda v: "-" if v is None else (f"{v:.3f}" if isinstance(v, float) else str(v))
 head = "| Tipe | STAAD err | UC tiang | UC lengan | KL/r maks | Baja | Simpangan | Footing (m) | Pedestal | Stabilitas penentu | Pondasi | PDF |"
