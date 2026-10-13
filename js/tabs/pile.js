@@ -2,14 +2,14 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20261013c';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013c';
-import { fmt as fmtRaw } from '../core/format.js?v=20261013c';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20261013c';
-import { comboLabel } from '../core/worksheet.js?v=20261013c';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20261013c';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261013c';
-import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261013c';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector } from '../../lib/foundation/index.js?v=20261013d';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013d';
+import { fmt as fmtRaw } from '../core/format.js?v=20261013d';
+import { comboState, lastResults, pileList } from '../core/state.js?v=20261013d';
+import { comboLabel } from '../core/worksheet.js?v=20261013d';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20261013d';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261013d';
+import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261013d';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);

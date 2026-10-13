@@ -47,7 +47,7 @@ export function buildFoundationDrawing(r, opts = {}) {
   const bp = opts.baseplate || f.baseplate || null, bolts = opts.bolts || f.bolts || null;
   const cc = D ? D.cc : 75, dbF = D ? D.bar : 13;
   const flex = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
-  const barTxt = (c) => (c && c.required && c.s ? `D${dbF}-${c.s}` : null);
+  const barTxt = (c) => (c && c.required && c.s ? `D${dbF}-${c.s}` + (c.n ? ` (${c.n} bars)` : '') : null);
   const gap = 900;
 
   // ---------------- 1. PLAN (origin = footing centre; x = STAAD X, y = STAAD Z) ----------------
@@ -84,8 +84,9 @@ export function buildFoundationDrawing(r, opts = {}) {
   const yb = -Df + cc + dbF / 2;
   S.line('REBAR', X(-B / 2 + cc), yb, X(B / 2 - cc), yb);
   [-1, 1].forEach(a => S.line('REBAR', X(a * (B / 2 - cc)), yb, X(a * (B / 2 - cc)), yb + Math.min(12 * dbF, t - 2 * cc)));
-  const sz_ = flex['z-bottom']?.s || 200;
-  for (let x = -B / 2 + cc + 40; x <= B / 2 - cc - 30; x += sz_) S.circle('REBAR', X(x), yb + dbF, dbF / 2, true);
+  // n bars evenly between the covers (count rounded up in the design, nominal spacing written as D13-s)
+  const even = (c, len) => { const n = c?.n || 2, a0 = -len / 2 + cc + dbF / 2, a1 = len / 2 - cc - dbF / 2; return Array.from({ length: n }, (_, i) => a0 + i * (a1 - a0) / (n - 1)); };
+  even(flex['z-bottom'], B).forEach(x => S.circle('REBAR', X(x), yb + dbF, dbF / 2, true));
   const topReq = flex['x-top']?.required || flex['z-top']?.required;
   if (topReq) {
     const yt = -Df + t - cc - dbF / 2;
@@ -149,9 +150,8 @@ export function buildFoundationDrawing(r, opts = {}) {
   const FX = (x) => fx0 + x, FY = (y) => fy0 + y;
   S.rect('CONCRETE', FX(-B / 2), FY(-L / 2), B, L);
   if (hasPed) S.rect('HIDDEN', FX(ox - Bp / 2), FY(oz - Lp / 2), Bp, Lp);
-  const sxb = flex['x-bottom']?.s, szb = flex['z-bottom']?.s;
-  if (sxb) for (let z = -L / 2 + cc; z <= L / 2 - cc + 1e-6; z += sxb) S.line('REBAR', FX(-B / 2 + cc), FY(z), FX(B / 2 - cc), FY(z));   // bars along x
-  if (szb) for (let x = -B / 2 + cc; x <= B / 2 - cc + 1e-6; x += szb) S.line('REBAR', FX(x), FY(-L / 2 + cc), FX(x), FY(L / 2 - cc));   // bars along z
+  if (flex['x-bottom']?.s) even(flex['x-bottom'], L).forEach(z => S.line('REBAR', FX(-B / 2 + cc), FY(z), FX(B / 2 - cc), FY(z)));   // bars along x
+  if (flex['z-bottom']?.s) even(flex['z-bottom'], B).forEach(x => S.line('REBAR', FX(x), FY(-L / 2 + cc), FX(x), FY(L / 2 - cc)));   // bars along z
   if (barTxt(flex['x-bottom'])) S.text('TEXT', FX(B / 2 + 80), FY(60), TXT, `${barTxt(flex['x-bottom'])} along x (B)`);
   if (barTxt(flex['z-bottom'])) S.text('TEXT', FX(B / 2 + 80), FY(-10), TXT, `${barTxt(flex['z-bottom'])} along z (B)`);
   if (topReq) S.text('TEXT', FX(B / 2 + 80), FY(-80), TXT, `Top: ${barTxt(flex['x-top']) || '-'} along x, ${barTxt(flex['z-top']) || '-'} along z`);
@@ -167,7 +167,7 @@ function bounds(E) {
   E.forEach(e => {
     if (e.t === 'line') { add(e.x1, e.y1); add(e.x2, e.y2); }
     else if (e.t === 'circle') { add(e.x - e.r, e.y - e.r); add(e.x + e.r, e.y + e.r); }
-    else { const w = e.s.length * e.h * 0.6; add(e.x - (e.align === 'center' ? w / 2 : e.align === 'right' ? w : 0), e.y); add(e.x + w, e.y + e.h); }
+    else { const w = e.s.length * e.h * 0.72; add(e.x - (e.align === 'center' ? w / 2 : e.align === 'right' ? w : 0), e.y); add(e.x + w, e.y + e.h); }
   });
   return { x1, y1, x2, y2 };
 }

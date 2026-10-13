@@ -1,12 +1,12 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 733 checks, 733 pass, 0 fail** (18 files, run 13 Oct 2026).
+**Total: 737 checks, 737 pass, 0 fail** (18 files, run 13 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
 | validation_shared_part1.mjs | bearing capacity, load combinations, stability (shallow + legacy pile) | 21 |
 | validation_shared_part2.mjs | pedestal P-M, soil correlations, settlement | 17 |
-| validation_shared_part3.mjs | anchor bolts, footing one-way / punching shear, pile cap moment, flexure (A_s,min of a footing Table 8.6.1.1 / project 'beam' option, bar layout in 25 mm steps), pedestal shear with axial load (§22.5) and ρmin option | 38 |
+| validation_shared_part3.mjs | anchor bolts, footing one-way / punching shear, pile cap moment, flexure (A_s,min of a footing Table 8.6.1.1 / project 'beam' option, bar layout in 25 mm steps, bar count over the width between covers), pedestal shear with axial load (§22.5) and ρmin option | 42 |
 | validation_shared_part4.mjs | seismic, settlement check | 15 |
 | validation_cat_part5.mjs | static / rotating / reciprocating / pipe rack categories, foundation sizing, load kinds | 91 |
 | validation_cat_part6.mjs | skid-mounted category | 23 |
@@ -22,7 +22,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
 | validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift; two-way size effect λs | 31 |
 | validation_import_part18.mjs | STAAD import (.std load cases / REPEAT LOAD, .ANL support reactions, reaction → FAIR signs) + batch shallow-footing stability + footing and pedestal design + drawing + anchor-bolt top ties + pedestal auto-size (tools/staad-stability.mjs, tools/foundation-drawing.mjs) | 84 |
-| **Total** | | **733** |
+| **Total** | | **737** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 

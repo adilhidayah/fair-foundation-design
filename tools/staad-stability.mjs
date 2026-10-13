@@ -304,7 +304,7 @@ function designReport(r) {
     `${n(D.d - D.bar, 0)} mm (z-bars); f'c = ${D.fc} MPa, f_y = ${D.fy} MPa. Pedestal ${n(f.Bp)} × ${n(f.Lp)} m. Net design pressure q − w, ` +
     `w = kD × ${n(D.wUnit, 2)} kPa (footing + backfill). Rigid footing, linear pressure, no tension. ACI 318M-19: flexure at the pedestal ` +
     `faces §13.2.7.1, ${r.f && D.asMinRule === 'beam' ? 'A_s,min = max(0.0018·b·h, 1.4·b·d/f_y) (project criterion)' : `A_s,min = ρ_min·b·h (§13.3 → Table 8.6.1.1, ρ_min ${D.fy < 420 ? '0.0020' : n(Math.max(0.0018 * 420 / D.fy, 0.0014), 4)})`}, ` +
-    `spacing rounded down to ${D.spacingStep} mm, s ≤ min(3h, 450) mm, clear ≥ max(25 mm, d_b); one-way shear at d §22.5.5.1 ` +
+    `spacing rounded down to ${D.spacingStep} mm (written), bar count rounded up over the width between the covers (drawn, A_s,prov = n·A_bar), s ≤ min(3h, 450) mm, clear ≥ max(25 mm, d_b); one-way shear at d §22.5.5.1 ` +
     `(Eq. c, ρ_w of the bottom bars, λ_s); punching at d/2 §22.6 with the unbalanced moments at the pedestal base (§8.4.4.2).`);
   if (r.thTrials) o.push('', 'Thickness trials (each with its own stability auto-size, pedestal depth below grade locked):', '',
     '| H (m) | B = L (m) | Stability UC | Design governing | Design UC | Status |', '|---|---|---|---|---|---|',
@@ -385,9 +385,9 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     const Mu = c.get(gov), required = c.face === 'bottom' || Mu > 1e-6;   // top steel only where a combination gives hogging
     const des = required ? flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, rule) : null;
     // spacing in `step` mm steps, rounded down, ≤ min(3t, 450) (barLayout(), as the app's 5B)
-    const lay = des && des.ok ? barLayout(des.As, c.b, bar, t, step) : null;
+    const lay = des && des.ok ? barLayout(des.As, c.b, bar, t, step, cc) : null;   // count rounded up over b − 2·cover, nominal s
     const n = lay && lay.valid ? lay.n : null, s = lay && lay.valid ? lay.s : null;
-    return { ...c, lc: gov.lc, Mu, required, des, n, s, AsProv: lay && lay.valid ? lay.AsProv : 0,
+    return { ...c, lc: gov.lc, Mu, required, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
       ok: !required || (!!des && des.ok && !!lay && lay.valid && s - bar >= minClear - 1e-9) };
   });
   out.flex = CASES;
