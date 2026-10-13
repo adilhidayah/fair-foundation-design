@@ -32,6 +32,7 @@
 //                                                                          //   the bolts are inside the ties and clear of the bars (whole foundation re-run)
 //                                                                          //   P-M (5A) + shear with ties, LRFD (fc / fy from "design")
 //                             "autoThickness": { "to": 0.8, "step": 0.05 } } },              //   from the LRFD combos ("lc_lrfd")
+//                             autoThickness.optimize = true (+ "from"): try every thickness, keep the smallest footing volume
 //   "lc_lrfd": "301-400",                                // factored combinations for the footing design (5B, chapter 06)
 //   "drawings": true,                                    // optional: <report> - <foundation>.dxf / .svg (plan, section, pedestal
 //                                                        //   section, footing bars); per foundation "baseplate": { "B", "L", "t" }
@@ -306,14 +307,16 @@ function designReport(r) {
     `faces §13.2.7.1, ${r.f && D.asMinRule === 'beam' ? 'A_s,min = max(0.0018·b·h, 1.4·b·d/f_y) (project criterion)' : `A_s,min = ρ_min·b·h (§13.3 → Table 8.6.1.1, ρ_min ${D.fy < 420 ? '0.0020' : n(Math.max(0.0018 * 420 / D.fy, 0.0014), 4)})`}, ` +
     `spacing rounded down to ${D.spacingStep} mm (written), bar count rounded up over the width between the covers (drawn, A_s,prov = n·A_bar), s ≤ min(3h, 450) mm, clear ≥ max(25 mm, d_b); one-way shear at d §22.5.5.1 ` +
     `(Eq. c, ρ_w of the bottom bars, λ_s); punching at d/2 §22.6 with the unbalanced moments at the pedestal base (§8.4.4.2).`);
-  if (r.thTrials) o.push('', 'Thickness trials (each with its own stability auto-size, pedestal depth below grade locked):', '',
-    '| H (m) | B = L (m) | Stability UC | Design governing | Design UC | Status |', '|---|---|---|---|---|---|',
-    ...r.thTrials.map(t => `| ${n(t.Hf)} | ${n(t.B)} | ${n(t.stabUC, 3)} | ${t.desGov} | ${n(t.desUC, 3)} | ${t.pass ? 'PASS' : 'FAIL'} |`));
+  const opt = r.thTrials && r.thTrials.some(t => t.chosen !== undefined);
+  if (r.thTrials) o.push('', opt ? 'Thickness optimisation — every thickness with its own stability auto-size and design (pedestal depth below grade locked); ' +
+      'the passing combination with the smallest footing volume B·L·H is used (◄):' : 'Thickness trials (each with its own stability auto-size, pedestal depth below grade locked):', '',
+    '| H (m) | B = L (m) | Volume (m³) | Stability UC | Design governing | Design UC | Status |', '|---|---|---|---|---|---|---|',
+    ...r.thTrials.map(t => `| ${n(t.Hf)}${t.chosen ? ' ◄' : ''} | ${n(t.B)} | ${n(t.vol, 3)} | ${n(t.stabUC, 3)} | ${t.desGov} | ${n(t.desUC, 3)} | ${t.pass ? 'PASS' : 'FAIL'} |`));
   if (D.missing.length) o.push('', `**No reaction for L/C ${D.missing.join(', ')} — not checked.**`);
   const inv = D.items.filter(it => it.invalid);
   if (inv.length) o.push('', `**No soil pressure: ${inv.map(it => it.lc + ' (' + it.invalid + ')').join('; ')}.**`);
   o.push('', '| Check | L/C | Demand | Capacity | UC | Status |', '|---|---|---|---|---|---|');
-  o.push(`| Min. depth (§13.3.1.2) | - | d = ${n(D.d, 0)} mm | 150 mm | ${n(150 / D.d, 3)} | ${D.d >= 150 ? 'OK' : 'NOT OK'} |`);
+  o.push(`| Min. depth above bottom bars (§13.3.1.2) | - | d (upper layer) = ${n(D.d - D.bar, 0)} mm | 150 mm | ${n(150 / (D.d - D.bar), 3)} | ${D.d - D.bar >= 150 ? 'OK' : 'NOT OK'} |`);
   for (const w of D.oneway || []) {
     const c = w.chk;
     o.push(`| One-way shear, sections ⟂ ${w.axis} (b_w ${n(w.bw, 0)} mm, ρ_w ${n(w.rho * 100, 3)} %) | ${w.lc} | V_u = ${n(w.Vu, 1)} kN | ` +
@@ -413,7 +416,8 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     out.punch = { lc: g.it.lc, Vu: g.res.Vu, vu: g.st.vu, loc: g.res.sec.loc, bo: g.res.sec.bo, cap, uc: g.st.vu / cap.phiVc_stress };
   } else out.punch = { note: pp[0] ? pp[0].res.note : 'not evaluated', uc: 0 };   // section spans the footing -> one-way governs
   out.checks = [
-    { name: 'Min. depth d ≥ 150 mm (§13.3.1.2)', uc: 150 / Math.max(d, 1e-9) },
+    // depth above the bottom reinforcement (§13.3.1.2): the upper layer of the bottom mat (z-bars, d − d_b) governs
+    { name: 'Min. depth above bottom bars ≥ 150 mm (§13.3.1.2)', uc: 150 / Math.max(d - bar, 1e-9) },
     ...out.oneway.map(o => ({ name: `One-way shear ${o.axis} (§22.5.5)`, uc: o.uc })),
     { name: 'Punching shear (§22.6)', uc: out.punch.uc },
     ...CASES.filter(c => c.required).map(c => ({ name: `Flexure ${c.key}`, uc: c.ok ? (c.des.AsCalc / c.AsProv) : Infinity }))
@@ -558,10 +562,23 @@ export function runConfig(cfgPath, outP = null) {
     const evalAll = (f0) => {
     const thTrials = [];
     let g = f0, r, des;
-    for (;;) {
+    const vol = (rr, h) => rr.B * rr.L * h;                                         // footing concrete volume (m³)
+    if (at && at.optimize) {
+      // efficient footing: every thickness from..to (each with its own stability auto-size and design); the passing one with the
+      // smallest footing volume B·L·H wins (ties: the thinner). Pedestal depth below grade stays locked (Df = Dp + H).
+      let best = null;
+      for (let h = at.from ?? f0.Hf; h <= (at.to ?? 1.0) + 1e-9; h = Math.round((h + (at.step ?? 0.05)) * 1000) / 1000) {
+        const gh = resolveFoundation(cfg)({ ...f0, Hf: h, Df: f0.Dp != null ? undefined : f0.Df });
+        const rh = stab(gh), dh = footingDesignCheck({ ...gh, Bf: rh.B, Lf: rh.L }, crit, loads, reac, lcU, dc), ok = rh.pass && dh.pass;
+        thTrials.push({ Hf: h, B: rh.B, stabUC: rh.gov ? rh.gov.governingUC : Infinity, stabPass: rh.pass, desUC: dh.gov.uc, desGov: dh.gov.name, pass: ok, vol: vol(rh, h) });
+        if (ok && (!best || vol(rh, h) < best.v - 1e-9)) best = { g: gh, r: rh, des: dh, v: vol(rh, h), h };
+      }
+      if (best) { g = best.g; r = best.r; des = best.des; thTrials.forEach(t => { t.chosen = t.Hf === best.h; }); }
+      else { const last = thTrials[thTrials.length - 1]; g = resolveFoundation(cfg)({ ...f0, Hf: last.Hf, Df: f0.Dp != null ? undefined : f0.Df }); r = stab(g); des = footingDesignCheck({ ...g, Bf: r.B, Lf: r.L }, crit, loads, reac, lcU, dc); }
+    } else for (;;) {
       r = stab(g);
       des = footingDesignCheck({ ...g, Bf: r.B, Lf: r.L }, crit, loads, reac, lcU, dc);
-      thTrials.push({ Hf: g.Hf, B: r.B, stabUC: r.gov ? r.gov.governingUC : Infinity, stabPass: r.pass, desUC: des.gov.uc, desGov: des.gov.name, pass: r.pass && des.pass });
+      thTrials.push({ Hf: g.Hf, B: r.B, stabUC: r.gov ? r.gov.governingUC : Infinity, stabPass: r.pass, desUC: des.gov.uc, desGov: des.gov.name, pass: r.pass && des.pass, vol: vol(r, g.Hf) });
       if ((r.pass && des.pass) || !at) break;
       const Hn = Math.round((g.Hf + (at.step ?? 0.05)) * 1000) / 1000;
       if (Hn > (at.to ?? 1.0) + 1e-9) break;
