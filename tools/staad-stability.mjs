@@ -27,6 +27,7 @@
 //                             "asMin": "slab",                         // "slab" (ACI Table 8.6.1.1) | "beam" (max(0.0018bt, 1.4bd/fy))
 //                             "spacingStep": 25,                       // bar spacing rounded down to this multiple (mm)
 //                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
+//                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
 //                                                                          //   P-M (5A) + shear with ties, LRFD (fc / fy from "design")
 //                             "autoThickness": { "to": 0.8, "step": 0.05 } } },              //   from the LRFD combos ("lc_lrfd")
 //   "lc_lrfd": "301-400",                                // factored combinations for the footing design (5B, chapter 06)
@@ -224,7 +225,8 @@ function reportTables(r) {
     `| Reinforcement bottom (x / z) | ${bars('x-bottom')} / ${bars('z-bottom')} | - |`,
     `| Reinforcement top (x / z) | ${bars('x-top')} / ${bars('z-top')} | - |`);
   if (P && P.pm && P.pm.found) o.push('| **Pedestal** | | |', `| Width | ${n(f.Bp)} | m |`, `| Length | ${n(f.Lp)} | m |`,
-    `| Height (below + above grade) | ${n(s.Dp + (f.pedGp || 0))} | m |`, `| Flexural reinforcement | ${P.pm.n * 2} D${P.bar} | - |`, `| Stirrups | Ø${P.tie}-${P.tieS} | - |`);
+    `| Height (below + above grade) | ${n(s.Dp + (f.pedGp || 0))} | m |`, `| Flexural reinforcement | ${P.pm.n * 2} D${P.bar} | - |`,
+    `| Stirrups | Ø${P.tie}-${P.tieS}${P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} within ${P.topTies.within} mm of top` : ''} | - |`);
   const rows = r.rows.filter(x => x.valid), grp = (tmp) => rows.filter(x => x.temporary === tmp);
   const line = (label, tmp, val, lim, good, unit = '') => {
     const g = grp(tmp);
@@ -254,7 +256,7 @@ function reportTables(r) {
 function pedText(p) {
   if (!p) return '-';
   if (!p.pm || !p.pm.found) return `NOT OK — ${p.note || 'no bars found'}`;
-  return `${p.pass ? 'OK' : 'NOT OK'} — ${p.pm.n * 2} D${p.bar}, ties D${p.tie} @ ${p.tieS}; ${p.gov.name} UC ${n(p.gov.uc, 3)}`;
+  return `${p.pass ? 'OK' : 'NOT OK'} — ${p.pm.n * 2} D${p.bar}, ties D${p.tie} @ ${p.tieS}${p.topTies ? ` + ${p.topTies.n} at top` : ''}; ${p.gov.name} UC ${n(p.gov.uc, 3)}`;
 }
 
 function pedestalReport(r) {
@@ -278,7 +280,14 @@ function pedestalReport(r) {
       `φV_n = φ(V_c + V_s) = ${n(c.phiVn / 1000, 1)} kN (φV_c ${n(c.phiVc / 1000, 1)} kN${c.needTies ? ', ties required' : ''}) | ${n(c.uc, 3)} | ${c.sectionOk && c.uc <= 1 ? 'OK' : 'NOT OK'} |`);
   }
   o.push(`| Bar clear spacing along the face | - | ${P.barSpacing.clear === null ? '-' : n(P.barSpacing.clear, 0) + ' mm'} | ≥ ${n(P.barSpacing.minClear, 0)} mm | - | ${P.barSpacing.ok ? 'OK' : 'NOT OK'} |`);
+  if (P.topTies) {
+    const T = P.topTies;
+    o.push(`| Anchor bolts ${T.bolts} inside the ties | - | bolt edge ${n(T.reach, 0)} mm from centre | tie inner face ${n(T.tieIn, 0)} mm | - | ${T.enclosed ? 'OK' : 'NOT OK'} |`,
+      `| Clear distance anchor bolt / longitudinal bar | - | ${n(T.clear, 0)} mm | ≥ ${n(T.minClear, 0)} mm | - | ${T.clearOk ? 'OK' : 'NOT OK'} |`);
+  }
   const sx = P.shear.map(s => `${s.axis}: shear ${Number.isFinite(s.gov.s.sShear) ? n(s.gov.s.sShear, 0) : '—'}, minimum ${Number.isFinite(s.gov.s.sMin) ? n(s.gov.s.sMin, 0) : '—'}, detailing ${n(s.gov.s.sDetail, 0)} mm`).join('; ');
+  if (P.topTies) o.push('', `Top ties (anchor bolts in the top of the pedestal, ACI 318M-19 §10.7.6.1.6): **${P.topTies.n} × Ø${P.topTies.dia} within ` +
+    `${P.topTies.within} mm of the top**, enclosing the anchor bolts and the longitudinal bars (at least 2 × D13 or 3 × D10).`);
   o.push('', `Ties: D${P.tie} (${P.legs} legs) @ **${P.tieS} mm** (governing of ${sx}). Longitudinal: **${pm.n * 2} D${P.bar}** ` +
     `(A_st ${n(pm.Ast, 0)} mm²). Pedestal: **${P.pass ? 'OK' : 'NOT OK'}** — governing ${P.gov.name}, UC ${n(P.gov.uc, 3)}.`);
   return o;
@@ -446,11 +455,28 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
   });
   const sReq = Math.min(...out.shear.map(s => s.sReq));
   out.tieS = Math.floor(sReq / step + 1e-9) * step;                          // ties at a spacing rounded down to `step`
+  // anchor bolts in the top of the pedestal (ACI 318M-19 §10.7.6.1.6): ties enclosing the bolts and >= 4 longitudinal bars,
+  // within 125 mm of the top, at least 2 × D13 or 3 × D10 (D13 and larger: 2, smaller: 3). Bolt positions from f.bolts (mm).
+  const bo = f.bolts;
+  if (bo) {
+    const nTop = tie >= 13 ? 2 : 3;
+    const tieIn = (Math.min(Bp, Lp) / 2) - (P0.clearCover ?? 50) - tie;            // inner face of the ties from the centre
+    const bolts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].slice(0, bo.n || 4).map(([a, b]) => [a * bo.sx / 2, b * bo.sz / 2]);
+    const bars = [];
+    for (const xs of [-Bp / 2 + dPrime, Bp / 2 - dPrime]) for (let i = 0; i < pm.n; i++) bars.push([xs, pm.n > 1 ? -Lp / 2 + dPrime + i * (Lp - 2 * dPrime) / (pm.n - 1) : 0]);
+    const reach = Math.max(...bolts.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z)) + bo.dia / 2));
+    const clear = Math.min(...bolts.flatMap(([x, z]) => bars.map(([u, v]) => Math.hypot(x - u, z - v) - (bo.dia + bar) / 2)));
+    const minClear = P0.boltBarClearMin ?? Math.max(25, bar, bo.dia);            // clear bar / bolt: default as §25.2.1, project option
+    out.topTies = { n: nTop, dia: tie, within: 125, enclosed: reach <= tieIn + 1e-9, reach, tieIn, clear, minClear,
+      clearOk: clear >= minClear - 1e-9, bolts: `${bo.n || 4}-M${bo.dia} @ ${bo.sx} × ${bo.sz}` };
+  }
   out.checks = [
     { name: 'P-M (5A, resultant moment)', uc: pm.maxUC },
     ...out.shear.map(s => ({ name: `Shear ${s.axis} (§22.5)`, uc: s.govUC.s.sectionOk ? s.govUC.s.uc : Infinity })),
     { name: 'Bar clear spacing (§25.2.3)', uc: out.barSpacing.ok ? 0 : Infinity },
-    { name: `Tie spacing ≥ ${step} mm`, uc: out.tieS >= step ? 0 : Infinity }
+    { name: `Tie spacing ≥ ${step} mm`, uc: out.tieS >= step ? 0 : Infinity },
+    ...(out.topTies ? [{ name: 'Anchor bolts inside the ties (§10.7.6.1.6)', uc: out.topTies.enclosed ? 0 : Infinity },
+      { name: 'Clear distance anchor bolt / bar', uc: out.topTies.clearOk ? 0 : Infinity }] : [])
   ];
   out.gov = out.checks.reduce((a, b) => (b.uc > a.uc ? b : a));
   out.pass = out.checks.every(c => c.uc <= 1) && !out.missing.length;

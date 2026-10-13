@@ -97,9 +97,12 @@ export function buildFoundationDrawing(r, opts = {}) {
     const dpr = P.dPrime, xb = [ox - Bp / 2 + dpr, ox + Bp / 2 - dpr], yTop = Gp - 40, yBot = yb + dbF + P.bar / 2;
     xb.forEach((x, i) => { S.line('REBAR', X(x), yBot, X(x), yTop); S.line('REBAR', X(x), yBot, X(x + (i ? 1 : -1) * 12 * P.bar), yBot); });
     const tx1 = ox - Bp / 2 + (dpr - P.bar / 2 - P.tie / 2), tx2 = ox + Bp / 2 - (dpr - P.bar / 2 - P.tie / 2);
-    for (let y = -Dp + 50; y <= Gp - 40; y += P.tieS) S.line('REBAR', X(tx1), y, X(tx2), y);
+    const yTopT = P.topTies ? Gp - 125 : Gp - 40;                                // top 125 mm: the anchor-bolt ties
+    for (let y = -Dp + 50; y < yTopT - 1e-6; y += P.tieS) S.line('REBAR', X(tx1), y, X(tx2), y);
+    if (P.topTies) for (let i = 0; i < P.topTies.n; i++) { const y = Gp - 40 - i * (85 / Math.max(P.topTies.n - 1, 1)); S.line('REBAR', X(tx1), y, X(tx2), y); }
     S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2, TXT, `${P.pm.n * 2} D${P.bar}`);
     S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 60, TXT, `Ø${P.tie}-${P.tieS}`);
+    if (P.topTies) S.text('TEXT', X(ox + Bp / 2 + 440), Gp - 90, TXT, `${P.topTies.n} Ø${P.topTies.dia} within 125 (top)`);
   }
   if (barTxt(flex['x-bottom'])) S.text('TEXT', X(-B / 2 + 40), yb - TXT - 90, TXT, `${barTxt(flex['x-bottom'])} (B) both ways`);
   if (topReq) S.text('TEXT', X(-B / 2 + 40), -Df + t + 30, TXT, `${barTxt(flex['x-top']) || barTxt(flex['z-top'])} (T)`);
@@ -135,7 +138,8 @@ export function buildFoundationDrawing(r, opts = {}) {
     S.dim(PX(-Bp / 2), PY(-Lp / 2), PX(Bp / 2), PY(-Lp / 2), -150, `${r0(Bp)}`);
     S.dim(PX(-Bp / 2), PY(Lp / 2), PX(-Bp / 2), PY(-Lp / 2), -150, `${r0(Lp)}`);
     S.text('TEXT', PX(Bp / 2 + 80), PY(40), TXT, `${n * 2} D${P.bar} (${n} per face ⟂ x)`);
-    S.text('TEXT', PX(Bp / 2 + 80), PY(-30), TXT, `Ties Ø${P.tie}-${P.tieS}, ${P.legs} legs`);
+    S.text('TEXT', PX(Bp / 2 + 80), PY(-30), TXT, `Ties Ø${P.tie}-${P.tieS}, ${P.legs} legs` + (P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} at top` : ''));
+    if (P.topTies && bolts) [[-1, -1], [1, -1], [1, 1], [-1, 1]].slice(0, bolts.n || 4).forEach(([a, b]) => S.circle('STEEL', PX(a * bolts.sx / 2), PY(b * bolts.sz / 2), bolts.dia / 2));
     S.text('TEXT', PX(Bp / 2 + 80), PY(-100), TXT, `Clear cover ${r0(P.dPrime - P.bar / 2 - P.tie)} mm, ρ = ${(P.pm.rho * 100).toFixed(2)} %`);
     S.text('TEXT', PX(0), PY(-Lp / 2 - 420), TXT_TITLE, 'PEDESTAL SECTION B-B', 'center');
   }
