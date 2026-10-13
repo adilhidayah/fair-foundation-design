@@ -221,7 +221,7 @@ export function renderReport(cfg, results) {
 function reportTables(r) {
   const o = [], f = r.f, s = r.w.sizing, D = r.design, P = r.pedestal, ok = (b) => (b ? 'Safe' : 'Not Safe');
   const fl = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
-  const bars = (k) => (fl[k] && fl[k].required && fl[k].s ? `D${D.bar}-${fl[k].s}` : '-');
+  const bars = (k) => (fl[k] && fl[k].required && fl[k].s ? `D${D.bar}-${fl[k].s}${fl[k].n ? ` (${fl[k].n})` : ''}` : '-');
   o.push('', `### ${f.name} — summary (report format)`, '', '| Description | Value | Unit |', '|---|---|---|', '| **Footing** | | |',
     `| Width (x) | ${n(r.B)} | m |`, `| Length (z) | ${n(r.L)} | m |`, `| Thickness | ${n(s.Hf)} | m |`, `| Depth (FGL to bottom) | ${n(s.Df)} | m |`,
     `| Reinforcement bottom (x / z) | ${bars('x-bottom')} / ${bars('z-bottom')} | - |`,
