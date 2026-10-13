@@ -40,7 +40,9 @@
 //   "lc_lrfd": "301-400",                                // factored combinations for the footing design (5B, chapter 06)
 //   "drawings": true,                                    // optional: <report> - <foundation>.dxf / .svg (plan, section, pedestal
 //                                                        //   section, footing bars); per foundation "baseplate": { "B", "L", "t" }
-//                                                        //   (m, m, mm) and "bolts": { "n", "dia", "sx", "sz" } (mm) for the plan
+//                                                        //   (m, m, mm) and "bolts": { "n", "dia", "sx", "sz" } (mm) for the plan;
+//                                                        //   optional "column": { "name", "shape": "C"|"L", "h", "b", "tw", "tf", "cy",
+//                                                        //   "toe" } (mm) draws the steel column in plan and section
 //   "foundations": [ { "name": "PS-1.2 F1", "node": 1, "type": "pedestal",          // "pedestal" | "block"
 //                      "Bf": 1.0, "Lf": 1.0, "Hf": 0.3, "Df": 0.9,                    // footing (m), Df = bottom below grade
 //                      "Bp": 0.3, "Lp": 0.3, "pedGp": 0.3, "OffX": 0, "OffZ": 0,      // pedestal (m), Gp = top above grade

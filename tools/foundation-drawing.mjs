@@ -36,6 +36,25 @@ function sheet() {
 const r0 = (v) => Math.round(v);
 const elv = (m) => (Math.abs(m) < 5e-4 ? '±0.000' : (m > 0 ? '+' : '−') + Math.abs(m).toFixed(3));
 
+// Steel column outline in plan, relative to the column centroid (x = STAAD X, y = STAAD Z), mm.
+// column = { name, shape: 'C' | 'L', h, b, tw, tf, cy, toe: '+Z' | '-Z' }
+//   C: web along X (strong axis resists the arm moment), flanges toward `toe`; cy = centroid from the back of the web.
+//   L (equal leg, BETA ANGLE in STAAD): legs along −X and +Z from the heel; cy = centroid from the back of each leg.
+function columnOutline(c) {
+  if (c.shape === 'L') {
+    const L = c.h, t = c.tw, cy = c.cy;
+    return [[0, 0], [-L, 0], [-L, t], [-t, t], [-t, L], [0, L]].map(([u, v]) => [u + cy, v - cy]);
+  }
+  const h = c.h, b = c.b, tw = c.tw, tf = c.tf, s = String(c.toe || '+Z').startsWith('-') ? -1 : 1;
+  return [[-h / 2, 0], [h / 2, 0], [h / 2, b], [h / 2 - tf, b], [h / 2 - tf, tw], [-h / 2 + tf, tw], [-h / 2 + tf, b], [-h / 2, b]]
+    .map(([u, v]) => [u, s * (v - c.cy)]);
+}
+// x-extent of the column seen in section A-A (along x) and the inner visible edges
+function columnElevation(c) {
+  if (c.shape === 'L') return { x1: -c.h + c.cy, x2: c.cy, inner: [c.cy - c.tw] };
+  return { x1: -c.h / 2, x2: c.h / 2, inner: [] };
+}
+
 // foundation result r (staad-stability), drawing options: baseplate { B, L, t } (m, mm), bolts { n, dia, sx, sz } (mm)
 export function buildFoundationDrawing(r, opts = {}) {
   const f = r.f, D = r.design, P = r.pedestal, sz = r.w.sizing;
@@ -45,6 +64,7 @@ export function buildFoundationDrawing(r, opts = {}) {
   const Bp = hasPed ? f.Bp * 1000 : 0, Lp = hasPed ? f.Lp * 1000 : 0, Gp = hasPed ? (f.pedGp || 0) * 1000 : 0, gr = f.groutT || 0;
   const ox = hasPed ? (f.OffX || 0) * 1000 : 0, oz = hasPed ? (f.OffZ || 0) * 1000 : 0;
   const bp = opts.baseplate || f.baseplate || null, bolts = opts.bolts || f.bolts || null;
+  const colm = opts.column || f.column || null;
   const cc = D ? D.cc : 75, dbF = D ? D.bar : 13;
   const flex = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
   const barTxt = (c) => (c && c.required && c.s ? `D${dbF}-${c.s}` + (c.n ? ` (${c.n} bars)` : '') : null);
@@ -64,6 +84,11 @@ export function buildFoundationDrawing(r, opts = {}) {
   }
   if (bolts) S.text('TEXT', ox + Bp / 2 + 40, oz - Lp / 2 - 90, TXT, `${bolts.n || 4}-M${bolts.dia} @ ${bolts.sx}×${bolts.sz}`);
   if (bp) S.text('TEXT', ox + Bp / 2 + 40, oz + Lp / 2 + 40, TXT, `BP ${r0(bp.B * 1000)}×${r0(bp.L * 1000)}×${bp.t}`);
+  if (colm) {
+    const pts = columnOutline(colm);
+    pts.forEach(([x, z], i) => { const [x2, z2] = pts[(i + 1) % pts.length]; S.line('STEEL', ox + x, oz + z, ox + x2, oz + z2); });
+    S.text('TEXT', ox + Bp / 2 + 40, oz + Lp / 2 + 40 + TXT * 1.6, TXT, `COLUMN ${colm.name}`);
+  }
   S.text('TEXT', 0, -L / 2 - 520, TXT_TITLE, `FOUNDATION PLAN — ${f.name}`, 'center');
   S.text('TEXT', 0, -L / 2 - 620, TXT, 'x = STAAD X, z = STAAD Z (pipe direction)', 'center');
 
@@ -78,8 +103,18 @@ export function buildFoundationDrawing(r, opts = {}) {
     if (gr) S.rect('HIDDEN', X(ox - Bp / 2), Gp, Bp, gr);
     if (bp) S.rect('STEEL', X(ox - bp.B * 500), Gp + gr, bp.B * 1000, bp.t);
     if (bolts) [-1, 1].forEach(a => S.line('STEEL', X(ox + a * bolts.sx / 2), Gp + gr + (bp ? bp.t : 0) + 60, X(ox + a * bolts.sx / 2), Gp - Math.min(Dp + Gp - 100, 400)));
+    if (colm) {                                                                  // column stub with a break line
+      const e = columnElevation(colm), y0 = Gp + gr + (bp ? bp.t : 0), y1 = y0 + 350, zz = 25;
+      S.line('STEEL', X(ox + e.x1), y0, X(ox + e.x1), y1); S.line('STEEL', X(ox + e.x2), y0, X(ox + e.x2), y1);
+      e.inner.forEach(x => S.line('STEEL', X(ox + x), y0, X(ox + x), y1));
+      const xm = (e.x1 + e.x2) / 2;
+      S.line('STEEL', X(ox + e.x1 - 20), y1, X(ox + xm - zz), y1); S.line('STEEL', X(ox + xm - zz), y1, X(ox + xm), y1 + zz);
+      S.line('STEEL', X(ox + xm), y1 + zz, X(ox + xm), y1 - zz); S.line('STEEL', X(ox + xm), y1 - zz, X(ox + xm + zz), y1);
+      S.line('STEEL', X(ox + xm + zz), y1, X(ox + e.x2 + 20), y1);
+      S.text('TEXT', X(ox + e.x2 + 60), y0 + 200, TXT, `COLUMN ${colm.name}`);
+    }
   }
-  S.line('AXIS', X(ox), -Df - 200, X(ox), Gp + gr + 400);
+  S.line('AXIS', X(ox), -Df - 200, X(ox), Gp + gr + (colm ? 620 : 400));
   // footing bars in section: bottom bars along x (line, hooks up), bars along z as dots; top bars if required
   const yb = -Df + cc + dbF / 2;
   S.line('REBAR', X(-B / 2 + cc), yb, X(B / 2 - cc), yb);
@@ -120,7 +155,8 @@ export function buildFoundationDrawing(r, opts = {}) {
   if (hasPed) {
     S.dim(X(ox - Bp / 2), 0, X(ox - Bp / 2), -Dp, 360, `${r0(Dp)}`);
     if (Gp > 0) S.dim(X(ox - Bp / 2), Gp, X(ox - Bp / 2), 0, 360, `${r0(Gp)}`);
-    S.dim(X(ox - Bp / 2), Gp + gr + 250, X(ox + Bp / 2), Gp + gr + 250, 0, `${r0(Bp)}`);
+    const yPd = colm ? Gp + gr + (bp ? bp.t : 0) + 350 + 160 : Gp + gr + 250;   // above the column stub when drawn
+    S.dim(X(ox - Bp / 2), yPd, X(ox + Bp / 2), yPd, 0, `${r0(Bp)}`);
   }
   S.text('TEXT', X(0), -Df - 520, TXT_TITLE, 'SECTION A-A (along x)', 'center');
 
