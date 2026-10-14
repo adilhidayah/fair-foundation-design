@@ -1,28 +1,28 @@
 import {
   windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20260927f'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20260927f';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20260927f';
-import { dlWorksheetItem } from './core/worksheet.js?v=20260927f';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20260927f';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20260927f';
-import { loadTesseract } from './ocr/tesseract.js?v=20260927f';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20260927f';
-import { renderSummaryReport } from './report/summary.js?v=20260927f';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20260927f';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20260927f';
-import { calcFoundation } from './tabs/foundation.js?v=20260927f';
-import { calcFoundSize } from './tabs/foundSize.js?v=20260927f';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20260927f';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20260927f';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20260927f';
-import { calcRebar } from './tabs/rebar.js?v=20260927f';
-import { calcSettlement } from './tabs/settlement.js?v=20260927f';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20260927f';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20260927f';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20260927f';
-import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20260927f';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20260927f';
+} from '../lib/foundation/index.js?v=20261014a'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261014a';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261014a';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261014a';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261014a';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261014a';
+import { loadTesseract } from './ocr/tesseract.js?v=20261014a';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261014a';
+import { renderSummaryReport } from './report/summary.js?v=20261014a';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261014a';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261014a';
+import { calcFoundation } from './tabs/foundation.js?v=20261014a';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261014a';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261014a';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261014a';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261014a';
+import { calcRebar } from './tabs/rebar.js?v=20261014a';
+import { calcSettlement } from './tabs/settlement.js?v=20261014a';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261014a';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261014a';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261014a';
+import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261014a';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261014a';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -658,7 +658,19 @@ document.querySelectorAll('#in-settlement select').forEach(el => el.addEventList
 document.querySelectorAll('#in-anchor input:not(.bolt-input)').forEach(el => el.addEventListener('input', calcAnchor));
 document.querySelectorAll('#in-rebar input, #in-rebarcap input').forEach(el => el.addEventListener('input', calcRebar));
 document.querySelectorAll('#in-summary input:not(.rpt-include):not(.rpt-pagebreak):not([type="file"])').forEach(el => el.addEventListener('input', generateReport));
-document.querySelectorAll('#in-foundsize input').forEach(el => el.addEventListener('input', calcFoundSize));
+// Tab 02 fields: calcFoundSize() ends in recalcAll() (every tab x every load combination), so while the user types it
+// runs once after a short pause instead of on every keystroke. Real typing (isTrusted) is debounced and flushed on
+// change/blur; programmatic input events (AI fill, pile cap resize) stay immediate.
+document.querySelectorAll('#in-foundsize input').forEach(el => {
+  let t = null;
+  const run = () => { if (t !== null) { clearTimeout(t); t = null; } calcFoundSize(); };
+  el.addEventListener('input', (e) => {
+    if (!e.isTrusted || el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') { run(); return; }
+    if (t !== null) clearTimeout(t);
+    t = setTimeout(run, 300);
+  });
+  el.addEventListener('change', () => { if (t !== null) run(); });
+});
 document.querySelectorAll('#in-general input').forEach(el => el.addEventListener('input', recalcAllGeneral));
 // Pile capacity fields (P_all, T_all, H_all) — kN, 1 decimal, matching Table 1.3.2's fmt(...,1).
 [['pf-Qc', 1], ['pf-Qt', 1], ['pf-Ql', 1]].forEach(([id, dec]) => wireDecimalAutoFormat(id, dec));
