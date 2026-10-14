@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261014f';
+import { fmt } from '../core/format.js?v=20261014g';
 
 // Load transfer top-of-pedestal -> bottom of footing (Design Load Summary).
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.

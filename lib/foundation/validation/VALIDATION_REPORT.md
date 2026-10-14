@@ -16,7 +16,7 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
-| validation_shared_part13.mjs | autoSizeFooting() (B = L and H) + autoSizeThickness() (plan fixed, H only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
+| validation_shared_part13.mjs | autoSizeFooting() (B = L and H) + autoSizeDepth() (B, L, H fixed, Df only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
 | **Total** | | **501** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
@@ -87,8 +87,8 @@ The solver has no engineering formula; it searches B = L (stability) and H (shea
 stability needs B ≥ 2.37, shear needs H ≥ 0.62 → B = 2.40, H = 0.65 (20 trials, not a grid scan); thresholds on a grid point are accepted
 (2.40 / 0.65); B depending on H (B ≥ 4.0 − H, H ≥ 0.80 → B 3.20); H depending on B (H ≥ 0.2·B, B ≥ 3.0 → B 3.00, H 0.60); 200 random
 thresholds equal the brute-force grid answer; no solution (stability / shear / geometry / empty range) returns ok = false with the reason;
-no trial is evaluated twice. autoSizeThickness (plan fixed by the site, H only): stability H ≥ 0.43 + shear H ≥ 0.62 → 0.65; stability H ≥ 0.80 governs → 0.80; 200 random thresholds = brute force; stability never passing → failed = stability, H = Hmax. The UI wiring (js/tabs/autoSize.js) was checked in a headless browser: one step smaller (B − 0.05 or H − 0.05)
-fails a check, the found size passes all.
+no trial is evaluated twice. autoSizeDepth (footing size fixed by the site, only Df searched): stability needs Df ≥ 2.62 → 2.65; on-grid 2.60 accepted; 200 random thresholds = brute force; Dmax not enough → failed = stability; shear failing (independent of Df) → failed = shear. The UI wiring (js/tabs/autoSize.js) was checked in a headless browser: one step smaller (B − 0.05 or H − 0.05)
+fails a check, the found size passes all. Depth-only mode in the browser (default load data, pedestal): 3.5 × 3.5 × 0.40 m → Df 2.65 m (Df 2.60 gives kern UC 1.006), 3.0 × 4.0 × 0.40 m → Df 3.80 m (3.75 gives 1.002); footing only 3.0 × 4.0 × 0.40 m → Df 1.30 m (1.25 gives 1.035).
 
 ### part12 — foundation geometry consistency (26 Sep 2026)
 - foundationGeometryCheck: Bf, Lf, Hf > 0; Df ≥ Hf; pedestal inside the footing, |OffX| + Bp/2 ≤ Bf/2 and |OffZ| + Lp/2 ≤ Lf/2

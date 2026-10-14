@@ -1,18 +1,19 @@
 // Auto-Size Foundation (Tab 02 button / Design Status panel button): smallest square footing B = L and thickness H, in
 // 0.05 m steps, for which 4A stability (kern, bearing pressure, sliding, overturning) and the one-way / punching shear checks
-// all PASS. With "Keep B × L" ticked the plan is the user's (site limit) and only H is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
+// all PASS. With "Keep B × L × H" ticked the footing size is the user's (site limit) and only the depth D_f is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
 // size into Tab 02, runs calcFoundSize() (-> recalcAll(), the very checks the user sees) and reads the statuses back.
 // Shallow foundations only. Pedestal, D_f, grout and the load data are never changed; nothing is changed when no size passes.
-import { autoSizeFooting, autoSizeThickness } from '../../lib/foundation/index.js?v=20261014f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014f';
-import { fmt } from '../core/format.js?v=20261014f';
-import { lastResults } from '../core/state.js?v=20261014f';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014f';
+import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261014g';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014g';
+import { fmt } from '../core/format.js?v=20261014g';
+import { lastResults } from '../core/state.js?v=20261014g';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014g';
 
 const STEP = 0.05;          // m — grid of the result (B, L, H)
 const H_MIN = 0.3;          // m — thinnest footing the search starts from
 const H_MAX_BLOCK = 3.0;    // m — thickest footing tried for "Footing Only" (with a pedestal H <= D_f, the geometry rule)
 const B_MAX = 10;           // m — largest square footing tried
+const DF_MAX = 5.0;         // m — deepest embedment tried when only D_f is sized
 let running = false;
 
 const setField = (id, v) => { document.getElementById(id).value = String(v); };
@@ -29,7 +30,7 @@ export async function autoSizeFoundation() {
   }
   const hasPed = getRadioVal('fs-type') === 'pedestal';
   const Df = num('fs-Df');
-  const orig = { Bf: document.getElementById('fs-Bf').value, Lf: document.getElementById('fs-Lf').value, Hf: document.getElementById('fs-Hf').value };
+  const orig = { Bf: document.getElementById('fs-Bf').value, Lf: document.getElementById('fs-Lf').value, Hf: document.getElementById('fs-Hf').value, Df: document.getElementById('fs-Df').value };
   // Smallest plan that still holds the pedestal (with its offset) — foundationGeometryCheck() would reject anything smaller.
   const Bmin = hasPed ? Math.max(num('fs-Bp') + 2 * Math.abs(num('fs-OffX')), num('fs-Lp') + 2 * Math.abs(num('fs-OffZ')), 0.5) : 0.5;
   const Hmax = hasPed ? Df : H_MAX_BLOCK; // with a pedestal the footing must fit within the embedment depth (Df >= Hf)
@@ -38,13 +39,14 @@ export async function autoSizeFoundation() {
   btns.forEach((b) => { b.disabled = true; });
   show('note', 'Auto-sizing…');
   let trial = 0;
-  // lockPlan: B and L stay as typed (site limit, any B x L) and only H is searched; otherwise B = L is searched as well.
+  // lockPlan: B, L and H stay as typed (site limit, any B x L) and only D_f is searched; otherwise B = L and H are searched.
   const lockPlan = document.getElementById('fs-autosize-lock').checked;
-  const evaluate = async ({ B, H }) => {
+  const evaluate = async ({ B, H, Df: D }) => {
     trial += 1;
-    out.innerHTML = `Auto-sizing… trial ${trial}: ${B === undefined ? '' : `B = L = ${fmt(B, 2)} m, `}H = ${fmt(H, 2)} m`;
+    out.innerHTML = `Auto-sizing… trial ${trial}: ${D !== undefined ? `D<sub>f</sub> = ${fmt(D, 2)} m` : `B = L = ${fmt(B, 2)} m, H = ${fmt(H, 2)} m`}`;
     if (B !== undefined) { setField('fs-Bf', B); setField('fs-Lf', B); }
-    setField('fs-Hf', H);
+    if (H !== undefined) setField('fs-Hf', H);
+    if (D !== undefined) setField('fs-Df', D);
     calcFoundSize();
     await yieldToUi();
     const issues = lastResults.foundsize && lastResults.foundsize.issues ? lastResults.foundsize.issues : [];
@@ -58,25 +60,26 @@ export async function autoSizeFoundation() {
   };
   try {
     if (lockPlan) {
-      const Bf = num('fs-Bf'), Lf = num('fs-Lf');
-      if (!(Bf > 0 && Lf > 0)) { show('warn-box', '<strong>Enter B<sub>f</sub> and L<sub>f</sub> first</strong> — with the plan size locked, only H is sized.'); return; }
-      const t = await autoSizeThickness({ evaluate, Hmin: H_MIN, Hmax, step: STEP });
+      const Bf = num('fs-Bf'), Lf = num('fs-Lf'), Hf = num('fs-Hf');
+      if (!(Bf > 0 && Lf > 0 && Hf > 0)) { show('warn-box', '<strong>Enter B<sub>f</sub>, L<sub>f</sub> and H<sub>f</sub> first</strong> — with the footing size locked, only D<sub>f</sub> is sized.'); return; }
+      // Smallest D_f that still holds the footing (D_f >= H_f); a deeper footing carries more soil and a larger q_a, so stability improves.
+      const t = await autoSizeDepth({ evaluate, Dmin: Hf, Dmax: DF_MAX, step: STEP });
       if (t.ok) {
-        setField('fs-Hf', t.H.toFixed(2));
+        setField('fs-Df', t.Df.toFixed(2));
         calcFoundSize();
         const rows = (lastResults.foundation && lastResults.foundation.checks ? lastResults.foundation.checks : []).map((c) => `<li>${escapeHtml(c.name)}: UC = ${fmt(c.uc, 3)} (LC ${escapeHtml(String(c.lc))})</li>`).join('');
         const ow = lastResults.oneway, tw = lastResults.twoway;
-        show('suggest-box', `<strong>✓ Auto-sized: H<sub>f</sub> = ${fmt(t.H, 2)} m</strong> with the plan size kept at B<sub>f</sub> × L<sub>f</sub> = ${fmt(Bf, 2)} × ${fmt(Lf, 2)} m — smallest thickness (${fmt(STEP * 1000, 0)} mm steps) passing the checks below, found in ${t.evals} trials. B<sub>f</sub>, L<sub>f</sub>, D<sub>f</sub>, the pedestal and the loads were not changed.`
+        show('suggest-box', `<strong>✓ Auto-sized: D<sub>f</sub> = ${fmt(t.Df, 2)} m</strong> with the footing kept at B<sub>f</sub> × L<sub>f</sub> × H<sub>f</sub> = ${fmt(Bf, 2)} × ${fmt(Lf, 2)} × ${fmt(Hf, 2)} m — smallest depth (${fmt(STEP * 1000, 0)} mm steps) passing the checks below, found in ${t.evals} trials. B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub>, the pedestal size and the loads were not changed.`
           + `<ul style="margin:6px 0 0 18px;padding:0;">${rows}<li>One-way shear: ${escapeHtml(ow ? ow.metric : '—')}</li><li>Punching shear: ${escapeHtml(tw ? tw.metric : '—')}</li></ul>`
-          + `<div class="clause" style="margin-top:6px;">Review the result (rebar, flexure, deflection) before using it.</div>`);
+          + `<div class="clause" style="margin-top:6px;">A deeper footing carries more soil on top of it and a larger q<sub>a</sub> (08), but the pedestal below grade gets longer (D<sub>p</sub> = D<sub>f</sub> − H<sub>f</sub>), which adds weight and the H·Δh moment — all included in the checks above. Check that the excavation, the water table and the soil layers at this depth match the soil data (Section 01 / 08), and review rebar and flexure before using it.</div>`);
       } else {
-        setField('fs-Hf', orig.Hf);
+        setField('fs-Df', orig.Df);
         calcFoundSize();
-        const atMax = t.info && t.info.stability ? ` At H<sub>f</sub> = ${fmt(t.H, 2)} m the stability check gives ${escapeHtml(t.info.stability.metric || '—')}.` : '';
-        const hint = t.failed.includes('stability')
-          ? ` The plan size ${fmt(Bf, 2)} × ${fmt(Lf, 2)} m is too small for stability whatever the thickness — enlarge it (untick "Keep B × L" to let Auto-Size find the plan), or reduce the loads / soil demand.`
-          : ` Increase the limit by raising D<sub>f</sub>${hasPed ? ' (with a pedestal H ≤ D<sub>f</sub>)' : ''}, or check the shear inputs in 5B.`;
-        show('warn-box', `<strong>⚠  No thickness found for the fixed plan size — H<sub>f</sub> left unchanged.</strong> ${escapeHtml(t.reason)}${atMax}${hint}`);
+        const atMax = t.info && t.info.stability ? ` At D<sub>f</sub> = ${fmt(t.Df, 2)} m the stability check gives ${escapeHtml(t.info.stability.metric || '—')}.` : '';
+        const hints = [];
+        if (t.failed.includes('stability')) hints.push(`The footing ${fmt(Bf, 2)} × ${fmt(Lf, 2)} × ${fmt(Hf, 2)} m is not enough for stability even at the deepest D<sub>f</sub> tried (${fmt(DF_MAX, 1)} m) — enlarge it (untick "Keep B × L × H" to let Auto-Size find the size), or reduce the loads.`);
+        if (t.failed.includes('shear')) hints.push(`Shear does not depend on D<sub>f</sub>: H<sub>f</sub> = ${fmt(Hf, 2)} m is too thin for the shear checks (${escapeHtml(shearReason() || 'see 5B')}) — increase H<sub>f</sub>, or check the shear inputs in 5B.`);
+        show('warn-box', `<strong>⚠  No depth found for the fixed footing size — D<sub>f</sub> left unchanged.</strong> ${escapeHtml(t.reason)}${atMax} ${hints.join(' ')}`);
       }
       return;
     }

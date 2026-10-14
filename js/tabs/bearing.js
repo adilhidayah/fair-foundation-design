@@ -1,9 +1,9 @@
 // 08 — Bearing capacity (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261014f';
-import { getRadioVal, num } from '../core/dom.js?v=20261014f';
-import { fmt } from '../core/format.js?v=20261014f';
-import { lastResults } from '../core/state.js?v=20261014f';
+import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261014g';
+import { getRadioVal, num } from '../core/dom.js?v=20261014g';
+import { fmt } from '../core/format.js?v=20261014g';
+import { lastResults } from '../core/state.js?v=20261014g';
 
 // TERZAGHI_* tables, terzaghiFactors(), meyerhofFactors(), terzaghiShapeFactors() and bearingCapacityCheck() live in lib/foundation/shared/bearingCapacity.js.
 export function calcBearing() {

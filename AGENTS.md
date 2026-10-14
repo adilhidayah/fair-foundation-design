@@ -24,7 +24,7 @@
 ## 3. Peta File
 Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - UI: `FAIR Foundation Design.html` (markup), `css/app.css` (style), `js/app.js` (event wiring + startup).
-- Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`), `autoSize.js` (`autoSizeFoundation`: tombol Auto-Size, shallow saja; opsi "Keep B × L" = plan dikunci, hanya H dicari; pencarian ada di `lib/foundation/shared/autoSizeFooting.js`). `lastResults` di `js/core/state.js`.
+- Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`), `autoSize.js` (`autoSizeFoundation`: tombol Auto-Size, shallow saja; opsi "Keep B × L × H" = ukuran footing dikunci, hanya Df dicari (`autoSizeDepth`); pencarian ada di `lib/foundation/shared/autoSizeFooting.js`). `lastResults` di `js/core/state.js`.
 - `lib/foundation/index.js` — ENTRY POINT + dispatcher. Import dari sini, jangan deep-import dari UI.
 - `lib/foundation/shared/` — `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
 - `lib/foundation/static/` — vessel/tank/heat-exchanger: `loadingData`, `foundationSizing`.
