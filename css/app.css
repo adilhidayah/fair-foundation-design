@@ -315,6 +315,7 @@
     flex: 1;
     min-width: 0;
   }
+  .live-bar-autosize { width: 100%; margin: 10px 0 0; padding: 6px 8px; font-size: 11px; }
   .live-bar-sub { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
   .live-bar-sub-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 5px; font-size: 10px; }
   .live-bar-sub-row:last-child { margin-bottom: 0; }

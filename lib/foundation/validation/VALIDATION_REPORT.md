@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 472 checks, 472 pass, 0 fail** (12 files, run 26 Sep 2026).
+**Total: 492 checks, 492 pass, 0 fail** (13 files, run 14 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -16,7 +16,8 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
-| **Total** | | **472** |
+| validation_shared_part13.mjs | autoSizeFooting(): smallest B = L / H on a 0.05 m grid vs known thresholds + 200 random brute-force cases | 20 |
+| **Total** | | **492** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -81,6 +82,14 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
   500×500, d = 400: bo = 3600, Jc = 204.0e9 mm⁴, γv = 0.4; Vu = 500 kN, Mz = 100 kN·m → 0.3472 + 0.0882 = 0.4355 MPa;
   equal biaxial moments add both terms; 600×400: γf 0.5729 / 0.6265, Jc 237.33e9 / 170.67e9; edge / corner → invalid.
 
+### part13 — autoSizeFooting (14 Oct 2026)
+The solver has no engineering formula; it searches B = L (stability) and H (shear) on a 0.05 m grid using caller-supplied checks. Vectors:
+stability needs B ≥ 2.37, shear needs H ≥ 0.62 → B = 2.40, H = 0.65 (20 trials, not a grid scan); thresholds on a grid point are accepted
+(2.40 / 0.65); B depending on H (B ≥ 4.0 − H, H ≥ 0.80 → B 3.20); H depending on B (H ≥ 0.2·B, B ≥ 3.0 → B 3.00, H 0.60); 200 random
+thresholds equal the brute-force grid answer; no solution (stability / shear / geometry / empty range) returns ok = false with the reason;
+no trial is evaluated twice. The UI wiring (js/tabs/autoSize.js) was checked in a headless browser: one step smaller (B − 0.05 or H − 0.05)
+fails a check, the found size passes all.
+
 ### part12 — foundation geometry consistency (26 Sep 2026)
 - foundationGeometryCheck: Bf, Lf, Hf > 0; Df ≥ Hf; pedestal inside the footing, |OffX| + Bp/2 ≤ Bf/2 and |OffZ| + Lp/2 ≤ Lf/2
   (flush edge allowed; 2.4 m footing, Bp 1.25, OffX −0.6 → 0.025 m out); pile embedment h < Hf (h = Hf fails);
@@ -100,6 +109,7 @@ node lib/foundation/validation/validation_shared_part9.mjs
 node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
 node lib/foundation/validation/validation_static_part12.mjs
+node lib/foundation/validation/validation_shared_part13.mjs
 ```
 
 ## Notes

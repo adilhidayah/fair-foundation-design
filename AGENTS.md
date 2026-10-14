@@ -24,7 +24,7 @@
 ## 3. Peta File
 Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - UI: `FAIR Foundation Design.html` (markup), `css/app.css` (style), `js/app.js` (event wiring + startup).
-- Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`). `lastResults` di `js/core/state.js`.
+- Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`), `autoSize.js` (`autoSizeFoundation`: tombol Auto-Size, shallow saja; pencarian B = L / H ada di `lib/foundation/shared/autoSizeFooting.js`). `lastResults` di `js/core/state.js`.
 - `lib/foundation/index.js` — ENTRY POINT + dispatcher. Import dari sini, jangan deep-import dari UI.
 - `lib/foundation/shared/` — `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
 - `lib/foundation/static/` — vessel/tank/heat-exchanger: `loadingData`, `foundationSizing`.
@@ -33,7 +33,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - `lib/foundation/piperack/` — `loadingData` (L-dir/T-dir), `loadCombinations` (envelope max |Mbot|), `foundationSizing` (iteratif `sizePierFooting`).
 - `lib/foundation/skidMounted/` — `loadingData` (`sumBoltReactions`), `foundationSizing` (footprint + 2x edge).
 - `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan).
-- `lib/foundation/validation/` — 12 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks) + `VALIDATION_REPORT.md` (472 checks, 472 pass @ 27 Sep 2026).
+- `lib/foundation/validation/` — 13 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = auto-size footing, 20 checks) + `VALIDATION_REPORT.md` (492 checks, 492 pass @ 14 Oct 2026).
 
 ## 4. Kontrak Pure Function (harga mati di lib/)
 - `lib/` = no DOM, no `document`, no `window`, no `fmt()`, no Tesseract. Input plain numbers/objects, output plain objects.
@@ -65,6 +65,7 @@ node lib/foundation/validation/validation_shared_part9.mjs
 node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
 node lib/foundation/validation/validation_static_part12.mjs
+node lib/foundation/validation/validation_shared_part13.mjs
 ```
 - Exit 0 = pass, 1 = ada fail. Toleransi: integer 1e-9, textbook 0.05-0.08. Jangan tambah jest/vitest tanpa izin.
 

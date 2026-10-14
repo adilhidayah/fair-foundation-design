@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261014c">
+<link rel="stylesheet" href="css/app.css?v=20261014d">
 </head>
 <body>
 <div class="sheet">
@@ -1324,6 +1324,10 @@
           <input type="number" id="fs-Df" value="1" min="0" step="0.05">
         </div>
         <div id="fs-grout-slot-footing"></div>
+        <div class="field">
+          <button type="button" class="combo-add-btn" id="fs-autosize-btn" data-autosize title="Smallest square footing (B = L) and thickness H, in 0.05 m steps, that passes 4A stability and the shear checks. Shallow foundations only.">Auto-Size Foundation</button>
+          <div id="fs-autosize-result" style="margin-top:8px;"></div>
+        </div>
         <!-- Lean concrete inputs hidden from the Footing panel; still read by calcFoundSize() with these defaults -->
         <div id="fs-lean-fields" style="display:none;">
         <div class="gt-sub">Lean Concrete (Blinding)</div>
@@ -1692,6 +1696,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261014c"></script>
+<script type="module" src="js/app.js?v=20261014d"></script>
 </body>
 </html>
