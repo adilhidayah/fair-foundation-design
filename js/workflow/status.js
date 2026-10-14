@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014a';
-import { fmt } from '../core/format.js?v=20261014a';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014a';
-import { calcAnchor } from '../tabs/anchor.js?v=20261014a';
-import { calcBearing } from '../tabs/bearing.js?v=20261014a';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014a';
-import { calcFoundation } from '../tabs/foundation.js?v=20261014a';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014a';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261014a';
-import { calcPile } from '../tabs/pile.js?v=20261014a';
-import { calcRebar } from '../tabs/rebar.js?v=20261014a';
-import { calcSettlement } from '../tabs/settlement.js?v=20261014a';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014b';
+import { fmt } from '../core/format.js?v=20261014b';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014b';
+import { calcAnchor } from '../tabs/anchor.js?v=20261014b';
+import { calcBearing } from '../tabs/bearing.js?v=20261014b';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014b';
+import { calcFoundation } from '../tabs/foundation.js?v=20261014b';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014b';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261014b';
+import { calcPile } from '../tabs/pile.js?v=20261014b';
+import { calcRebar } from '../tabs/rebar.js?v=20261014b';
+import { calcSettlement } from '../tabs/settlement.js?v=20261014b';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014b';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -227,7 +227,19 @@ export function renderLiveBar() {
     const m = /UC\s*=\s*([\d.]+)/i.exec(st.metric) || /UC\s*=\s*([\d.]+)/i.exec(st.note);
     return m ? m[1] : null;
   };
-  bar.innerHTML = checks.map(([label, st]) => {
+  // Foundation Stability (4A) lists each of its checks under the card: governing LC, UC and status (lastResults.foundation.checks,
+  // set by calcFoundation() from the same values as tables 4.2-4.5 — nothing is recomputed here).
+  const subChecksHtml = (id) => {
+    const list = id === '4A' && lastResults.foundation && lastResults.foundation.checks ? lastResults.foundation.checks : [];
+    if (!list.length) return '';
+    return '<div class="live-bar-sub">' + list.map((c) => {
+      const bad = !(c.uc <= 1.0);
+      return '<div class="live-bar-sub-row"><span class="live-bar-sub-name">' + escapeHtml(c.name) + '<span class="live-bar-sub-lc">LC ' + escapeHtml(String(c.lc)) + '</span></span>' +
+        '<span class="live-bar-sub-uc' + (bad ? ' fail' : '') + '">' + (isFinite(c.uc) ? c.uc.toFixed(3) : '∞') + '</span>' +
+        '<span class="live-bar-sub-st' + (bad ? ' fail' : '') + '">' + (bad ? 'NG' : 'OK') + '</span></div>';
+    }).join('') + '</div>';
+  };
+  bar.innerHTML = checks.map(([label, st, id]) => {
     const failed = st.status === 'FAIL';
     const cls = failed ? 'fail' : 'pass'; // pending ('—') reads as an unfilled/gray "PASS" shell until computed
     const txt = st.status === '—' ? 'PENDING' : st.status;
@@ -242,7 +254,7 @@ export function renderLiveBar() {
       '<div class="live-bar-card-row">' +
         '<span class="live-bar-status-pill ' + cls + '"><span class="live-bar-status-icon"><svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">' + (failed ? LIVE_BAR_ICON_X : LIVE_BAR_ICON_CHECK) + '</svg></span>' + escapeHtml(txt) + '</span>' +
         '<div class="live-bar-dcr-wrap"><span class="live-bar-dcr-val">' + escapeHtml(dcr ?? '—') + '</span><span class="live-bar-dcr-limit">/ 1.00</span></div>' +
-      '</div>' +
+      '</div>' + subChecksHtml(id) +
     '</div>';
   }).join('') + noticesHtml();
 }

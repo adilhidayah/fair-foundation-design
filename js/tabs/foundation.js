@@ -1,12 +1,12 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014a';
-import { fmt } from '../core/format.js?v=20261014a';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014a';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014a';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261014a';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261014a';
+import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014b';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014b';
+import { fmt } from '../core/format.js?v=20261014b';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014b';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014b';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261014b';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261014b';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -141,6 +141,14 @@ export function calcFoundation() {
   const bearingGov = validResults.length ? validResults.reduce((a, b) => ucOf(b, 'Bearing pressure') > ucOf(a, 'Bearing pressure') ? b : a) : null;
   const slidingGov = validResults.length ? validResults.reduce((a, b) => ucOf(b, 'Sliding') > ucOf(a, 'Sliding') ? b : a) : null;
   const otGov = validResults.length ? validResults.reduce((a, b) => b.ucOTBiaxial > a.ucOTBiaxial ? b : a) : null;
+  // Every check of this chapter with its governing combination (same UC / LC as the 4.2-4.5 tables) — the Design Status
+  // panel lists them under the Foundation Stability card (renderLiveBar()). Empty when no combination could be evaluated.
+  lastResults.foundation.checks = validResults.length ? [
+    { name: 'Eccentricity (kern)', uc: kernGov.ucKernBiaxial, lc: kernGov.combo.lc || kernGov.combo.name },
+    { name: 'Bearing pressure', uc: ucOf(bearingGov, 'Bearing pressure'), lc: bearingGov.combo.lc || bearingGov.combo.name },
+    { name: 'Sliding', uc: ucOf(slidingGov, 'Sliding'), lc: slidingGov.combo.lc || slidingGov.combo.name },
+    { name: 'Overturning', uc: otGov.ucOTBiaxial, lc: otGov.combo.lc || otGov.combo.name }
+  ] : [];
   const ratioTxt = fmt(1 / eccRatioAllow, 2);
   html += sectionHeader('4.2', 'Eccentricity (Kern) Check',
     `The resultant must stay inside the kern so the whole base remains in contact (q<sub>min</sub> ≥ 0). Both directions are checked together (biaxial): e<sub>x</sub> from the x-direction moments (WX, EQX), e<sub>z</sub> from the z-direction moments (WZ, EQZ).`);
