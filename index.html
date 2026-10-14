@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261014o">
+<link rel="stylesheet" href="css/app.css?v=20261014q">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1406,7 +1406,7 @@
         <div id="fs-grout-slot-footing"></div>
         <div class="field">
           <button type="button" class="combo-add-btn" id="fs-autosize-btn" data-autosize title="Smallest square footing (B = L) and thickness H, in 0.05 m steps, that passes 4A stability and the shear checks. Shallow foundations only.">Auto-Size Foundation</button>
-          <label class="check-row" style="display:flex; gap:6px; align-items:center; margin-top:6px; font-size:12px;" title="Footing size fixed by the site: keep B, L and H as typed (any B × L) and size only the embedment depth Df."><input type="checkbox" id="fs-autosize-lock"> Keep B<sub>f</sub> × L<sub>f</sub> × H<sub>f</sub> as entered — size D<sub>f</sub> only</label>
+          <label class="check-row" style="display:flex; gap:6px; align-items:center; margin-top:6px; font-size:12px;" title="Footing size fixed by the site: keep B, L and H as typed (any B × L) and size only the embedment depth Df."><input type="checkbox" id="fs-autosize-lock"><span>Keep B<sub>f</sub> × L<sub>f</sub> × H<sub>f</sub> as entered — size D<sub>f</sub> only</span></label>
           <div id="fs-autosize-result" style="margin-top:8px;"></div>
         </div>
         <!-- Lean concrete inputs hidden from the Footing panel; still read by calcFoundSize() with these defaults -->
@@ -1806,6 +1806,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261014o"></script>
+<script type="module" src="js/app.js?v=20261014q"></script>
 </body>
 </html>

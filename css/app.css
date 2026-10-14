@@ -2004,3 +2004,22 @@
     user-select: none;
   }
   @media print { .app-footer { display: none !important; } }
+
+  /* ===== Focus Canvas type scale (all #focus-* panels, screen only) =====
+     One family (IBM Plex Sans, tabular figures) and one scale: 10px captions / 11px body / 20px title. Diagram labels follow the
+     same family and are drawn smaller (the plan / section crops were shown at ~1.6x their report size). */
+  @media screen {
+    .focus-panel { font-family: var(--sans); font-variant-numeric: tabular-nums; }
+    .focus-panel :is(.fz-kicker, .fz-tag, .fz-sub, .fz-extra, .cad-switcher button, .sh-dc) { font-family: var(--sans); }
+    .focus-panel .fz-kicker, .focus-panel .fz-tag, .focus-panel .fz-sub { font-size: 10px; letter-spacing: 0.06em; }
+    .focus-panel .fz-sub.fz-sub-plain { font-size: 11px; letter-spacing: 0; }
+    .focus-panel .fz-title { font-size: 18px; }
+    .focus-panel .fz-tile-value { font-size: 17px; }
+    .focus-panel .fz-check .fz-tile-value { font-size: 18px; }
+    .focus-panel .fz-unit { font-size: 11px; }
+    .focus-panel .fz-tile-label, .focus-panel .fz-tile-sub, .focus-panel .fz-note, .focus-panel .fz-table, .focus-panel .fz-checks, .focus-panel .fz-alert { font-size: 11px; }
+    .focus-panel .fz-table th, .focus-panel .fz-table .fz-kind, .focus-panel .fz-table .fz-sym, .focus-panel .fz-checks li.detail, .focus-panel .cad-switcher button { font-size: 10px; }
+    .focus-panel .fdn-diagram text, .focus-panel .sh-svg text { font-family: var(--sans); font-variant-numeric: tabular-nums; }
+    .focus-panel .cad-viewport #svg-plan, .focus-panel .cad-viewport #svg-elev { max-width: 400px; }
+    .focus-panel .cad-viewport #svg-iso { max-width: 480px; }
+  }
