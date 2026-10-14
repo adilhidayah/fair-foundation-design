@@ -20,7 +20,7 @@
 ## 2. Status Saat Ini (25 Sep 2026)
 - Rumus kalkulasi sudah diekstrak ke library pure functions di `lib/foundation/` (tanpa DOM), divalidasi hand-calc lewat `lib/foundation/validation/` (part1–12, 472 cek, semua PASS per 27 Sep 2026).
 - UI yang dulu satu file raksasa (~408 KB) sudah dipecah:
-  - `FAIR Foundation Design.html` — markup saja (~92 KB)
+  - `index.html` — markup saja (~92 KB)
   - `css/app.css` — style
   - `js/` — ES modules: `app.js` (event wiring + startup), `core/`, `diagrams/`, `tabs/` (satu file per tab), `ocr/`, `report/`, `workflow/`
 - Refactor ini murni pemindahan kode — tidak ada rumus yang berubah. Diverifikasi: validasi lib PASS + uji interaksi headless browser identik dengan versi sebelum dipecah (949/949 langkah).

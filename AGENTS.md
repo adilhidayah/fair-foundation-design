@@ -12,7 +12,7 @@
 - Acuan standar: **ACI 318M-19 / ASCE 7-22** untuk UI, library, dan laporan. Komentar lama bertulis "ASCE 7-16" = legacy, samakan ke ASCE 7-22 saat menyentuh file itu.
 
 ## 2. Tech Stack (jangan tambah baru tanpa izin)
-- **UI**: `FAIR Foundation Design.html` (markup) + `css/app.css` (style) + `js/` (ES modules, entry `js/app.js`). Tanpa bundler, tanpa package.json, tanpa framework.
+- **UI**: `index.html` (markup) + `css/app.css` (style) + `js/` (ES modules, entry `js/app.js`). Tanpa bundler, tanpa package.json, tanpa framework.
   - Aturan modul UI (modul hanya deklarasi, wiring di `app.js`, state lewat `state.x`): lihat `js/README.md`.
   - Import antar modul js pakai `?v=` — naikkan di semua import file yang berubah, plus `js/app.js?v=` di HTML.
 - **Library hitung**: `lib/foundation/**/*.js` — ES Modules murni, pure functions, tanpa DOM.
@@ -23,7 +23,7 @@
 
 ## 3. Peta File
 Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
-- UI: `FAIR Foundation Design.html` (markup), `css/app.css` (style), `js/app.js` (event wiring + startup).
+- UI: `index.html` (markup), `css/app.css` (style), `js/app.js` (event wiring + startup).
 - Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`; V_u source manual / piles / soil), `footing.js` (shallow: lentur footing + V_u dari tekanan tanah, `calcFootingFlexure`), `autoSize.js` (`autoSizeFoundation`: tombol Auto-Size, shallow saja; opsi "Keep B × L × H" = ukuran footing dikunci, hanya Df dicari (`autoSizeDepth`); pencarian ada di `lib/foundation/shared/autoSizeFooting.js`). `lastResults` di `js/core/state.js`.
 - `lib/foundation/index.js` — ENTRY POINT + dispatcher. Import dari sini, jangan deep-import dari UI.
 - `lib/foundation/shared/` — `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `spreadFooting` (tekanan kontak + aksi di muka pedestal, `soilPressure` / `footingActions`), `autoSizeFooting`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
