@@ -658,7 +658,19 @@ document.querySelectorAll('#in-settlement select').forEach(el => el.addEventList
 document.querySelectorAll('#in-anchor input:not(.bolt-input)').forEach(el => el.addEventListener('input', calcAnchor));
 document.querySelectorAll('#in-rebar input, #in-rebarcap input').forEach(el => el.addEventListener('input', calcRebar));
 document.querySelectorAll('#in-summary input:not(.rpt-include):not(.rpt-pagebreak):not([type="file"])').forEach(el => el.addEventListener('input', generateReport));
-document.querySelectorAll('#in-foundsize input').forEach(el => el.addEventListener('input', calcFoundSize));
+// Tab 02 fields: calcFoundSize() ends in recalcAll() (every tab x every load combination), so while the user types it
+// runs once after a short pause instead of on every keystroke. Real typing (isTrusted) is debounced and flushed on
+// change/blur; programmatic input events (AI fill, pile cap resize) stay immediate.
+document.querySelectorAll('#in-foundsize input').forEach(el => {
+  let t = null;
+  const run = () => { if (t !== null) { clearTimeout(t); t = null; } calcFoundSize(); };
+  el.addEventListener('input', (e) => {
+    if (!e.isTrusted || el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') { run(); return; }
+    if (t !== null) clearTimeout(t);
+    t = setTimeout(run, 300);
+  });
+  el.addEventListener('change', () => { if (t !== null) run(); });
+});
 document.querySelectorAll('#in-general input').forEach(el => el.addEventListener('input', recalcAllGeneral));
 // Pile capacity fields (P_all, T_all, H_all) — kN, 1 decimal, matching Table 1.3.2's fmt(...,1).
 [['pf-Qc', 1], ['pf-Qt', 1], ['pf-Ql', 1]].forEach(([id, dec]) => wireDecimalAutoFormat(id, dec));
