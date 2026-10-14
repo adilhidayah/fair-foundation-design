@@ -1,8 +1,8 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getRadioVal } from '../core/dom.js?v=20261014k';
-import { lastResults } from '../core/state.js?v=20261014k';
-import { generateReport } from '../report/builder.js?v=20261014k';
+import { getRadioVal } from '../core/dom.js?v=20261014l';
+import { lastResults } from '../core/state.js?v=20261014l';
+import { generateReport } from '../report/builder.js?v=20261014l';
 
 export function buildQuickStatusHtml() {
   // 4A (shallow) and 4B (pile) are exclusive: the stability check of the other support is not part of this design

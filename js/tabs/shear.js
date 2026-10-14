@@ -1,13 +1,13 @@
 // Pile cap one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261014k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
-import { fmt } from '../core/format.js?v=20261014k';
-import { lastResults, pileList } from '../core/state.js?v=20261014k';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014k';
-import { pileComboLoads } from '../tabs/pile.js?v=20261014k';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261014k';
-import { soilOneWay, soilPunching, soilShearHtml } from '../tabs/footing.js?v=20261014k';
+import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261014l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014l';
+import { fmt } from '../core/format.js?v=20261014l';
+import { lastResults, pileList } from '../core/state.js?v=20261014l';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014l';
+import { pileComboLoads } from '../tabs/pile.js?v=20261014l';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261014l';
+import { soilOneWay, soilPunching, soilShearHtml } from '../tabs/footing.js?v=20261014l';
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group

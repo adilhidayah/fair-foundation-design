@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261014k">
+<link rel="stylesheet" href="css/app.css?v=20261014l">
 </head>
 <body>
 <div class="sheet">
@@ -242,6 +242,15 @@
         <button data-val="manual" class="sel">Manual Input (from components)</button>
         <button data-val="reaction">Support Reaction (from structural model)</button>
       </div>
+    </div>
+    <div class="field" id="ld-sign-field" style="display:none;">
+      <label id="ld-sign-label"><span>Sign convention of the Load Values</span></label>
+      <div class="radio-row gt-radio" id="ld-sign" role="radiogroup" aria-labelledby="ld-sign-label">
+        <button data-val="fair" class="sel">FAIR (loads on the foundation)</button>
+        <button data-val="staad">STAAD support reactions (Y up)</button>
+      </div>
+      <div class="note" id="ld-sign-note-fair">P down +. For a lateral load, H and M have the <strong>same sign</strong> when they overturn the same way (H = F, M = F·h). Mz &gt; 0 presses the +x side, M<sub>x</sub> &gt; 0 the −z side.</div>
+      <div class="note" id="ld-sign-note-staad" style="display:none;">Type the support reactions as STAAD reports them (global axes, <strong>Y up</strong>, forces the support exerts on the structure): vertical types P = F<sub>Y</sub>, H = F<sub>X</sub>, M = M<sub>Z</sub>, H<sub>z</sub> = F<sub>Z</sub>, M<sub>x</sub> = M<sub>X</sub>; X-direction types (WX, EQX …) H = F<sub>X</sub>, M = M<sub>Z</sub>; Z-direction types (WZ, EQZ …) H = F<sub>Z</sub>, M = M<sub>X</sub>. FAIR flips the signs itself (H = −F<sub>X</sub>, H<sub>z</sub> = −F<sub>Z</sub>, M of Z types = −M<sub>X</sub>). Not valid for a Z-up model or another software — use the FAIR convention there.</div>
     </div>
     </div>
     </details>
@@ -1655,7 +1664,7 @@
     <div class="note">Signed values allowed (e.g., negative P for uplift, reversed H/M). These are unfactored/service-level actions at the <strong>top of footing/pedestal</strong> (base plate level) — see Wind (W) and Seismic (E) to fill those rows instead of typing them here directly.</div>
     <div class="overflow-x">
       <table class="calc-table load-matrix-table" id="lc-loadvalue-table">
-        <tr><th>Load type</th><th>P <span class="unit">kN</span></th><th>H / H<sub>x</sub> <span class="unit">kN</span></th><th>M / M<sub>z</sub> <span class="unit">kN·m</span></th><th>H<sub>z</sub> <span class="unit">kN</span></th><th>M<sub>x</sub> <span class="unit">kN·m</span></th></tr>
+        <tr id="lc-loadvalue-head"><th>Load type</th><th>P <span class="unit">kN</span></th><th>H / H<sub>x</sub> <span class="unit">kN</span></th><th>M / M<sub>z</sub> <span class="unit">kN·m</span></th><th>H<sub>z</sub> <span class="unit">kN</span></th><th>M<sub>x</sub> <span class="unit">kN·m</span></th></tr>
         <tbody id="lc-loadvalue-body"></tbody>
       </table>
     </div>
@@ -1702,6 +1711,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261014k"></script>
+<script type="module" src="js/app.js?v=20261014l"></script>
 </body>
 </html>

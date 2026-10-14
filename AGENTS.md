@@ -33,7 +33,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - `lib/foundation/piperack/` — `loadingData` (L-dir/T-dir), `loadCombinations` (envelope max |Mbot|), `foundationSizing` (iteratif `sizePierFooting`).
 - `lib/foundation/skidMounted/` — `loadingData` (`sumBoltReactions`), `foundationSizing` (footprint + 2x edge).
 - `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan).
-- `lib/foundation/validation/` — 15 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = auto-size footing, 29 checks; part14 = audit fixes: anchor Vb, one-way shear Vc, pedestal P-M phi, 38 checks; part15 = spread footing from soil pressure, 41 checks) + `VALIDATION_REPORT.md` (580 checks, 580 pass @ 14 Oct 2026).
+- `lib/foundation/validation/` — 16 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = auto-size footing, 29 checks; part14 = audit fixes: anchor Vb, one-way shear Vc, pedestal P-M phi, 38 checks; part15 = spread footing from soil pressure, 41 checks; part16 = STAAD reactions → FAIR load inputs, 27 checks) + `VALIDATION_REPORT.md` (607 checks, 607 pass @ 14 Oct 2026).
 
 ## 4. Kontrak Pure Function (harga mati di lib/)
 - `lib/` = no DOM, no `document`, no `window`, no `fmt()`, no Tesseract. Input plain numbers/objects, output plain objects.
@@ -41,6 +41,7 @@ Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - Konversi ton → kN (`* 9.80665`) hanya di UI (Tab 03), BUKAN di library.
 - Return standar: `{ valid, ..., governingUC, overallPass }`. `UC = demand/capacity`, PASS bila `UC <= 1.0`. `Infinity` = fail berat.
 - Note string di lib pakai `.toFixed()` polos, bukan helper `fmt()` UI.
+- Konvensi tanda beban (`loadTypeVector()`): P ke bawah +; beban lateral: H dan M **tanda sama** bila menggulingkan searah (M_dasar = M + H·Δh); Mz > 0 menekan sisi +x, Mx > 0 menekan sisi −z. Reaksi tumpuan STAAD (Y up) BUKAN konvensi ini: pilih "STAAD support reactions (Y up)" di Tab 03 (mode Support Reaction) — `staadReactionToFair()`: H = −FX, Hz = −FZ, M = +MZ (tipe X) / −MX (tipe Z), P = FY, Mx = +MX. Software / sumbu lain butuh pemetaan sendiri.
 
 ## 5. Dispatcher Kategori
 - `getCategoryForEquipment(type)` dan `requiredChecksForCategory(cat)` = satu-satunya mapping equipment → modul.
@@ -68,6 +69,7 @@ node lib/foundation/validation/validation_static_part12.mjs
 node lib/foundation/validation/validation_shared_part13.mjs
 node lib/foundation/validation/validation_shared_part14.mjs
 node lib/foundation/validation/validation_shared_part15.mjs
+node lib/foundation/validation/validation_shared_part16.mjs
 ```
 - Exit 0 = pass, 1 = ada fail. Toleransi: integer 1e-9, textbook 0.05-0.08. Jangan tambah jest/vitest tanpa izin.
 
