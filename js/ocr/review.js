@@ -1,13 +1,13 @@
 // OCR / pasted-text review tables (parsers live in lib/foundation/import/textParsers.js).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { parseComboImport, parseEquipmentWeightText, parseFoundationDimText, parseLoadTypeText } from '../../lib/foundation/index.js?v=20260927f';
-import { escapeHtml, getRadioVal } from '../core/dom.js?v=20260927f';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20260927f';
-import { fmt } from '../core/format.js?v=20260927f';
-import { comboState, state } from '../core/state.js?v=20260927f';
-import { renderComboTable } from '../tabs/combos.js?v=20260927f';
-import { renderEquipmentLoad, renderLoadTypesTable } from '../tabs/loading.js?v=20260927f';
-import { recalcAll } from '../workflow/recalc.js?v=20260927f';
+import { parseComboImport, parseEquipmentWeightText, parseFoundationDimText, parseLoadTypeText } from '../../lib/foundation/index.js?v=20261014a';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261014a';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014a';
+import { fmt } from '../core/format.js?v=20261014a';
+import { comboState, state } from '../core/state.js?v=20261014a';
+import { renderComboTable } from '../tabs/combos.js?v=20261014a';
+import { renderEquipmentLoad, renderLoadTypesTable } from '../tabs/loading.js?v=20261014a';
+import { recalcAll } from '../workflow/recalc.js?v=20261014a';
 
 // parseLoadTypeText() lives in lib/foundation/import/textParsers.js.
 export function renderLtOcrReview(text) {
