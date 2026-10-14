@@ -237,7 +237,7 @@ function reportTables(r) {
   if (P && P.pm && P.pm.found) o.push('| **Pedestal** | | |', `| Width | ${n(f.Bp)} | m |`, `| Length | ${n(f.Lp)} | m |`,
     `| Height (below + above grade) | ${n(s.Dp + (f.pedGp || 0))} | m |`, `| Flexural reinforcement | ${P.pm.n * 2} D${P.bar} | - |`,
     `| Stirrups | Ø${P.tie}-${P.tieS}${P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} within ${P.topTies.within} mm of top` : ''} | - |`,
-    ...(P.topTies ? [`| Anchor bolts | ${P.topTies.bolts}${P.anchor ? ` (UC ${n(P.anchor.res.uc, 2)}${P.anchor.A.reinforcement ? ', with anchor reinforcement' : ''})` : ''} | - |`] : []));
+    ...(P.topTies ? [`| Anchor bolts | ${P.topTies.bolts}${P.anchor ? ` (UC ${n(P.anchor.res.uc, 2)}${P.anchor.A.reinforcement ? (P.anchor.hairpin ? ', with hairpins' : ', with anchor reinforcement') : ''})` : ''} | - |`] : []));
   const rows = r.rows.filter(x => x.valid), grp = (tmp) => rows.filter(x => x.temporary === tmp);
   const line = (label, tmp, val, lim, good, unit = '') => {
     const g = grp(tmp);
@@ -305,12 +305,16 @@ function pedestalReport(r) {
     const R = P.anchor.res, A = P.anchor.A;
     o.push('', `**Anchor bolts — ACI 318M-19 Chapter 17** (${P.topTies.bolts}, cast-in headed, A_se ${A.Ase} mm², f_uta ${A.futa} MPa, h_ef ${A.hef} mm, ` +
       `A_brg ${A.Abrg} mm²; cracked concrete; seismic: concrete strengths × 0.75 and the seismic M, H × Ω0 = ${P.anchor.omega0}` +
-      `${A.reinforcement ? '; tension breakout replaced by anchor reinforcement = the pedestal bars within 0.5 h_ef of the anchors in tension, 90° hooks at the top (§17.5.2.1, l_dh §25.4.3)' : ''}). ` +
+      `${A.reinforcement ? (P.anchor.hairpin ? `; tension breakout replaced by anchor reinforcement = ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${P.anchor.hairpin.db} (4 legs at ±${P.anchor.hairpin.a} × ±${P.anchor.hairpin.b} mm from the centre, just inside the anchors) within 0.5 h_ef of the anchors in tension, 180° bend at the top (§17.5.2.1, l_dh §25.4.3, legs l_d §25.4.2.3)` : '; tension breakout replaced by anchor reinforcement = the pedestal bars within 0.5 h_ef of the anchors in tension, 90° hooks at the top (§17.5.2.1, l_dh §25.4.3)') : ''}). ` +
       `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
       `h_ef' = ${n(R.hefE, 1)} mm (edges).`, '',
       '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
       `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
-    if (R.ar) o.push('', `Anchor reinforcement: ${R.ar.n} × D${P.bar} (A_s ${n(R.ar.As, 0)} mm²) within 0.5 h_ef of the anchors in tension, nearest at ${n(R.ar.r, 0)} mm; ` +
+    if (R.ar && R.ar.hairpin) o.push('', `Anchor reinforcement (hairpins): ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${R.ar.db}, ${R.ar.n} legs within 0.5 h_ef of the anchors in tension (A_s ${n(R.ar.As, 0)} mm²), nearest at ${n(R.ar.r, 0)} mm; ` +
+      `legs ${n(R.ar.legLen, 0)} mm long from the top of the pedestal; above the 35° plane ${n(R.ar.avail, 0)} mm ${R.ar.avail >= R.ar.ldh - 1e-9 ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (ψr = 1.6); ` +
+      `below the plane ${n(R.ar.availLow, 0)} mm ${R.ar.availLow >= R.ar.ld - 1e-9 ? '≥' : '<'} l_d ${n(R.ar.ld, 0)} mm. ` +
+      `Clear distance hairpin / bolt ${n(P.anchor.hairpin.boltClear, 0)} mm, hairpin / bar ${n(P.anchor.hairpin.barClear, 0)} mm.`);
+    else if (R.ar) o.push('', `Anchor reinforcement: ${R.ar.n} × D${P.bar} (A_s ${n(R.ar.As, 0)} mm²) within 0.5 h_ef of the anchors in tension, nearest at ${n(R.ar.r, 0)} mm; ` +
       `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (hooked).`);
   }
   if (P.topTies) o.push('', `Top ties (anchor bolts in the top of the pedestal, ACI 318M-19 §10.7.6.1.6): **${P.topTies.n} × Ø${P.topTies.dia} within ` +
@@ -506,11 +510,25 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     const bolts = [[-1, -1], [1, -1], [1, 1], [-1, 1]].slice(0, bo.n || 4).map(([a, b]) => [a * bo.sx / 2, b * bo.sz / 2]);
     const bars = [];
     for (const xs of [-Bp / 2 + dPrime, Bp / 2 - dPrime]) for (let i = 0; i < pm.n; i++) bars.push([xs, pm.n > 1 ? -Lp / 2 + dPrime + i * (Lp - 2 * dPrime) / (pm.n - 1) : 0]);
+    // hairpin anchor reinforcement (A.hairpin = { db, n }): U-bars along x, vertical legs (180° bend at the top) just inside the anchor
+    // pattern, at (±a, ±b) = anchor position − 35 mm towards the centre (min. 30 mm); n = 2: one hairpin at each anchor row (z = ±b),
+    // n = 1: only z = −b. The legs are 49 mm (diagonal) from the nearest anchor, so the 35° plane is as deep as possible.
+    const HP = P0.anchor && P0.anchor.reinforcement && P0.anchor.hairpin ? P0.anchor.hairpin : null;
+    let hairpin = null;
+    if (HP) {
+      const hdb = HP.db ?? 10;
+      const a = Math.max(HP.offset ?? 30, Math.floor((bo.sx / 2 - 35) / 5) * 5), b = Math.max(HP.offset ?? 30, Math.floor((bo.sz / 2 - 35) / 5) * 5);
+      const legsH = [[-a, -b], [a, -b]].concat((HP.n ?? 2) > 1 ? [[-a, b], [a, b]] : []);
+      hairpin = { db: hdb, n: HP.n ?? 2, a, b, legs: legsH,
+        boltClear: Math.min(...legsH.flatMap(([u, v]) => bolts.map(([x, z]) => Math.hypot(x - u, z - v) - (bo.dia + hdb) / 2))),
+        barClear: Math.min(...legsH.flatMap(([u, v]) => bars.map(([x, z]) => Math.hypot(x - u, z - v) - (bar + hdb) / 2))) };
+    }
     const reach = Math.max(...bolts.map(([x, z]) => Math.max(Math.abs(x), Math.abs(z)) + bo.dia / 2));
     const clear = Math.min(...bolts.flatMap(([x, z]) => bars.map(([u, v]) => Math.hypot(x - u, z - v) - (bo.dia + bar) / 2)));
     const minClear = P0.boltBarClearMin ?? Math.max(25, bar, bo.dia);            // clear bar / bolt: default as §25.2.1, project option
     out.topTies = { n: nTop, dia: tie, within: 125, enclosed: reach <= tieIn + 1e-9, reach, tieIn, clear, minClear,
-      clearOk: clear >= minClear - 1e-9, bolts: `${bo.n || 4}-M${bo.dia} @ ${bo.sx} × ${bo.sz}` };
+      clearOk: clear >= minClear - 1e-9, bolts: `${bo.n || 4}-M${bo.dia} @ ${bo.sx} × ${bo.sz}`,
+      hairpinClearOk: !hairpin || (hairpin.boltClear >= minClear - 1e-9 && hairpin.barClear >= Math.max(25, hairpin.db) - 1e-9) };
     // anchors, ACI 318M-19 Chapter 17 (anchorGroupCheck, lib): LRFD actions at the top of the pedestal, seismic combinations with
     // M and H × Ω0 (§17.10.5.3(d) / §17.10.6.3(c)); anchor reinforcement = the longitudinal bars (hooked at the top) when enabled
     const A = P0.anchor;
@@ -522,10 +540,11 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
         const k = seis ? om : 1, t0 = row.top;
         const res = anchorGroupCheck({ Bp, Lp, sx: bo.sx, sz: bo.sz, da: bo.dia, Ase: A.Ase, futa: A.futa, hef: A.hef, Abrg: A.Abrg, fc, lambda,
           seismic: A.seismic !== false, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
-          reinf: A.reinforcement ? { bars, db: bar, fy, topCover: A.topCover ?? 50 } : null });
+          reinf: A.reinforcement ? (hairpin ? { hairpin: { legs: hairpin.legs, db: hairpin.db, maxLen: w0.Hp * 1000 - 75 }, fy, topCover: A.topCover ?? 50 }
+            : { bars, db: bar, fy, topCover: A.topCover ?? 50 }) : null });
         if (!gov || res.uc > gov.res.uc) gov = { lc: row.lc, seis, res };
       }
-      out.anchor = { ...gov, A, omega0: om };
+      out.anchor = { ...gov, A, omega0: om, hairpin };
     }
   }
   out.checks = [
@@ -534,7 +553,8 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     { name: 'Bar clear spacing (§25.2.3)', uc: out.barSpacing.ok ? 0 : Infinity },
     { name: `Tie spacing ≥ ${step} mm`, uc: out.tieS >= step ? 0 : Infinity },
     ...(out.topTies ? [{ name: 'Anchor bolts inside the ties (§10.7.6.1.6)', uc: out.topTies.enclosed ? 0 : Infinity },
-      { name: 'Clear distance anchor bolt / bar', uc: out.topTies.clearOk ? 0 : Infinity }] : []),
+      { name: 'Clear distance anchor bolt / bar', uc: out.topTies.clearOk ? 0 : Infinity },
+      ...(out.anchor && out.anchor.hairpin ? [{ name: 'Clear distance hairpin / anchor bolt / bar', uc: out.topTies.hairpinClearOk ? 0 : Infinity }] : [])] : []),
     ...(out.anchor ? [{ name: `Anchor bolts (ACI 17, ${out.anchor.res.govT.uc >= out.anchor.res.govV.uc ? out.anchor.res.govT.name : out.anchor.res.govV.name})`, uc: out.anchor.res.uc }] : [])
   ];
   out.gov = out.checks.reduce((a, b) => (b.uc > a.uc ? b : a));

@@ -67,7 +67,8 @@ export function buildFoundationDrawing(r, opts = {}) {
   const colm = opts.column || f.column || null;
   const cc = D ? D.cc : 75, dbF = D ? D.bar : 13;
   const AN = P && P.anchor ? P.anchor : null, AA = AN ? AN.A : null, AR = AN && AN.res ? AN.res.ar : null;   // anchors (ACI 318M-19 ch. 17) when checked
-  const hooked = !!(AA && AA.reinforcement);                                                              // pedestal bars = anchor reinforcement, 90° hook at the top
+  const HPN = AN && AN.hairpin ? AN.hairpin : null;                                                       // hairpin anchor reinforcement (legs in plan, e, d_b)
+  const hooked = !!(AA && AA.reinforcement) && !HPN;                                                      // pedestal bars = anchor reinforcement, 90° hook at the top
   const flex = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
   const barTxt = (c) => (c && c.required && c.s ? `D${dbF}-${c.s}` + (c.n ? ` (${c.n} bars)` : '') : null);
   const gap = 900;
@@ -115,6 +116,13 @@ export function buildFoundationDrawing(r, opts = {}) {
       }
     });
     if (bolts && hef) S.dim(X(ox - bolts.sx / 2), Gp, X(ox - bolts.sx / 2), Gp - hef, -140, `h_ef ${r0(hef)}`);
+    if (HPN && AR) {
+      const cov = AA.topCover ?? 50, yH = Gp - cov, yL = Gp - AR.legLen, e = HPN.a, db = HPN.db, rb = 2 * db;   // seen along z: the hairpins coincide
+      [-1, 1].forEach(a => S.line('REBAR', X(ox + a * e), yH - rb, X(ox + a * e), yL));                         // legs of the hairpins
+      S.line('REBAR', X(ox - e + rb), yH, X(ox + e - rb), yH);                                                  // top of the bend
+      [-1, 1].forEach(a => S.line('REBAR', X(ox + a * e), yH - rb, X(ox + a * (e - rb)), yH));                  // 180° bend (chamfer symbol)
+      S.dim(X(ox + e + 60), yH, X(ox + e + 60), yL, 220, `${r0(AR.legLen - cov)}`);
+    }
     if (colm) {                                                                  // column stub with a break line
       const e = columnElevation(colm), y0 = Gp + gr + (bp ? bp.t : 0), y1 = y0 + 350, zz = 25;
       S.line('STEEL', X(ox + e.x1), y0, X(ox + e.x1), y1); S.line('STEEL', X(ox + e.x2), y0, X(ox + e.x2), y1);
@@ -154,6 +162,11 @@ export function buildFoundationDrawing(r, opts = {}) {
     S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2, TXT, `${P.pm.n * 2} D${P.bar}`);
     S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 60, TXT, `Ø${P.tie}-${P.tieS}`);
     if (P.topTies) S.text('TEXT', X(ox + Bp / 2 + 440), Gp - 90, TXT, `${P.topTies.n} Ø${P.topTies.dia} within 125 (top)`);
+    if (HPN && AR) {
+      S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 140, TXT, `ANCHOR REINFORCEMENT (ACI 318M-19 17.5.2.1):`);
+      S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 200, TXT, `${HPN.n} hairpin${HPN.n > 1 ? 's' : ''} Ø${HPN.db} (${HPN.legs.length} legs @ ±${HPN.a} × ±${HPN.b} mm), 180° bend at top`);
+      S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 260, TXT, `legs ${r0(AR.legLen)} mm from top; l_dh ${r0(AR.ldh)} ≤ ${r0(AR.avail)}, l_d ${r0(AR.ld)} ≤ ${r0(AR.availLow)} mm`);
+    }
     if (hooked) {
       S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 140, TXT, `ANCHOR REINFORCEMENT (ACI 318M-19 17.5.2.1):`);
       S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 200, TXT, `pedestal bars D${P.bar}, 90° hook at top, tail ${12 * P.bar} mm`);
@@ -203,6 +216,11 @@ export function buildFoundationDrawing(r, opts = {}) {
       S.text('TEXT', PX(Bp / 2 + 80), PY(-170), TXT, `${bolts.n || 4}-M${bolts.dia} @ ${bolts.sx}×${bolts.sz}, headed (h_ef ${AA ? r0(AA.hef) : '-'})`);
     }
     if (hooked) S.text('TEXT', PX(Bp / 2 + 80), PY(-240), TXT, `Bars: anchor reinf., hooked at top`);
+    if (HPN) {
+      HPN.legs.forEach(([u, v]) => S.circle('REBAR', PX(u), PY(v), HPN.db / 2, true));
+      [-1, 1].slice(HPN.n > 1 ? 0 : 0, HPN.n > 1 ? 2 : 1).forEach(sg => S.line('REBAR', PX(-HPN.a), PY(sg * HPN.b), PX(HPN.a), PY(sg * HPN.b)));   // bends of the hairpins along x
+      S.text('TEXT', PX(Bp / 2 + 80), PY(-240), TXT, `${HPN.n} hairpin${HPN.n > 1 ? 's' : ''} Ø${HPN.db}, legs @ ±${HPN.a} × ±${HPN.b} mm`);
+    }
     S.text('TEXT', PX(0), PY(-Lp / 2 - 420), TXT_TITLE, 'PEDESTAL SECTION B-B', 'center');
   }
 
