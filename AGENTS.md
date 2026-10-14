@@ -24,16 +24,18 @@
 ## 3. Peta File
 Peta lengkap semua file: `docs/PROJECT_MAP.md`. Ringkasan:
 - UI: `index.html` (markup), `css/app.css` (style), `js/app.js` (event wiring + startup).
-- Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`; V_u source manual / piles / soil), `footing.js` (shallow: lentur footing + V_u dari tekanan tanah, `calcFootingFlexure`), `autoSize.js` (`autoSizeFoundation`: tombol Auto-Size, shallow saja; opsi "Keep B × L × H" = ukuran footing dikunci, hanya Df dicari (`autoSizeDepth`); pencarian ada di `lib/foundation/shared/autoSizeFooting.js`). `lastResults` di `js/core/state.js`.
+- Fungsi `calc*()` ada di `js/tabs/`: `bearing.js` (`calcBearing`), `foundation.js` (`calcFoundation`), `pile.js` (`calcPile`), `settlement.js` (`calcSettlement`), `anchor.js` (`calcAnchor`), `rebar.js` (`calcRebar`), `foundSize.js` (`calcFoundSize`), `shear.js` (`calcOneWay`, `calcTwoWay`; V_u source manual / piles / soil), `footingSoil.js` (shallow: aksi LRFD + tekanan tanah per kombinasi; lentur / geser footing memakai `lib/foundation/shared/footingDesign.js`), `autoSize.js` (`autoSizeFoundation`: tombol Auto-Size, shallow saja; opsi "Keep B × L × H" = ukuran footing dikunci, hanya Df dicari (`autoSizeDepth`); pencarian ada di `lib/foundation/shared/autoSizeFooting.js`). `lastResults` di `js/core/state.js`.
 - `lib/foundation/index.js` — ENTRY POINT + dispatcher. Import dari sini, jangan deep-import dari UI.
-- `lib/foundation/shared/` — `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `spreadFooting` (tekanan kontak + aksi di muka pedestal, `soilPressure` / `footingActions`), `autoSizeFooting`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
+- `lib/foundation/shared/` — `anchorGroup` (grup anchor ACI 17 + tulangan pengangkuran), `bearingCapacity`, `loadCombinations`, `stabilityCheck`, `pedestalCheck`, `pileGroup`, `pileCapShear`, `footingCheck`, `footingDesign`, `spreadFooting` (referensi independen / cross-check `footingDesign`), `autoSizeFooting`, `soilProperties`, `settlementCheck`, `windLoad`, `seismicLoad`.
 - `lib/foundation/static/` — vessel/tank/heat-exchanger: `loadingData`, `foundationSizing`.
 - `lib/foundation/rotating/` — `loadingData`, `vibrationCheck`, `foundationSizing` (mass ratio >= 3).
 - `lib/foundation/reciprocating/` — `loadingData`, `dynamicForceCheck` (1x + 2x rpm), `foundationSizing` (mass ratio >= 5).
 - `lib/foundation/piperack/` — `loadingData` (L-dir/T-dir), `loadCombinations` (envelope max |Mbot|), `foundationSizing` (iteratif `sizePierFooting`).
 - `lib/foundation/skidMounted/` — `loadingData` (`sumBoltReactions`), `foundationSizing` (footprint + 2x edge).
-- `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan).
-- `lib/foundation/validation/` — 16 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = auto-size footing, 29 checks; part14 = audit fixes: anchor Vb, one-way shear Vc, pedestal P-M phi, 38 checks; part15 = spread footing from soil pressure, 41 checks; part16 = STAAD reactions → FAIR load inputs, 27 checks) + `VALIDATION_REPORT.md` (607 checks, 607 pass @ 14 Oct 2026).
+- `lib/foundation/import/` — `textParsers` (OCR/paste teks → kandidat untuk direview user; tanpa konversi satuan), `staadOutput` (STAAD .std load case/REPEAT LOAD + .ANL support reactions → konvensi tanda FAIR).
+- `tools/foundation-drawing.mjs` — gambar pondasi per tipe dari hasil staad-stability (plan, potongan, potongan pedestal, tulangan footing) → DXF R12 (layer CONCRETE/REBAR/DIM/TEXT/AXIS/HIDDEN/STEEL, mm) + SVG; tanpa hitungan.
+- `tools/staad-stability.mjs` — CLI Node batch: reaksi STAAD per kombinasi → stabilitas fondasi dangkal (cek 4A, rumus dari lib) → laporan Markdown. `node tools/staad-stability.mjs <config.json> [--out report.md]`; format config di header file.
+- `lib/foundation/validation/` — 24 file `.mjs` (part7 = import parsers, 62 checks; part8 = pile group, 105 checks; part9 = LRFD set + pile cap shear, 58 checks; part10 = pile cap flexure 2 axes, 25 checks; part11 = punching with unbalanced moment, 16 checks; part12 = foundation geometry consistency, 23 checks; part13 = offset pedestal on a shallow footing + biaxial governing, 22 checks; part14 = biaxial no-tension soil pressure + no-e-limit option + Meyerhof effective area, 43 checks; part15 = wind generator ASCE 7-22, 26 checks; part16 = shallow footing M_u / V_u from net soil pressure, 33 checks; part17 = footing punching at edge / corner + two-way size effect λs, 31 checks; part18 = STAAD import + batch stability + Meyerhof bearing + FS temp + auto-size + project file + static uplift + min contact + footing thickness / bars, 65 checks; part19 = anchor group ACI 17, 19 checks; part20 = Auto-Size footing, 29 checks; part21 = audit fixes (anchor Vb, one-way Vc, P-M φ), 38 checks; part22 = independent spread-footing reference, 41 checks; part23 = STAAD reactions Y-up → FAIR, 27 checks; part24 = cross-check `footingDesign` vs `spreadFooting` on 600 random cases, 6 checks) + `VALIDATION_REPORT.md` (898 checks, 898 pass @ 14 Oct 2026).
 
 ## 4. Kontrak Pure Function (harga mati di lib/)
 - `lib/` = no DOM, no `document`, no `window`, no `fmt()`, no Tesseract. Input plain numbers/objects, output plain objects.
@@ -70,6 +72,14 @@ node lib/foundation/validation/validation_shared_part13.mjs
 node lib/foundation/validation/validation_shared_part14.mjs
 node lib/foundation/validation/validation_shared_part15.mjs
 node lib/foundation/validation/validation_shared_part16.mjs
+node lib/foundation/validation/validation_shared_part17.mjs
+node lib/foundation/validation/validation_import_part18.mjs
+node lib/foundation/validation/validation_shared_part19.mjs
+node lib/foundation/validation/validation_shared_part20.mjs
+node lib/foundation/validation/validation_shared_part21.mjs
+node lib/foundation/validation/validation_shared_part22.mjs
+node lib/foundation/validation/validation_shared_part23.mjs
+node lib/foundation/validation/validation_shared_part24.mjs
 ```
 - Exit 0 = pass, 1 = ada fail. Toleransi: integer 1e-9, textbook 0.05-0.08. Jangan tambah jest/vitest tanpa izin.
 - CI: `.github/workflows/validation.yml` menjalankan semua `validation_*.mjs` + cek sintaks (`.github/scripts/parse-check.mjs`) di setiap push / PR ke `main` (Node 22). `node --check` tidak dipakai: meleset pada `.js` ber-`import`/`export`.

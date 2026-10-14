@@ -1,29 +1,36 @@
 import {
-  windForceASCE716, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261014l'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261014l';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261014l';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261014l';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261014l';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261014l';
-import { loadTesseract } from './ocr/tesseract.js?v=20261014l';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261014l';
-import { renderSummaryReport } from './report/summary.js?v=20261014l';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261014l';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261014l';
-import { calcFoundation } from './tabs/foundation.js?v=20261014l';
-import { autoSizeFoundation } from './tabs/autoSize.js?v=20261014l';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261014l';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261014l';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderLoadValuesHeader, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261014l';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261014l';
-import { calcRebar } from './tabs/rebar.js?v=20261014l';
-import { calcSettlement } from './tabs/settlement.js?v=20261014l';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261014l';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261014l';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261014l';
-import { toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261014l';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261014l';
+  windForceASCE722, designSpectralAccel, seismicResponseCoefficient
+} from '../lib/foundation/index.js?v=20261014m'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261014m';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261014m';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261014m';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261014m';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261014m';
+import { loadTesseract } from './ocr/tesseract.js?v=20261014m';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261014m';
+import { renderSummaryReport } from './report/summary.js?v=20261014m';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261014m';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261014m';
+import { calcFoundation } from './tabs/foundation.js?v=20261014m';
+import { autoSizeFoundation } from './tabs/autoSize.js?v=20261014m';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261014m';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261014m';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderLoadValuesHeader, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261014m';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261014m';
+import { calcRebar } from './tabs/rebar.js?v=20261014m';
+import { calcSettlement } from './tabs/settlement.js?v=20261014m';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261014m';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261014m';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261014m';
+import { resolveCheckTab, sync5BSources, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261014m';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261014m';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261014m';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261014m';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261014m';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261014m';
+import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261014m';
+import { renderScopePanel } from './workflow/scope.js?v=20261014m';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261014m';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -403,15 +410,15 @@ document.getElementById('ab-add-bolt').addEventListener('click', () => {
 });
 renderBoltTable();
 
-// ---------- Wind load generator (ASCE 7-16 Ch. 29, force method for rigid "other structures") ----------
-// windForceASCE716() lives in lib/foundation/shared/windLoad.js.
+// ---------- Wind load generator (ASCE 7-22 Ch. 29, force method for rigid "other structures") ----------
+// windForceASCE722() lives in lib/foundation/shared/windLoad.js.
 selectRadio('wg-exp', () => {});
 document.getElementById('wg-generate').addEventListener('click', () => {
   const V = num('wg-V');
   const exp = getRadioVal('wg-exp');
-  const Kzt = num('wg-Kzt'), Kd = num('wg-Kd'), G = num('wg-G'), Cf = num('wg-Cf'), h = num('wg-h');
+  const Kzt = num('wg-Kzt'), Kd = num('wg-Kd'), Ke = num('wg-Ke'), G = num('wg-G'), Cf = num('wg-Cf'), h = num('wg-h');
   const Asx = num('wg-Asx'), Asz = num('wg-Asz');
-  const { alpha, zg, z, Kz, qz, Fx, Mz, Fz, Mx } = windForceASCE716({ V, exposure: exp, z: num('wg-z'), Kzt, Kd, G, Cf, h, Asx, Asz });
+  const { alpha, zg, z, Kz, qz, Fx, Mz, Fz, Mx } = windForceASCE722({ V, exposure: exp, z: num('wg-z'), Kzt, Kd, Ke, G, Cf, h, Asx, Asz });
   state.windDirState = { Fx, Mz, Fz, Mx };
   // Each direction fills its own WX/WZ row used by Load Combinations.
   ensureLoadType('WX', 'Wind Load, WX');
@@ -422,22 +429,22 @@ document.getElementById('wg-generate').addEventListener('click', () => {
   document.getElementById('lc-WZ-M').value = Mx.toFixed(2);
   const dirBlock = (dirLabel, sym, A, symA, F, Msym, M) => {
     let rows = '';
-    rows += dlWorksheetItem('Velocity pressure exposure coefficient,', 'K<sub>z</sub>', '2.01·(z / z<sub>g</sub>)<sup>2/α</sup>', `2.01×(${fmt(z,2)}/${fmt(zg,2)})^(2/${fmt(alpha,2)})`, Kz, '', 3, false);
-    rows += dlWorksheetItem('Velocity pressure,', 'q<sub>z</sub>', '0.613·K<sub>z</sub>·K<sub>zt</sub>·K<sub>d</sub>·V²', `0.613×${fmt(Kz,3)}×${fmt(Kzt,2)}×${fmt(Kd,2)}×${fmt(V,1)}²`, qz, 'Pa', 1, false);
+    rows += dlWorksheetItem('Velocity pressure exposure coefficient,', 'K<sub>z</sub>', '2.41·(z / z<sub>g</sub>)<sup>2/α</sup>', `2.41×(${fmt(z,2)}/${fmt(zg,2)})^(2/${fmt(alpha,2)})`, Kz, '', 3, false);
+    rows += dlWorksheetItem('Velocity pressure,', 'q<sub>z</sub>', '0.613·K<sub>z</sub>·K<sub>zt</sub>·K<sub>e</sub>·V²', `0.613×${fmt(Kz,3)}×${fmt(Kzt,2)}×${fmt(Ke,3)}×${fmt(V,1)}²`, qz, 'Pa', 1, false);
     rows += dlWorksheetItem(`Projected area,`, symA, 'input', fmt(A,2), A, 'm²', 2, false);
-    rows += dlWorksheetItem(`Wind force,`, sym, `q<sub>z</sub>·G·C<sub>f</sub>·${symA} / 1000`, `${fmt(qz,1)}×${fmt(G,2)}×${fmt(Cf,2)}×${fmt(A,2)} / 1000`, F, 'kN', 2, false);
+    rows += dlWorksheetItem(`Wind force,`, sym, `q<sub>z</sub>·K<sub>d</sub>·G·C<sub>f</sub>·${symA} / 1000`, `${fmt(qz,1)}×${fmt(Kd,2)}×${fmt(G,2)}×${fmt(Cf,2)}×${fmt(A,2)} / 1000`, F, 'kN', 2, false);
     rows += dlWorksheetItem(`Wind moment,`, Msym, `${sym}·h`, `${fmt(F,2)}×${fmt(h,2)}`, M, 'kN·m', 2, false);
     return rows;
   };
   const wgHtml = `<div class="overflow-x"><table class="dl-worksheet"><colgroup><col style="width:28%"><col style="width:8%"><col style="width:18px"><col style="width:20%"><col style="width:24%"><col style="width:17%"></colgroup>
-    <caption>Wind Load Generator (ASCE 7-16 Ch. 29) — X-direction</caption>
+    <caption>Wind Load Generator (ASCE 7-22 Ch. 29) — X-direction</caption>
     ${dirBlock('transversal', 'F<sub>x</sub>', Asx, 'A<sub>sx</sub>', Fx, 'M<sub>z</sub>', Mz)}
   </table></div>
   <div class="overflow-x"><table class="dl-worksheet"><colgroup><col style="width:28%"><col style="width:8%"><col style="width:18px"><col style="width:20%"><col style="width:24%"><col style="width:17%"></colgroup>
-    <caption>Wind Load Generator (ASCE 7-16 Ch. 29) — Z-direction</caption>
+    <caption>Wind Load Generator (ASCE 7-22 Ch. 29) — Z-direction</caption>
     ${dirBlock('longitudinal', 'F<sub>z</sub>', Asz, 'A<sub>sz</sub>', Fz, 'M<sub>x</sub>', Mx)}
   </table></div>
-  <div class="note">Fills the Design Load Summary's and Load Combinations' WX (F<sub>x</sub>=${fmt(Fx,2)} kN, M<sub>z</sub>=${fmt(Mz,2)} kN·m) and WZ (F<sub>z</sub>=${fmt(Fz,2)} kN, M<sub>x</sub>=${fmt(Mx,2)} kN·m) rows directly. K<sub>zt</sub>, K<sub>d</sub> and C<sub>f</sub> depend on structure shape and site — verify against ASCE 7-16 Tables 26.8-1, 26.6-1 and 29.4-1 before using the generated value.</div>`;
+  <div class="note">Fills the Design Load Summary's and Load Combinations' WX (F<sub>x</sub>=${fmt(Fx,2)} kN, M<sub>z</sub>=${fmt(Mz,2)} kN·m) and WZ (F<sub>z</sub>=${fmt(Fz,2)} kN, M<sub>x</sub>=${fmt(Mx,2)} kN·m) rows directly. K<sub>zt</sub>, K<sub>d</sub> and C<sub>f</sub> depend on structure shape and site — verify against ASCE 7-22 Tables 26.8-1, 26.6-1 and 29.4-1 before using the generated value. z below z<sub>min</sub> of the exposure (B 9.14 m, C 4.57 m, D 2.13 m) is raised to z<sub>min</sub>.</div>`;
   document.getElementById('wg-result').innerHTML = wgHtml;
   // Also persist the breakdown in the main "03 — LOADING DATA" results panel, so it stays visible after the popup closes.
   const wgPreview = document.getElementById('wind-calc-preview');
@@ -624,14 +631,15 @@ selectRadio('tw-vu-src', calcTwoWay);
 selectRadio('tw-lambda', calcTwoWay);
 selectRadio('tw-loc', calcTwoWay);
 selectRadio('fd-ecc', calcFoundationAndGeneral);
+selectRadio('fd-bearmeth', calcFoundationAndGeneral);
 selectRadio('bc-shape', calcBearingAndFoundation);
 selectRadio('bc-method', calcBearingAndFoundation);
 selectRadio('bc-failure', calcBearingAndFoundation);
 selectRadio('ab-type', calcAnchor);
 selectRadio('ab-crack', calcAnchor);
-selectRadio('fs-type', calcFoundSize);
+selectRadio('fs-type', () => { calcFoundSize(); syncPedestalTab(); });
 
-selectRadio('fs-support', () => { updateFoundationTabVisibility(); calcFoundSize(); renderGeneralSummary(); }); // visibility first: it moves the 5B V_u source to the one that exists for the support
+selectRadio('fs-support', () => { sync5BSources(); calcFoundSize(); updateFoundationTabVisibility(); renderGeneralSummary(); });
 selectRadio('ld-mode', () => { toggleLoadInputMode(); renderLoadValuesHeader(); recalcAll(); });
 selectRadio('ld-sign', () => { toggleLoadInputMode(); renderLoadValuesHeader(); recalcAll(); }); // the typed values keep their numbers, only their meaning changes
 toggleLoadInputMode();
@@ -659,6 +667,7 @@ document.querySelectorAll('#in-settlement input').forEach(el => el.addEventListe
 document.querySelectorAll('#in-settlement select').forEach(el => el.addEventListener('change', calcSettlement));
 document.querySelectorAll('#in-anchor input:not(.bolt-input)').forEach(el => el.addEventListener('input', calcAnchor));
 document.querySelectorAll('#in-rebar input, #in-rebarcap input').forEach(el => el.addEventListener('input', calcRebar));
+document.getElementById('rb-asmin').addEventListener('change', calcRebar);
 document.querySelectorAll('#in-summary input:not(.rpt-include):not(.rpt-pagebreak):not([type="file"])').forEach(el => el.addEventListener('input', generateReport));
 // Tab 02 fields: calcFoundSize() ends in recalcAll() (every tab x every load combination), so while the user types it
 // runs once after a short pause instead of on every keystroke. Real typing (isTrusted) is debounced and flushed on
@@ -705,6 +714,14 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 selectRadio('eq-type', updateEquipmentSetup);
 updateEquipmentSetup(); // Run on startup
+// 00 profile card: each required check opens the tab where it is done ('stability' -> 4A or 4B by Support).
+document.getElementById('setup-status').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-check-tab]');
+  if (b) switchWorkflowTab(resolveCheckTab(b.dataset.checkTab));
+});
+// Scope of Work (right panel on 00): taking a check in or out of scope re-runs everything that reads it (08, 4A via q_a, 09,
+// Table 1.3.1, Design Status) and sets the NOT IN SCOPE banners.
+['scope-stability', 'scope-bearing', 'scope-settlement', 'scope-structural', 'scope-anchor'].forEach((id) => document.getElementById(id).addEventListener('change', () => { renderScopePanel(); recalcAll(); }));
 updateFoundationTabVisibility(); // Run on startup — hide the tab that doesn't match the default Support selection
 document.getElementById('st-copy-bearing').addEventListener('click', () => {
   document.getElementById('st-B').value = document.getElementById('bc-B').value;
@@ -848,6 +865,52 @@ document.querySelectorAll('#wf-nav button').forEach((btn) => {
   });
 });
 
+// ---------- Layout: collapsible input panel + Focus Canvas / Report Preview switch (js/ui/) ----------
+// Injected before the first renderWorkflowLive() below so the governing badges get filled on startup.
+injectSidebarRails();
+injectSectionNavs(); // sticky Previous / Next section bar at the bottom of the main (preview) panel
+injectViewSwitchers();
+setSidebarState(getSavedSidebarState(), false);
+setRightPanelState(getSavedRightPanelState(), false);
+setViewMode(getSavedViewMode(), false);
+document.addEventListener('click', (e) => {
+  const t = e.target.closest && e.target.closest('[data-sidebar-set], [data-sidebar-step], [data-go-tab], [data-rp-set], .view-switcher-bar [data-mode]');
+  if (!t) return;
+  if (t.dataset.rpSet) { setRightPanelState(t.dataset.rpSet); return; }
+  if (t.dataset.sidebarSet) setSidebarState(t.dataset.sidebarSet);
+  else if (t.dataset.sidebarStep) shrinkSidebar();
+  else if (t.dataset.goTab) switchWorkflowTab(t.dataset.goTab);
+  else if (t.dataset.mode) setViewMode(t.dataset.mode);
+});
+// Compact strip codes follow the active tab and the 4A/4B visibility (Support radio in Tab 02).
+document.querySelectorAll('.sidebar-menu .tab').forEach((t) => t.addEventListener('click', syncSidebarRails));
+document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('.radio-row button')) setTimeout(syncSidebarRails, 0); }, true);
+// 02 Focus Canvas viewport: Plan / Elevation / Isometric switch (in place, no re-render).
+// 5B shear Focus Canvas (6.1 one-way and 6.2 punching canvases): view switches and the hover popover (js/tabs/shearFocus.js).
+{
+  const sh = document.getElementById('focus-capcheck');
+  sh.addEventListener('click', (e) => {
+    const v = e.target.closest('[data-sh-view]'); if (v) setShearFocusView(v.dataset.shBlock, v.dataset.shView);
+  });
+  sh.addEventListener('mousemove', shearFocusHover);
+  sh.addEventListener('mouseleave', () => sh.querySelectorAll('.sh-tip').forEach((t) => { t.hidden = true; }));
+}
+document.getElementById('focus-foundsize').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-cad-view]');
+  if (b) setCadView(b.dataset.cadView);
+});
+// Watermark under the sheet: current year.
+document.getElementById('app-year').textContent = String(new Date().getFullYear());
+// Light / dark toggle in the header; the button icon also follows OS theme changes while no choice is saved.
+syncThemeButton();
+document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
+window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', syncThemeButton);
+// Scrolling over a focused number input must not change its value — drop focus first.
+document.addEventListener('wheel', () => {
+  const el = document.activeElement;
+  if (el && el.type === 'number') el.blur();
+}, { passive: true });
+
 document.addEventListener('input', scheduleWorkflowLive, true);
 document.addEventListener('change', scheduleWorkflowLive, true);
 // Radio-row buttons (e.g. V_u source Manual / From piles) change results without an input/change event — refresh the
@@ -858,3 +921,150 @@ document.addEventListener('click', (e) => { if (e.target.closest && e.target.clo
 document.querySelectorAll('.sidebar-menu .tab').forEach((t) => t.addEventListener('click', scheduleWorkflowLive));
 try { renderWorkflowLive(); } catch (e) {}
 
+// ---------- Project file: New / Open / Save / Save As (js/workflow/project.js) ----------
+// Defaults = the state right after startup; "New" restores them and "Open" starts from them, so nothing from the previous
+// project survives a load.
+const PROJECT_DEFAULTS = collectProject();
+let projectLoading = false;
+function renderProjectLists() {
+  renderLoadTypesTable(); // also the Load Values rows (lc-<code>-*)
+  renderComboTable('lc'); // ASD and LRFD tables
+  renderPileTable();
+  renderBoltTable();
+  renderDesignStandardsTable();
+  renderBlockList();
+  [['rpt-logo1-preview', state.rptLogo1], ['rpt-logo2-preview', state.rptLogo2]].forEach(([id, src]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = src ? `<img src="${src}" style="max-height:60px;max-width:100%;border:1px solid var(--line);margin-top:6px;">` : '';
+  });
+}
+// Writes a project into the page and recalculates everything, in startup order.
+function loadProjectData(data) {
+  projectLoading = true;
+  try {
+    applyProjectData(PROJECT_DEFAULTS, renderProjectLists);
+    applyProjectData(data, renderProjectLists);
+    // Replay the radio choices as clicks so each group's own handler runs (field visibility, tab visibility, ...). Equipment
+    // type first: its handler may pre-select a foundation type, which the file's own fs-type choice then overrides.
+    const radios = data.radios || {};
+    Object.keys(radios).sort((a, b) => (b === 'eq-type') - (a === 'eq-type')).forEach((id) => {
+      const g = document.getElementById(id);
+      const btn = g && [...g.querySelectorAll('button[data-val]')].find((x) => x.dataset.val === radios[id]);
+      if (btn && !btn.disabled) btn.click();
+    });
+    toggleLoadInputMode();
+    updateFoundationTabVisibility();
+    renderScopePanel();
+    renderEquipmentLoad(); renderLiveLoad(); renderWindDirectPreview(); renderSeismicDirectPreview();
+    calcFoundSize(); // also recalcAll()
+    recalcPileCap();
+    calcSettlement();
+    recalcAllGeneral();
+    renderLcSummary();
+    if (typeof renderStdComboTables === 'function') renderStdComboTables();
+    renderSummaryReport();
+    // A loaded project is not a first-time entry: show the results, not the readiness checklist.
+    window.__liveBarVisited = new Set([...document.querySelectorAll('.sidebar-menu .tab')].map((t) => t.dataset.tab));
+    syncSidebarRails();
+    renderWorkflowLive();
+  } finally {
+    projectLoading = false;
+  }
+  setProjectDirty(false);
+  updateProjectLabel();
+}
+function updateProjectLabel() {
+  const f = projectFile();
+  const el = document.getElementById('project-file-name');
+  el.textContent = (f.name || 'Untitled project') + (f.dirty ? ' ●' : '');
+  el.classList.toggle('dirty', f.dirty);
+  el.title = f.dirty ? 'Unsaved changes' : (f.name ? 'Saved' : 'Not saved yet');
+}
+const confirmDiscard = () => !projectFile().dirty || window.confirm('Discard the unsaved changes of the current project?');
+// Short confirmation under the header (Open / Save / New) — a successful load otherwise only shows in the file name.
+let projectToastT = null;
+function projectToast(msg, bad) {
+  let el = document.getElementById('project-toast');
+  if (!el) { el = document.createElement('div'); el.id = 'project-toast'; el.setAttribute('role', 'status'); document.body.append(el); }
+  el.textContent = msg;
+  el.className = 'project-toast show' + (bad ? ' bad' : '');
+  clearTimeout(projectToastT);
+  projectToastT = setTimeout(() => { el.className = 'project-toast' + (bad ? ' bad' : ''); }, bad ? 8000 : 4000);
+}
+async function saveProject(asNew) {
+  try { if (await saveProjectFile(asNew)) { updateProjectLabel(); projectToast('✓ Saved: ' + projectFile().name); } }
+  catch (e) { console.error('Save project:', e); projectToast('✗ Could not save the project: ' + (e && e.message ? e.message : e), true); }
+}
+async function openProject() {
+  if (!confirmDiscard()) return;
+  try {
+    const r = await pickProjectFile();
+    if (r) {
+      loadProjectData(r.data);
+      switchWorkflowTab('foundsize'); // show something that visibly comes from the file
+      projectToast(`✓ Opened: ${r.name} — ${r.data.project || 'project'} (footing ${document.getElementById('fs-Bf').value} × ${document.getElementById('fs-Lf').value} m)`);
+    }
+  } catch (e) { console.error('Open project:', e); projectToast('✗ Could not open the project: ' + (e && e.message ? e.message : e), true); }
+  updateProjectLabel();
+}
+document.getElementById('project-new').addEventListener('click', () => {
+  if (!confirmDiscard()) return;
+  loadProjectData(PROJECT_DEFAULTS);
+  resetProjectFile();
+  updateProjectLabel();
+  projectToast('✓ New project (default values)');
+});
+document.getElementById('project-open').addEventListener('click', openProject);
+document.getElementById('project-save').addEventListener('click', () => saveProject(false));
+document.getElementById('project-saveas').addEventListener('click', () => saveProject(true));
+document.addEventListener('keydown', (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (k === 's') { e.preventDefault(); saveProject(e.shiftKey); }
+  else if (k === 'o' && !e.shiftKey) { e.preventDefault(); openProject(); }
+});
+// Unsaved-changes marker: any edit of an input, or a button press inside the input panels / dialogs / Scope of Work.
+const markProjectDirty = (e) => {
+  if (projectLoading || (e.target && e.target.type === 'file') || projectFile().dirty) return;
+  setProjectDirty(true);
+  updateProjectLabel();
+};
+document.addEventListener('input', markProjectDirty, true);
+document.addEventListener('change', markProjectDirty, true);
+document.addEventListener('click', (e) => {
+  const b = e.target.closest && e.target.closest('button');
+  if (b && b.closest('.inputs, .ld-inputs, .modal-box, #scope-panel') && !b.closest('.sidebar-rail')) markProjectDirty(e);
+}, true);
+window.addEventListener('beforeunload', (e) => {
+  if (!projectFile().dirty) return;
+  e.preventDefault();
+  e.returnValue = '';
+});
+updateProjectLabel();
+// Open a project straight from the address bar: ?project=<relative path on this server>.json [&tab=<ribbon tab id>], e.g.
+// FAIR%20Foundation%20Design.html?project=projects/my-job.fair.json&tab=foundation. Same-origin relative paths only.
+(async () => {
+  const q = new URLSearchParams(location.search);
+  const path = q.get('project');
+  if (!path) return;
+  if (/^[a-z][a-z0-9+.-]*:|^\/\//i.test(path) || !/\.json$/i.test(path)) { projectToast('✗ ?project= must be a relative path to a .json file on this server', true); return; }
+  try {
+    const res = await fetch(path, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status} for ${path}`);
+    const data = parseProjectText(await res.text());
+    loadProjectData(data);
+    setProjectFileName(decodeURIComponent(path.split('/').pop()));
+    updateProjectLabel();
+    const tab = q.get('tab');
+    if (tab) switchWorkflowTab(tab);
+    projectToast(`✓ Opened: ${decodeURIComponent(path.split('/').pop())} — ${data.project || 'project'}`);
+  } catch (e) {
+    console.error('Open project from URL:', e);
+    projectToast('✗ Could not open the project: ' + (e && e.message ? e.message : e), true);
+  }
+})();
+// For automation / tests: read the current project, or load one (object or JSON text) without the file dialogs.
+window.fairProject = {
+  collect: collectProject,
+  load: (p) => { const data = typeof p === 'string' ? parseProjectText(p) : p; validateProject(data); loadProjectData(data); }
+};

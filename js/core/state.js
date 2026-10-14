@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261014l';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261014m';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -40,8 +40,12 @@ export const reportBlocks = [
 ];
 
 export const state = {
+  // 02 Focus Canvas viewport view: 'plan' | 'elev' | 'iso' (js/tabs/foundSizeFocus.js) — survives calcFoundSize() re-renders.
+  fzView: 'plan',
+  // 5B Focus Canvas (js/tabs/shearFocus.js): viewport view of the one-way (6.1) and punching (6.2) canvases ('plan' | 'elev' | 'iso').
+  shViewOw: 'plan', shViewTw: 'plan',
   // Holds independent Fx/Mz (transversal) and Fz/Mx (longitudinal) Wind values — set by manual "Apply" (asymmetric,
-  // whatever was actually typed into the Fx/Fz dialog) or by the ASCE 7-16 generator (from Asx/Asz). Read by
+  // whatever was actually typed into the Fx/Fz dialog) or by the ASCE 7-22 generator (from Asx/Asz). Read by
   // renderLoadSummary() for the WX/WZ rows. Declared here (not next to where it's set, further down) because
   // renderEquipmentLoad() calls renderLoadSummary() once at page load, before the script reaches those sections.
   windDirState: null,
@@ -78,6 +82,11 @@ export const state = {
   // Pedestal of Tab 02 for the 5A pedestal design: height Hp (m, incl. grout — the lever arm of H down to the pedestal
   // base) and self-weight pedW (kN, concrete + grout). Both 0 when Tab 02 has no pedestal. Set by calcFoundSize().
   pedHp: 0, pedW: 0,
+  // Backfill above the footing / pile cap (kN, footing area minus pedestal, over the pedestal depth below ground) — set by
+  // calcFoundSize(); 4A places it at its own centroid when the pedestal is offset (pedestalOffsetMoments()).
+  footSoilW: 0,
+  // Footing / pile cap concrete weight (kN, Wf of Tab 02) — 5B shallow footing design deducts it with the backfill (net pressure).
+  footW: 0,
   // Report header logos (data URLs from the logo uploads).
   rptLogo1: null, rptLogo2: null
 };

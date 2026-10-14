@@ -7,7 +7,7 @@
 
 | Area | Fungsi | Isi |
 |---|---|---|
-| **Kiri** | What I enter | Input / Control (panel tree per tab, Auto Fill) |
+| **Kiri** | What I enter | Input / Control (panel tree per tab, ✨ AI Data Extractor di paling atas) |
 | **Tengah** | What the calculation produces | Calculation Preview (halaman A4) |
 | **Kanan** | What the system tells me | Live Design Status (default) ↔ AI Assistant |
 
@@ -31,7 +31,7 @@ Tombol di header: [ ✦ AI Assistant ]
 
 1. **AI Assistant** (tombol `✦ AI Assistant` di header): tanya-jawab umum.
    Contoh: "Kenapa DCR saya tinggi?", "Apa arti effective depth?", "Parameter apa yang mempengaruhi overturning?"
-2. **AI Auto Fill / Smart Fill** (tetap di **panel input kiri**, grup `✦ AUTO FILL`): aksi terhadap data.
+2. **AI Data Extractor / Smart Fill** (tetap di **panel input kiri**, kartu `✨ AI Data Extractor` di **paling atas** panel, tertutup default — dulu grup "Auto Fill" di bawah): aksi terhadap data.
    Alurnya: Upload PDF/drawing → Extract → **Review** → Apply. Jangan lewat assistant panel.
 3. **AI Design Assistant**: muncul **saat ada masalah** (cek FAIL).
    ```
@@ -60,7 +60,7 @@ Assistant membaca tab dan cek yang sedang aktif. Contoh:
 - **Panel kanan**: `#live-status-bar` (`.live-status-bar`, lebar 240 px), diisi oleh `renderLiveBar()`, termasuk mode onboarding "DESIGN NOT READY". Drawer assistant sebaiknya berupa mode/tab di kontainer ini, bukan elemen baru di `.layout-wrapper`.
 - **Konteks tab aktif**: `.sidebar-menu .tab.active` → `dataset.tab`. Tab gabungan dipetakan lewat `TAB_PANELS`.
 - **Konteks hasil cek**: `lastResults.*` dan `getWorkflowStepStatus(id)`. UC/DCR diambil dari angka yang sudah dihitung, bukan dihitung ulang (sama seperti `dcrOf()` di live bar).
-- **Auto Fill** sudah ada sebagai kartu `.gt-ai` di Tab 01, 02, dan 03. Tab 01/02 masih tampilan saja; Tab 03 (OCR datasheet & tabel kombinasi) sudah berfungsi.
+- **AI Data Extractor** (dulu "Auto Fill", dipindah ke paling atas panel input 30 Sep 2026) sudah ada sebagai kartu `.gt-ai` di Tab 01, 02, dan 03. Tab 01/02 masih tampilan saja; Tab 03 (OCR datasheet & tabel kombinasi) sudah berfungsi.
 - **Batasan wajib (AGENTS.md §8.3)**:
   - AI tidak boleh menebak atau menghasilkan angka hasil hitung.
   - "Explain / Show Governing Parameters" hanya membaca rumus dan nilai dari kode.

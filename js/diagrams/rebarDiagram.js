@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261014l';
+import { fmt } from '../core/format.js?v=20261014m';
 
 // Reinforcement drawings for Section 5 — pure SVG string builders (no DOM access): values in, markup out.
 //   pedestalSectionSVG      5A  pedestal cross-section with the bars of the P-M design
@@ -82,7 +82,7 @@ function legend(layers, x, y0) {
 
 // 5B plan. Bf, Lf in m; cc, db in mm; piles [{x,y}] in m (origin = cap centre); D pile diameter in m;
 // ped = { x, y, Bp, Lp } (m, mm) or null; layers = { xb, yb, xt, yt } each { n, label } or null (bars are spread at b / (n + 1)).
-export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers }) {
+export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers, name = 'Pile cap' }) {
   const W = 640, nLeg = Object.keys(LAYER).filter(k => layers[k]).length;
   const M = { l: 28, r: 28, t: 34, b: 30 + nLeg * 15 };
   const scale = Math.min((W - M.l - M.r) / Bf, 300 / Lf);
@@ -92,7 +92,7 @@ export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers }) {
   const toX = (x) => x0 + (x + Bf / 2) * scale, toY = (y) => y0 + (Lf / 2 - y) * scale;
   const ccPx = cc / 1000 * scale;
   // (the panel-title style upper-cases text: no unit letters or subscripts in the title — the dimensions carry the units)
-  let out = title(`Pile cap reinforcement — plan, cap Bf × Lf = ${fmt(Bf, 2)} × ${fmt(Lf, 2)}`);
+  let out = title(`${name} reinforcement — plan, ${name === 'Pile cap' ? 'cap' : 'footing'} Bf × Lf = ${fmt(Bf, 2)} × ${fmt(Lf, 2)}`);
   out += `<rect class="outline-footing" x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>`;
   // piles (dashed, under the bars) and pedestal
   const r = D > 0 ? Math.max(5, D / 2 * scale) : 9;
@@ -127,7 +127,7 @@ export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers }) {
 
 // 5B section (looking along z): the x-direction bars run in the plane of the drawing, the z-direction bars are cut and appear as dots.
 // Bf in m; t, cc, db in mm; piles [{x,y}] (m); D (m); ped = { x, Bp } (m, mm) or null.
-export function pileCapRebarSectionSVG({ Bf, t, cc, db, piles, D, ped, layers }) {
+export function pileCapRebarSectionSVG({ Bf, t, cc, db, piles, D, ped, layers, name = 'Pile cap' }) {
   const W = 640, nLeg = Object.keys(LAYER).filter(k => layers[k]).length;
   const sx = Math.min(500 / Bf, 260 / (t / 1000 * 2.6)); // px per m
   const pxmm = sx / 1000;
@@ -137,7 +137,7 @@ export function pileCapRebarSectionSVG({ Bf, t, cc, db, piles, D, ped, layers })
   const x0 = M.l + (W - M.l - M.r - w) / 2, y0 = M.t;
   const H = Math.round(y0 + h + M.b);
   const toX = (x) => x0 + (x + Bf / 2) * sx;
-  let out = title(`Pile cap reinforcement — section, D${fmt(db, 0)} bars`);
+  let out = title(`${name} reinforcement — section, D${fmt(db, 0)} bars`);
   // pile stubs below, pedestal stub above
   const pileX = [...new Set(piles.map(p => +p.x.toFixed(4)))];
   pileX.forEach(px => { const pw = D > 0 ? D * sx : 14; out += `<rect x="${(toX(px) - pw / 2).toFixed(1)}" y="${(y0 + h).toFixed(1)}" width="${pw.toFixed(1)}" height="${stubDown.toFixed(1)}" style="fill:none;stroke:var(--ink-soft);stroke-width:1.2;stroke-dasharray:4 3;"/>`; });

@@ -1,13 +1,13 @@
 # VALIDATION REPORT — Foundation Calculation Library
-Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 607 checks, 607 pass, 0 fail** (16 files, run 14 Oct 2026).
+Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
+**Total: 898 checks, 898 pass, 0 fail** (24 files, run 14 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
 | validation_shared_part1.mjs | bearing capacity, load combinations, stability (shallow + legacy pile) | 21 |
 | validation_shared_part2.mjs | pedestal P-M, soil correlations, settlement | 17 |
-| validation_shared_part3.mjs | anchor bolts, footing one-way / punching shear, pile cap moment, flexure | 16 |
-| validation_shared_part4.mjs | wind, seismic, settlement check | 15 |
+| validation_shared_part3.mjs | anchor bolts, footing one-way / punching shear, pile cap moment, flexure (A_s,min of a footing Table 8.6.1.1 / project 'beam' option, bar layout in 25 mm steps, bar count over the width between covers), pedestal shear with axial load (§22.5) and ρmin option | 42 |
+| validation_shared_part4.mjs | seismic, settlement check | 15 |
 | validation_cat_part5.mjs | static / rotating / reciprocating / pipe rack categories, foundation sizing, load kinds | 91 |
 | validation_cat_part6.mjs | skid-mounted category | 23 |
 | validation_import_part7.mjs | text / OCR import parsers (incl. Tab 02 foundation dimensions) | 62 |
@@ -16,11 +16,19 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part10.mjs | pile cap flexure, both axes, bottom + top | 25 |
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
-| validation_shared_part13.mjs | autoSizeFooting() (B = L and H) + autoSizeDepth() (B, L, H fixed, Df only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
-| validation_shared_part14.mjs | audit fixes 14 Oct 2026: anchor Vb (SI 0.6 / 3.7), one-way shear Vc (Table 22.5.5.1 cases, no 0.17 floor without Av,min), pedestal P-M (phi from net tensile strain, pure-tension end, envelope lookup) | 38 |
-| validation_shared_part15.mjs | spread footing from the soil pressure: contact pressure (full / partial / biaxial, signs, pedestal offset), flexure at the pedestal faces, one-way shear at d, punching — closed forms + brute-force grid | 41 |
-| validation_shared_part16.mjs | STAAD support reactions → FAIR load inputs (staadReactionToFair): worked example, +x / +z lateral loads, 300 random load sets vs vector statics, vertical rows, kinds | 27 |
-| **Total** | | **607** |
+| validation_shared_part13.mjs | shallow footing with an offset pedestal; biaxial kern / overturning in the governing UC | 22 |
+| validation_shared_part14.mjs | biaxial no-tension soil pressure (rigid footing); "no eccentricity limit" option; Meyerhof effective area | 43 |
+| validation_shared_part15.mjs | wind force generator, ASCE 7-22 Ch. 29 (Table 26.11-1 constants, Kz with zmin, qz without Kd, Ke) | 26 |
+| validation_shared_part16.mjs | shallow footing design actions from the net soil pressure: flexure at the pedestal faces, one-way shear at d, punching at d/2 | 33 |
+| validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift; two-way size effect λs | 31 |
+| validation_import_part18.mjs | STAAD import (.std load cases / REPEAT LOAD, .ANL support reactions, reaction → FAIR signs) + batch shallow-footing stability + footing and pedestal design + drawing + anchor-bolt top ties + pedestal auto-size + depth above the bottom mat (tools/staad-stability.mjs, tools/foundation-drawing.mjs) | 85 |
+| validation_shared_part19.mjs | anchor group ACI 318M-19 Ch. 17: forces on a rigid plate, breakout with edges and hef', pullout, side-face blowout, steel, shear, anchor reinforcement + l_dh | 19 |
+| validation_shared_part20.mjs | autoSizeFooting() (B = L and H) + autoSizeDepth() (B, L, H fixed, Df only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
+| validation_shared_part21.mjs | audit fixes 14 Oct 2026: anchor Vb (SI 0.6 / 3.7), one-way shear Vc (Table 22.5.5.1 cases, no 0.17 floor without Av,min), pedestal P-M (phi from net tensile strain, pure-tension end, envelope lookup) | 38 |
+| validation_shared_part22.mjs | independent spread-footing reference (spreadFooting.js): contact pressure (full / partial / biaxial), flexure at the pedestal faces, one-way shear at d, punching — closed forms + brute-force grid | 41 |
+| validation_shared_part23.mjs | STAAD support reactions → FAIR load inputs (staadReactionToFair): worked example, +x / +z lateral loads, 300 random load sets vs vector statics, vertical rows, kinds | 27 |
+| validation_shared_part24.mjs | cross-check footingDesign.js (app) vs spreadFooting.js (independent Newton-solver reference): contact plane, flexure at the pedestal faces, one-way shear, punching — 600 random cases, 449 with partial contact, agreement ≤ 1e-8 | 6 |
+| **Total** | | **898** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -37,7 +45,39 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
 - footing: one-way vc = 0.17λ√fc·b·d, two-way bo interior, pile cap moment, flexure As,min.
 - soil: Cn = √(100/σv) capped, Peck φ, Stroud cu, Bowles Es, γsub = γsat − 9.81.
 - settlement: Se = qB(1 − ν²)/Es·If·0.8, Sc = H/(1 + e0)·C·log10 (NC + OC branches).
-- wind (force method) and seismic (Fa/Fv, SDS/SD1, Cs) generators.
+- seismic (Fa/Fv, SDS/SD1, Cs) generator. (Wind was listed here but had no vector; it is covered by part15 since 9 Oct 2026.)
+
+### part17 — footing punching at an edge / corner (footingDesign.js)
+- Interior section reproduces eccentricPunchingStress() exactly (v<sub>u</sub>, J<sub>c</sub>, no moment shift).
+- Edge (pedestal 0.5 at x 0.7 on a 2 × 2 footing, d 0.3): b<sub>o</sub> 2.2, x̄ 0.522727, J<sub>z</sub> 0.0390091, J<sub>x</sub> 0.0818 m⁴,
+  V<sub>u</sub> 344, M<sub>z,c</sub> = V<sub>u</sub>(x<sub>p</sub> − x̄) = 60.982, γ<sub>v</sub> 0.384088, v<sub>u</sub> 0.807783 MPa; v<sub>c</sub> (a) governs, (c) 2.7690.
+- Corner (0.7, 0.7): b<sub>o</sub> 1.4, centroid 0.475, J<sub>z</sub> 0.0230125, V<sub>u</sub> 351, v<sub>u</sub> 1.316171 MPa, (c) 2.8575.
+- Limits: section spanning two opposite edges and pedestal outside the footing are invalid; face exactly d/2 from the edge -> edge.
+- Size effect λs = √(2/(1 + 0.004d)) ≤ 1 in all three v<sub>c</sub> expressions (Table 22.6.5.2): d 300 -> 0.953463, edge v<sub>c</sub> (a)
+  1.723369, (c) 2.640125, corner (c) 2.724564; twoWayShearCheck() d 435 -> 0.854358, (a) 1.409690, (b) 2.178612, (c) 2.358667;
+  λs = 1 for d ≤ 250. Browser (d 341, λs 0.920): punching UC manual 0.289 -> 0.314, pile 0.037 -> 0.041, soil 0.078 -> 0.085.
+- Browser: default footing interior result unchanged (UC 0.078); Off X 0.5 -> edge b<sub>o</sub> 4,582 mm, (0.5, −0.5) -> corner 2,991 mm.
+
+### part18 — STAAD import and batch stability (import/staadOutput.js, tools/staad-stability.mjs)
+Parser vectors on a synthetic .std / .ANL (continuation lines, nested REPEAT LOAD, LOAD COMB, page breaks in the reaction table, units). Reaction signs from the statics of a fixed column base (load F at height h: FX = −F, MZ = +F·h; FZ = −F, MX = −F·h) against loadTypeVector()'s convention. Footing self-weight and Δh by hand (pedestal and block), P = R_Y + kD·ΔW with kD from the dead-case factor, Mz + Fx·Δh, FS sliding μP/H, overturning P·(B/2)/Mz; net uplift → not valid. q_a from soil with the Meyerhof (1963) formula against an independent hand calc (shape / depth factors, Nγ = (Nq − 1)tan1.4φ); Meyerhof effective area beyond the kern: B′ = B − 2e_x, L′ = L − 2e_z, q′ = P/(B′L′), q′_a recomputed for B′ × L′; full contact keeps the rigid formula. Bearing FS permanent / temporary (q_a,temp = q_u/FS_temp); auto-size returns the first passing square size and every smaller trial fails. Project file: "extends" deep merge, presets, locked pedestal depth Dp (Df = Dp + Hf, Δh = Gp + Dp + grout + Hf). Static uplift classification (rigid footing, no tension): none inside the kern (6ex/B + 6ez/L ≤ 1), partial outside it, net uplift P ≤ 0, base separation e ≥ B/2. Optional minimum contact area: UC = minContact / contact ratio (statics), governs below the limit. Footing thickness and reinforcement from LRFD reactions (footingDesignCheck, same lib functions as 5B shallow), concentric hand calc: net pressure w = kD·(Wf/A + Ws/(A − Ap)), Mu = qn·L·a²/2 at the pedestal face, As,min = 0.0018·b·h (fy 420, Table 8.6.1.1) or the project 'beam' option max(0.0018bh, 1.4bd/fy), bars at a spacing rounded down to 25 mm (barLayout), one-way Vu = qn·L·(a − d) and φVc (Eq. 22.5.5.1(c), λs, ρw of the bottom bars), punching b_o = 4(c + d), Vu = qn·(A − (c + d)²), v = Vu/(b_o·d), φvc (Table 22.6.5.2 with λs); d < 150 mm fails. Pedestal from STAAD reactions: actions at the base P_u = R_Y + kD·W_ped, M = M_top + H·H_p, d′ = cover + tie + d_b/2, ρ ≥ 1 %, ties at min(16d_b, 48d_tie, least dimension) rounded to 25 mm. pedestalShearCheck (part3): V_c = [0.66ρ^(1/3)√f'c + N_u/(6A_g)]·b_w·d (Table 22.5.5.1 c), tension reduces V_c (≥ 0), ties s = A_v·f_yt·d/V_s ≤ d/2, minimum ties A_v/s ≥ max(0.062√f'c, 0.35)·b_w/f_yt. Anchor bolts in the top of the pedestal (§10.7.6.1.6): 3 × D10 / 2 × D13 within 125 mm, bolts inside the ties (bolt edge vs tie inner face), bolt / corner bar clear distance √2·(bar − bolt offset) − (d_bolt + d_b)/2.
+
+### part16 — shallow footing design actions (footingDesign.js)
+- Uniform pressure (B = L = 2, P = 400, pedestal 0.5, d 0.3): M = qLc²/2 = 56.25, V = 90, punching 336; net with w = 20 kPa: 45 / 72 / 268.8.
+- Trapezoidal (M<sub>z</sub> 40 → q = 100 + 30x): face moments 68.906 / 43.594 by direct integration; sign convention
+  (M<sub>z</sub> > 0 compresses +x, M<sub>x</sub> > 0 compresses −z) in all four directions.
+- Triangular partial contact (q<sub>max</sub> = 2P/[3L(B/2 − e)] = 400): face moments 93.75 / 0.694, net hogging on the uplift
+  side 2.118, punching 214.667. Offset pedestal (uniform) and perimeter-at-edge rejection.
+- Biaxial partial contact (contact 71%): ∫q = P and first moments = P·x<sub>R</sub>, P·z<sub>R</sub>; flexure (4 faces), one-way and punching
+  against an independent 800 × 800 midpoint grid (agreement ~1e-7).
+- UI wiring checked in a headless browser: default data LC206 (P<sub>u</sub> 360.1, M<sub>z</sub> 166.5, partial contact) hand calc
+  q<sub>max</sub> 135.61, V<sub>u</sub> = 72.13 − 13.75 = 58.38 kN, M<sub>u</sub> = 49.14 − 9.71 = 39.43 kN·m (app 135.6 / 58.4 / 39.4); pile mode output identical
+  to the previous commit apart from wording.
+
+### part15 — wind generator (ASCE 7-22)
+- Table 26.11-1 constants B/C/D (α, z<sub>g</sub>, z<sub>min</sub>, ft → m), K<sub>z</sub> = 2.41(z/z<sub>g</sub>)<sup>2/α</sup> with z raised to z<sub>min</sub>,
+  q<sub>z</sub> = 0.613K<sub>z</sub>K<sub>zt</sub>K<sub>e</sub>V² (Eq. 26.10-1, no K<sub>d</sub>), F = q<sub>z</sub>K<sub>d</sub>GC<sub>f</sub>A<sub>f</sub> (Eq. 29.4-1), K<sub>e</sub> = e<sup>−0.000119z<sub>e</sub></sup>.
+- Hand-calc worked in US units (ft, mph, psf) — default popup data: q<sub>z</sub> 1117.45 Pa, F 8.2065 kN (ASCE 7-16 code: 8.19 kN);
+  Exposure B below z<sub>min</sub>, K<sub>zt</sub> 1.1, z<sub>e</sub> 500 m: F 6.4102 kN. Table 26.10-1 spot values for C (0.85 / 0.98 / 1.13).
 
 ### part5–6 — equipment categories and sizing
 - static / rotating / reciprocating / pipe rack / skid: lateral M = F·h, unbalance m·e·ω², fn = (1/2π)√(k/m),
@@ -125,6 +165,27 @@ fails a check, the found size passes all. Depth-only mode in the browser (defaul
 - foundationGeometryCheck: Bf, Lf, Hf > 0; Df ≥ Hf; pedestal inside the footing, |OffX| + Bp/2 ≤ Bf/2 and |OffZ| + Lp/2 ≤ Lf/2
   (flush edge allowed; 2.4 m footing, Bp 1.25, OffX −0.6 → 0.025 m out); pile embedment h < Hf (h = Hf fails);
   pedestal / pile checks skipped when not applicable.
+
+### part13 — offset pedestal on a shallow footing; biaxial checks govern (9 Oct 2026)
+- pedestalOffsetMoments (statics about the footing centroid): no offset → 0; P at +x → ΔMz = +P·OffX, P at +z → ΔMx = −P·OffZ
+  (app sign convention); backfill centroid z_s = −OffZ·Ap/(Af − Ap); kD scales the self-weight only; a uniform-weight
+  pedestal + soil prism over the whole footing gives zero net moment.
+- Pipe support, STAAD node 1, LC 115 (kD = 0.6 − 0.14·0.623), footing 1.30 × 1.40 × 0.25, Df 0.90, pedestal 0.30 × 0.30,
+  OffZ 0.30: ΔW = 33.21 kN, Δh = 1.200 m, ΔMx,off = −0.340, P = 17.65 kN, Mx = −1.267, Mz = 2.545 kN·m, biaxial kern
+  (2.545/17.65/1.3 + 1.267/17.65/1.4)·6 = 0.973, biaxial OT UC 1.5/(17.65·0.65/2.545) = 0.333.
+- combineFootingChecks: B = L = 1.2, P = 10, Mx = Mz = 1.1 — resultant e = 0.156 ≤ B/6 (uniaxial passes, UC 0.778) but the
+  kern diamond gives 1.100 → combined result fails, governed by the biaxial kern; all-pass case; invalid result passed through.
+
+### part14 — biaxial soil pressure without tension; no eccentricity limit (9 Oct 2026)
+- biaxialSoilPressure: full contact q = (P/BL)(1 ± 6ex/B ± 6ez/L) (2.0 × 3.0, P 600, ex 0.10, ez 0.15 → 160 / 40 kPa; kern line
+  → 2P/A); uniaxial beyond the kern q_max = 2P/[3L(B/2 − e)] (266.667, contact 75 %; along z 333.333); corner-triangle closed form
+  q_max = 6P/(s·t), s = 4(B/2 − ex), t = 4(L/2 − ez) (416.667, contact 18 %; rectangular 1071.43); four general partial-contact
+  cases checked by an independent 600 × 600 grid integration of the returned plane (ΣV, ΣM about both axes, contact area);
+  continuity at the kern line; resultant outside the footing / P ≤ 0 → invalid.
+- combineFootingChecks with { eccLimit: false, ucBearingBiaxial }: eccentricity checks left out, biaxial bearing added; the call
+  without options is unchanged.
+- meyerhofEffectiveArea: B' = B − 2ex, L' = L − 2ez, q' = P/(B'L') (2.0 × 3.0, P 600, ex 0.5, ez 0.3 → 1.0 × 2.4, 250 kPa); shorter
+  effective side taken as the width; invalid at ex ≥ B/2; q_u with B' × L' (Terzaghi rectangular, DCPT-01 soil) = hand calc; q_a(B', L') < q_a(B, L).
 
 ## How to re-run
 ```

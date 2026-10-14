@@ -14,13 +14,18 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `core/dom.js` | `num`, `selectRadio`, `getRadioVal`, `escapeHtml`, `openModal`/`closeModal`, `wireDecimalAutoFormat` |
 | `core/worksheet.js` | `comboLabel`, `dlWorksheetItem`, `dlWorksheetTotal` (unused), `verdictHTML`, `efficiencyBadge` |
 | `core/state.js` | Shared state — see below |
-| `diagrams/*.js` | Pure SVG builders: foundation, foundSize (maintained by `patch.js`), loadTransfer, pile, anchor, pm |
+| `diagrams/*.js` | Pure SVG builders: foundation, foundSize (maintained by `patch.js`), loadTransfer, pile, anchor, pm, equipment (00 schematic), foundIso (02 isometric 2.5D) |
 | `tabs/general.js` | 01 — design standards register, general summary |
+| `tabs/generalFocus.js` | 01 — Focus Canvas view (`#focus-general`): material / unit-weight / q_a tiles, standards list, geotechnical criteria; replaces the A4 sheet only in Focus Canvas mode |
 | `tabs/foundSize.js` | 02 — `calcFoundSize` |
+| `tabs/shearFocus.js` | 5B — Focus Canvas of the shear checks (`#focus-capcheck`): two stacked canvases, 6.1 one-way and 6.2 punching, each with its own Plan / Elevation / Isometric 2.5D switcher (`state.shViewOw` / `state.shViewTw`), D/C badge and tiles, hover popover on `[data-tip]`; draws `lastResults.oneway.viz` / `.twoway.viz` (set in shear.js) with `diagrams/shearFocusDiagram.js` |
+| `tabs/foundSizeFocus.js` | 02 — Focus Canvas view (`#focus-foundsize`): tiles, CAD viewport (Plan / Elevation = crops of the report diagram, Isometric 2.5D; view in `state.fzView`), self-weight, geometry checks; replaces the A4 sheet only in Focus Canvas mode |
 | `tabs/loading.js` | 03 — load types / values, live, equipment, wind & seismic direct entry, design load summary |
 | `tabs/combos.js` | load combination tables, computed summary, standard LC101-126 set |
+| `tabs/loadingFocus.js` | 03 — Focus Canvas view (`#focus-loading`, filled by `renderLcSummary()`): ASD envelope tiles, load types, load-transfer diagram, combinations at the bottom of the footing; replaces `.ld-page` in Focus Canvas mode unless an OCR / paste review is open |
 | `tabs/foundation.js` | 4A — `calcFoundation` |
 | `tabs/pile.js` | 4B — pile table, `calcPile` |
+| `tabs/stabilityFocus.js` | 4A / 4B — Focus Canvas views (`#focus-foundation`, `#focus-pile`): check tiles with governing UC, diagram, UC / DCR table per combination; replace the A4 sheet only in Focus Canvas mode |
 | `tabs/rebar.js` | 5A/5B — `calcRebar` |
 | `tabs/shear.js` | 5B — `calcOneWay`, `calcTwoWay` |
 | `tabs/bearing.js`, `tabs/settlement.js` | 08 / 08B |
@@ -32,6 +37,11 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `workflow/setup.js` | 00 — equipment setup, foundation-tab visibility, load input mode |
 | `workflow/status.js` | workflow step status, live design-status bar |
 | `workflow/assistant.js` | right-panel assistant drawer |
+| `workflow/project.js` | project file `*.fair.json` — `collectProject()` / `applyProjectData()` (every input / select / textarea by id, radio groups, load types, combinations, piles, bolts, standards, report blocks, wind / seismic, logos), Save / Save As (File System Access API, download fallback), Open; wired in `app.js` (header buttons, Ctrl+S / Ctrl+Shift+S / Ctrl+O, unsaved marker, `window.fairProject.collect()` / `.load()`) |
+| `workflow/scope.js` | Scope of Work (right panel on 00): `inScope('anchor'|'bearing')` — out of scope = status `NA`, left out of the governing UC; bearing out of scope = q_a given (`bc-qa-given`), read via `allowableBearing()` in `tabs/bearing.js` |
+| `ui/theme.js` | light / dark toggle in the header (`localStorage` `fair_fdn_theme`; applied before paint by an inline script in `<head>`) |
+| `ui/sidebar.js` | collapsible input column — `.layout-wrapper[data-sidebar]` expanded / compact / collapsed, saved in `localStorage` (`fair_fdn_sidebar_state`); sticky Previous / Next section bar at the bottom of the main preview panel (ribbon order, hidden tabs skipped); right status panel hide / show (`.layout-wrapper[data-rpanel]`, `localStorage` `fair_fdn_rightpanel_state`) |
+| `ui/viewMode.js` | Focus Canvas / Report Preview switch on every `.results` / `.ld-results` (`data-view`), governing status badge (values from `getGoverningStatus()` in `workflow/status.js`, never recomputed) |
 
 ## Rules when editing
 - **Modules contain declarations only** (functions, pure consts). Anything that runs at load — `addEventListener`,

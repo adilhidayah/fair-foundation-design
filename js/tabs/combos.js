@@ -1,10 +1,13 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, staadReactionToFair, stdComboVector } from '../../lib/foundation/index.js?v=20261014l';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014l';
-import { fmt } from '../core/format.js?v=20261014l';
-import { comboState, state } from '../core/state.js?v=20261014l';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261014l';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, staadReactionToFair, stdComboVector } from '../../lib/foundation/index.js?v=20261014m';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014m';
+import { fmt } from '../core/format.js?v=20261014m';
+import { comboState, state } from '../core/state.js?v=20261014m';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261014m';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261014m';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261014m';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20261014m';
 
 // "STAAD support reactions (Y up)" applies to the typed Load Values of the Support Reaction mode only (the manual-mode worksheets write the
 // FAIR convention). The conversion lives in staadReactionToFair() (lib) and is applied here, at the one place the values are read.
@@ -96,6 +99,11 @@ export function renderLcSummary() {
   const footBase = buildStdComboBase();
   topEl.innerHTML = untypedLoadTypesWarning() + resultTable('lc', footBase, 'Load Combination Result at top of pedestal (ASD) — For Anchor Bolt Calculation', 'For Anchor Bolt Calculation', false);
   botEl.innerHTML = resultTable('lc', footBase, 'Load Combination Result at bottom of footing (ASD) — For Foundation Stability Calculation', 'For Foundation Stability Calculation', true);
+  // Shallow footing with an offset pedestal: 4A adds the offset moments to these values (pedestalOffsetMoments()).
+  const offX = num('fs-OffX'), offZ = num('fs-OffZ');
+  if (getRadioVal('fs-support') !== 'pile' && getRadioVal('fs-type') === 'pedestal' && (Math.abs(offX) > 1e-9 || Math.abs(offZ) > 1e-9)) {
+    botEl.innerHTML += `<div class="note">Moments about the footing <em>centre line under the pedestal</em>. The pedestal is offset from the footing centre (Off<sub>X</sub> = ${fmt(offX,2)} m, Off<sub>Z</sub> = ${fmt(offZ,2)} m, Section 02): Section 04 adds the moments of the offset loads and self-weight about the footing centroid to these values — see the pedestal-offset table in 4.1.</div>`;
+  }
   // LRFD results (strength design): the pedestal base carries H × pedestal height and the pedestal weight (5A pedestal design);
   // the bottom of the footing carries the whole footing transfer (5B pile cap flexure / shear).
   const lrfdPedEl = document.getElementById('lrfd-summary-ped'), lrfdBotEl = document.getElementById('lrfd-summary-bottom');
@@ -111,6 +119,24 @@ export function renderLcSummary() {
     : '<div class="note">No LRFD combinations — load them with "Edit Load Combinations (LRFD)".</div>';
   renderComboPrintTable();
   renderLrfdPrintTable();
+  // Focus Canvas view of the same vectors (js/tabs/loadingFocus.js) — shown instead of the A4 sheet in that mode.
+  const focusEl = document.getElementById('focus-loading');
+  if (focusEl) {
+    const isPile = getRadioVal('fs-support') === 'pile';
+    focusEl.innerHTML = loadingFocusHTML({
+      modeLabel: getRadioVal('ld-mode') === 'reaction' ? 'Support reaction (structural model)' : 'Manual input (from components)',
+      status: getWorkflowStepStatus('03'), nTypes: state.lcLoadTypes.length, nAsd: comboState.lc.length, nLrfd: comboState.lrfd.length,
+      dW: num('lc-dW'), dh: num('lc-dh'), untyped: state.lastUntypedLoadTypes, cWord: isPile ? 'pile cap' : 'footing',
+      types: state.lcLoadTypes.map(lt => ({ code: lt.code, label: lt.label, kindLabel: LOAD_KINDS[lt.kind] ? LOAD_KINDS[lt.kind].label : '—', v: footBase[lt.code] || null })),
+      // Bottom of footing = top vector + the transfer terms, H / M as the resultants of the biaxial components (as 4A / 4B read them).
+      rows: comboState.lc.map(combo => {
+        const v = stdComboVector(combo.f, footBase);
+        return { lc: combo.lc || '', name: combo.name, P: v.P + v.dP, H: Math.hypot(v.Fx, v.Fz), M: Math.hypot(v.Mx + v.dMx, v.Mz + v.dMz) };
+      }),
+      // Own marker ids: the report copy of this diagram is hidden in this mode (a marker in a hidden SVG does not render elsewhere).
+      svg: loadTransferDiagramSVG(getRadioVal('fs-type') === 'pedestal', isPile, num('lc-dh'), num('lc-dW')).replaceAll('ltr-arrow', 'fz3-arrow')
+    });
+  }
 }
 // Read-only print/preview version of the "Edit Load Combinations" table (#lc-combo-table) — same
 // comboState.lc / state.lcLoadTypes data, formatted for "3.2 Load Combination" in the report instead of an
