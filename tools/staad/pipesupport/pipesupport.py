@@ -286,9 +286,9 @@ def buat_tipe(tp, um, folder):
     fric = []
     for sg in (1, -1):
         b_ = baris_jl(jl["FZ"] + koreksi_tiang(jl["FZ"]), sg)
-        if b_: fric.append((ref("Live", f"FRIKSI {'+' if sg > 0 else '-'}Z", ["JOINT LOAD"] + b_), f"FF{'+' if sg > 0 else '-'}Z"))
+        if b_: fric.append((ref("Live", f"FRIKSI {'+' if sg > 0 else '-'}Z", ["JOINT LOAD"] + b_), f"T({'+' if sg > 0 else '-'}Z)"))
         g_ = baris_jl(jl["FX"] + koreksi_tiang(jl["FX"]), sg)
-        if jl["FX"]: fric.append((ref("Live", f"GUIDE {'+' if sg > 0 else '-'}X", ["JOINT LOAD"] + g_), f"FG{'+' if sg > 0 else '-'}X"))
+        if jl["FX"]: fric.append((ref("Live", f"GUIDE {'+' if sg > 0 else '-'}X", ["JOINT LOAD"] + g_), f"T({'+' if sg > 0 else '-'}X)"))
     # angin pada struktur (drag profil) + pipa
     Cfs = float(ang.get("Cf_struktur", 2.0))
     angin = []
@@ -307,7 +307,7 @@ def buat_tipe(tp, um, folder):
             isi += ["MEMBER LOAD"] + ml
             if ax == "X" and jl["WX"]:
                 isi += ["JOINT LOAD"] + baris_jl(jl["WX"] + koreksi_tiang(jl["WX"]), sg)
-            angin.append((ref("Wind", f"ANGIN {'+' if sg > 0 else '-'}{ax}", isi), f"W{'+' if sg > 0 else '-'}{ax}"))
+            angin.append((ref("Wind", f"ANGIN {'+' if sg > 0 else '-'}{ax}", isi), f"{'+' if sg > 0 else '-'}W{ax}"))
     lap += [f"Angin: V = {V} m/s, eksposur {eks}, Kd {Kd}, G {Gf}, Kzt {Kzt}, Ke {Ke:.3f}; qz di sumbu lengan atas = "
             f"{q(info[0]['y']):.3f} kN/m²" + (f" (q min {q_min} kPa)" if q_min else "") + (f", tekanan minimum {p_min} kPa x Af (ASCE 7-22 29.7)" if p_min else "") + f". Drag profil Cf = {Cfs} (lebar tiang {pt['b']:.0f} mm arah X, {pt['h']:.0f} mm arah Z; "
             "sisi lengan arah Z). Angin arah Z (sejajar pipa) tidak membebani pipa.", ""]
@@ -346,94 +346,109 @@ def buat_tipe(tp, um, folder):
             "(gaya dibangkitkan STAAD) - lihat cek torsi.", ""]
 
     # ---- primer & kombinasi
-    primer = [(1, "Seismic-H", "EX", "IBC LOAD X 1"), (2, "Seismic-H", "EZ", "IBC LOAD Z 1")]
+    primer = [(1, "Seismic-H", "EQX", "IBC LOAD X 1"), (2, "Seismic-H", "EQZ", "IBC LOAD Z 1")]
     EX, EZ = 1, 2
     D, PE, PO, PT = 3, 4, 5, 6
-    primer += [(D, "Dead", "D STRUKTUR", [(sw, 1)]), (PE, "Dead", "PIPA KOSONG Pe", [(rpe, 1)]),
-               (PO, "Dead", "PIPA OPERASI Po", [(rpe, 1), (rpc, 1)]), (PT, "Dead", "PIPA HYDROTEST Pt", [(rpe, 1), (rpt, 1)])]
+    primer += [(D, "Dead", "D", [(sw, 1)]), (PE, "Dead", "P(E)", [(rpe, 1)]),
+               (PO, "Dead", "P(O)", [(rpe, 1), (rpc, 1)]), (PT, "Dead", "P(T)", [(rpe, 1), (rpt, 1)])]
     no = 7; FF, W = [], []
     for r_, j_ in fric: primer.append((no, "Live", j_, [(r_, 1)])); FF.append((no, j_)); no += 1
     for r_, j_ in angin: primer.append((no, "Wind", j_, [(r_, 1)])); W.append((no, j_)); no += 1
+    # Judul kombinasi mengikuti notasi laporan (Tabel 6-4 / 6-5): D, P(E), P(O), P(T), T, WX/WZ, EQX/EQZ.
+    # Tanda arah ditulis eksplisit (- 0.6WX, -EQX ...); faktor tidak bergantung pada judul.
+    def tambah(dasar, f, j):
+        """dasar ± f·j untuk beban berlabel bertanda ('+WX' / '-WZ'); faktor 1 tidak ditulis."""
+        return f"{dasar} {j[0]} {'' if abs(f - 1) < 1e-9 else f3(f)}{j[1:]}"
     def eset(f):
         out = []
         for u, k, nu, nk in ((EX, EZ, "X", "Z"), (EZ, EX, "Z", "X")):
             for s1 in (1, -1):
                 for s2 in (1, -1):
-                    out.append((f"{f3(f * rho)}E{nu}{'+' if s1 > 0 else '-'}{f3(0.3 * f * rho)}E{nk}{'+' if s2 > 0 else '-'}",
+                    if nu == "X": t_ = f"{'' if s1 > 0 else '-'}EQX {'+' if s2 > 0 else '-'} 0.3EQZ"
+                    else: t_ = f"{'' if s2 > 0 else '-'}0.3EQX {'+' if s1 > 0 else '-'} EQZ"
+                    out.append((t_ if abs(f * rho - 1) < 1e-9 else f"{f3(f * rho)}({t_})",
                                 [(u, s1 * f * rho), (k, s2 * 0.3 * f * rho)]))
         return out
+    def plus(dasar, t_): return f"{dasar} - {t_[1:]}" if t_.startswith("-") else f"{dasar} + {t_}"
     kt = float(um.get("kombinasi", {}).get("faktor_angin_hydrotest", 0))
     hydro = bool(um.get("kombinasi", {}).get("hydrotest", True))   # False bila Test = Operating (kombinasi Pt identik)
-    asd = [("D+Po", [(D, 1), (PO, 1)])] + ([("D+Pt", [(D, 1), (PT, 1)])] if hydro else [])
-    asd += [(f"D+Po+{j}", [(D, 1), (PO, 1), (n_, 1)]) for n_, j in FF]
-    asd += [(f"D+Po+0.6{j}", [(D, 1), (PO, 1), (n_, 0.6)]) for n_, j in W]
-    if kt and hydro: asd += [(f"D+Pt+{f3(0.6 * kt)}{j}", [(D, 1), (PT, 1), (n_, 0.6 * kt)]) for n_, j in W]
-    asd += [(f"0.6(D+Pe)+0.6{j}", [(D, 0.6), (PE, 0.6), (n_, 0.6)]) for n_, j in W]
-    asd += [(f"(1+0.14SDS)(D+Po)+{j}", [(D, 1 + 0.14 * SDS), (PO, 1 + 0.14 * SDS)] + e) for j, e in eset(0.7)]
-    asd += [(f"(0.6-0.14SDS)(D+Pe)+{j}", [(D, 0.6 - 0.14 * SDS), (PE, 0.6 - 0.14 * SDS)] + e) for j, e in eset(0.7)]
-    lrfd = [("1.4(D+Po)", [(D, 1.4), (PO, 1.4)])] + ([("1.4(D+Pt)", [(D, 1.4), (PT, 1.4)])] if hydro else [])
-    lrfd += [(f"1.4(D+Po+{j})", [(D, 1.4), (PO, 1.4), (n_, 1.4)]) for n_, j in FF]
-    lrfd += [(f"1.2(D+Po)+1.0{j}", [(D, 1.2), (PO, 1.2), (n_, 1.0)]) for n_, j in W]
-    if kt and hydro: lrfd += [(f"1.2(D+Pt)+{f3(kt)}{j}", [(D, 1.2), (PT, 1.2), (n_, kt)]) for n_, j in W]
-    lrfd += [(f"0.9(D+Pe)+1.0{j}", [(D, 0.9), (PE, 0.9), (n_, 1.0)]) for n_, j in W]
-    lrfd += [(f"(1.2+0.2SDS)(D+Po)+{j}", [(D, 1.2 + 0.2 * SDS), (PO, 1.2 + 0.2 * SDS)] + e) for j, e in eset(1.0)]
-    lrfd += [(f"(0.9-0.2SDS)(D+Pe)+{j}", [(D, 0.9 - 0.2 * SDS), (PE, 0.9 - 0.2 * SDS)] + e) for j, e in eset(1.0)]
+    G_E, G_O, G_T = "[D + P(E)]", "[D + P(O)]", "[D + P(T)]"
+    asd = [("D + P(O)", [(D, 1), (PO, 1)])] + ([("D + P(T)", [(D, 1), (PT, 1)])] if hydro else [])
+    asd += [(f"D + P(O) + {j}", [(D, 1), (PO, 1), (n_, 1)]) for n_, j in FF]
+    asd += [(tambah("D + P(O)", 0.6, j), [(D, 1), (PO, 1), (n_, 0.6)]) for n_, j in W]
+    if kt and hydro: asd += [(tambah("D + P(T)", 0.6 * kt, j), [(D, 1), (PT, 1), (n_, 0.6 * kt)]) for n_, j in W]
+    asd += [(tambah("0.6" + G_E, 0.6, j), [(D, 0.6), (PE, 0.6), (n_, 0.6)]) for n_, j in W]
+    asd += [(plus("(1 + 0.14SDS)" + G_O, j), [(D, 1 + 0.14 * SDS), (PO, 1 + 0.14 * SDS)] + e) for j, e in eset(0.7)]
+    asd += [(plus("(0.6 - 0.14SDS)" + G_E, j), [(D, 0.6 - 0.14 * SDS), (PE, 0.6 - 0.14 * SDS)] + e) for j, e in eset(0.7)]
+    lrfd = [("1.4" + G_O, [(D, 1.4), (PO, 1.4)])] + ([("1.4" + G_T, [(D, 1.4), (PT, 1.4)])] if hydro else [])
+    lrfd += [(f"1.4[D + P(O) + {j}]", [(D, 1.4), (PO, 1.4), (n_, 1.4)]) for n_, j in FF]
+    lrfd += [(tambah("1.2" + G_O, 1.0, j), [(D, 1.2), (PO, 1.2), (n_, 1.0)]) for n_, j in W]
+    if kt and hydro: lrfd += [(tambah("1.2" + G_T, kt, j), [(D, 1.2), (PT, 1.2), (n_, kt)]) for n_, j in W]
+    lrfd += [(tambah("0.9" + G_E, 1.0, j), [(D, 0.9), (PE, 0.9), (n_, 1.0)]) for n_, j in W]
+    lrfd += [(plus("(1.2 + 0.2SDS)" + G_O, j), [(D, 1.2 + 0.2 * SDS), (PO, 1.2 + 0.2 * SDS)] + e) for j, e in eset(1.0)]
+    lrfd += [(plus("(0.9 - 0.2SDS)" + G_E, j), [(D, 0.9 - 0.2 * SDS), (PE, 0.9 - 0.2 * SDS)] + e) for j, e in eset(1.0)]
     mode_k = str(um.get("kombinasi", {}).get("mode", "")).lower()
+    PTX = PO
     if mode_k == "design_basis":
         # Design basis proyek (ASCE 7-22, Tabel 15-2 ASD / 15-3 LRFD): L = Lr = I = SP = Vh = E(.) = 0,
         # T = friksi pipa (±Z), P(T) = P(O) bila hydrotest False. LRFD operating gempa dikoreksi ke P(O)+T
         # dan ditambah (1.2+0.2SDS)[D+P(O)+T]+EQ (keputusan user 13-Okt-2026).
-        TT = [(n_, "T" + j[2:]) for n_, j in FF] or [(None, "")]
+        TT = FF or [(None, "")]
         def tt(n_, f): return [(n_, f)] if n_ else []
-        PTX, lbt = (PT, "Pt") if hydro else (PO, "Pt(=Po)")
-        asd = [("D+Pe", [(D, 1), (PE, 1)])]
-        asd += [(f"D+Pe+0.6{j}", [(D, 1), (PE, 1), (n_, 0.6)]) for n_, j in W]
-        asd += [(f"0.6(D+Pe)+0.6{j}", [(D, 0.6), (PE, 0.6), (n_, 0.6)]) for n_, j in W]
-        asd += [(f"(1+0.14SDS)(D+Pe)+{j}", [(D, 1 + 0.14 * SDS), (PE, 1 + 0.14 * SDS)] + e) for j, e in eset(0.7)]
-        asd += [(f"(1+0.105SDS)(D+Pe)+{j}", [(D, 1 + 0.105 * SDS), (PE, 1 + 0.105 * SDS)] + e) for j, e in eset(0.525)]
-        asd += [(f"(0.6-0.14SDS)(D+Pe)+{j}", [(D, 0.6 - 0.14 * SDS), (PE, 0.6 - 0.14 * SDS)] + e) for j, e in eset(0.7)]
-        asd += [(f"D+Po+{t}", [(D, 1), (PO, 1)] + tt(nt, 1)) for nt, t in TT]
-        asd += [(f"D+Po+{t}+0.45{j}", [(D, 1), (PO, 1)] + tt(nt, 1) + [(n_, 0.45)]) for nt, t in TT for n_, j in W]
-        asd += [(f"(1+0.105SDS)(D+Po)+{t}+{j}", [(D, 1 + 0.105 * SDS), (PO, 1 + 0.105 * SDS)] + tt(nt, 1) + e)
+        def gT(t): return f"[D + P(O) + {t}]" if t else G_O          # [D + P(O) + T]
+        def dT(t): return f"D + P(O) + {t}" if t else "D + P(O)"
+        PTX = PT if hydro else PO                                      # judul tetap P(T) (laporan: P(T) = P(O))
+        asd = [("D + P(E)", [(D, 1), (PE, 1)])]
+        asd += [(tambah("D + P(E)", 0.6, j), [(D, 1), (PE, 1), (n_, 0.6)]) for n_, j in W]
+        asd += [(tambah("0.6" + G_E, 0.6, j), [(D, 0.6), (PE, 0.6), (n_, 0.6)]) for n_, j in W]
+        asd += [(plus("(1 + 0.14SDS)" + G_E, j), [(D, 1 + 0.14 * SDS), (PE, 1 + 0.14 * SDS)] + e) for j, e in eset(0.7)]
+        asd += [(plus("(1 + 0.105SDS)" + G_E, j), [(D, 1 + 0.105 * SDS), (PE, 1 + 0.105 * SDS)] + e) for j, e in eset(0.525)]
+        asd += [(plus("(0.6 - 0.14SDS)" + G_E, j), [(D, 0.6 - 0.14 * SDS), (PE, 0.6 - 0.14 * SDS)] + e) for j, e in eset(0.7)]
+        asd += [(dT(t), [(D, 1), (PO, 1)] + tt(nt, 1)) for nt, t in TT]
+        asd += [(tambah(dT(t), 0.45, j), [(D, 1), (PO, 1)] + tt(nt, 1) + [(n_, 0.45)]) for nt, t in TT for n_, j in W]
+        asd += [(plus(f"(1 + 0.105SDS){G_O}" + (f" + {t}" if t else ""), j), [(D, 1 + 0.105 * SDS), (PO, 1 + 0.105 * SDS)] + tt(nt, 1) + e)
                 for nt, t in TT for j, e in eset(0.525)]
-        asd += [(f"D+{lbt}", [(D, 1), (PTX, 1)])]
-        asd += [(f"D+{lbt}+0.45{j}", [(D, 1), (PTX, 1), (n_, 0.45)]) for n_, j in W]
-        lrfd = [("1.4(D+Pe)", [(D, 1.4), (PE, 1.4)])]
-        lrfd += [(f"1.2(D+Pe)+0.5{j}", [(D, 1.2), (PE, 1.2), (n_, 0.5)]) for n_, j in W]
-        lrfd += [(f"1.2(D+Pe)+1.0{j}", [(D, 1.2), (PE, 1.2), (n_, 1.0)]) for n_, j in W]
-        lrfd += [(f"0.9(D+Pe)+1.0{j}", [(D, 0.9), (PE, 0.9), (n_, 1.0)]) for n_, j in W]
-        lrfd += [(f"(1.2+0.2SDS)(D+Pe)+{j}", [(D, 1.2 + 0.2 * SDS), (PE, 1.2 + 0.2 * SDS)] + e) for j, e in eset(1.0)]
-        lrfd += [(f"(0.9-0.2SDS)(D+Pe)+{j}", [(D, 0.9 - 0.2 * SDS), (PE, 0.9 - 0.2 * SDS)] + e) for j, e in eset(1.0)]
-        lrfd += [(f"1.2(D+Po+{t})", [(D, 1.2), (PO, 1.2)] + tt(nt, 1.2)) for nt, t in TT]
+        asd += [("D + P(T)", [(D, 1), (PTX, 1)])]
+        asd += [(tambah("D + P(T)", 0.45, j), [(D, 1), (PTX, 1), (n_, 0.45)]) for n_, j in W]
+        lrfd = [("1.4" + G_E, [(D, 1.4), (PE, 1.4)])]
+        lrfd += [(tambah("1.2" + G_E, 0.5, j), [(D, 1.2), (PE, 1.2), (n_, 0.5)]) for n_, j in W]
+        lrfd += [(tambah("1.2" + G_E, 1.0, j), [(D, 1.2), (PE, 1.2), (n_, 1.0)]) for n_, j in W]
+        lrfd += [(tambah("0.9" + G_E, 1.0, j), [(D, 0.9), (PE, 0.9), (n_, 1.0)]) for n_, j in W]
+        lrfd += [(plus("(1.2 + 0.2SDS)" + G_E, j), [(D, 1.2 + 0.2 * SDS), (PE, 1.2 + 0.2 * SDS)] + e) for j, e in eset(1.0)]
+        lrfd += [(plus("(0.9 - 0.2SDS)" + G_E, j), [(D, 0.9 - 0.2 * SDS), (PE, 0.9 - 0.2 * SDS)] + e) for j, e in eset(1.0)]
+        lrfd += [("1.2" + gT(t), [(D, 1.2), (PO, 1.2)] + tt(nt, 1.2)) for nt, t in TT]
         for fw in (0.5, 1.0):
-            lrfd += [(f"1.2(D+Po+{t})+{fw}{j}", [(D, 1.2), (PO, 1.2)] + tt(nt, 1.2) + [(n_, fw)]) for nt, t in TT for n_, j in W]
-        lrfd += [(f"0.9(D+Po+{t})+1.0{j}", [(D, 0.9), (PO, 0.9)] + tt(nt, 0.9) + [(n_, 1.0)]) for nt, t in TT for n_, j in W]
-        lrfd += [(f"(1.2+0.2SDS)(D+Po+{t})+{j}", [(D, 1.2 + 0.2 * SDS), (PO, 1.2 + 0.2 * SDS)] + tt(nt, 1.2 + 0.2 * SDS) + e)
+            lrfd += [(tambah("1.2" + gT(t), fw, j), [(D, 1.2), (PO, 1.2)] + tt(nt, 1.2) + [(n_, fw)]) for nt, t in TT for n_, j in W]
+        lrfd += [(tambah("0.9" + gT(t), 1.0, j), [(D, 0.9), (PO, 0.9)] + tt(nt, 0.9) + [(n_, 1.0)]) for nt, t in TT for n_, j in W]
+        lrfd += [(plus("(1.2 + 0.2SDS)" + gT(t), j), [(D, 1.2 + 0.2 * SDS), (PO, 1.2 + 0.2 * SDS)] + tt(nt, 1.2 + 0.2 * SDS) + e)
                  for nt, t in TT for j, e in eset(1.0)]
-        lrfd += [(f"(0.9-0.2SDS)(D+Po+{t})+{j}", [(D, 0.9 - 0.2 * SDS), (PO, 0.9 - 0.2 * SDS)] + tt(nt, 0.9 - 0.2 * SDS) + e)
+        lrfd += [(plus("(0.9 - 0.2SDS)" + gT(t), j), [(D, 0.9 - 0.2 * SDS), (PO, 0.9 - 0.2 * SDS)] + tt(nt, 0.9 - 0.2 * SDS) + e)
                  for nt, t in TT for j, e in eset(1.0)]
-        lrfd += [(f"1.4(D+{lbt})", [(D, 1.4), (PTX, 1.4)])]
-        lrfd += [(f"1.2(D+{lbt})+0.5{j}", [(D, 1.2), (PTX, 1.2), (n_, 0.5)]) for n_, j in W]
-        lrfd += [(f"1.2(D+{lbt})+1.0{j}", [(D, 1.2), (PTX, 1.2), (n_, 1.0)]) for n_, j in W]
-        lrfd += [(f"0.9(D+{lbt})+1.0{j}", [(D, 0.9), (PTX, 0.9), (n_, 1.0)]) for n_, j in W]
+        lrfd += [("1.4" + G_T, [(D, 1.4), (PTX, 1.4)])]
+        lrfd += [(tambah("1.2" + G_T, 0.5, j), [(D, 1.2), (PTX, 1.2), (n_, 0.5)]) for n_, j in W]
+        lrfd += [(tambah("1.2" + G_T, 1.0, j), [(D, 1.2), (PTX, 1.2), (n_, 1.0)]) for n_, j in W]
+        lrfd += [(tambah("0.9" + G_T, 1.0, j), [(D, 0.9), (PTX, 0.9), (n_, 1.0)]) for n_, j in W]
     if len(asd) > 99 or len(lrfd) > 199: berhenti("kombinasi terlalu banyak (ASD > 99 / LRFD > 199)")
     kombi = [(100 + i, j, s) for i, (j, s) in enumerate(asd, 1)] + [(300 + i, j, s) for i, (j, s) in enumerate(lrfd, 1)]
-    kombi += [(501, "DRIFT EX+", [(EX, 1)]), (502, "DRIFT EZ+", [(EZ, 1)]), (503, "DRIFT EX-", [(EX, -1)]), (504, "DRIFT EZ-", [(EZ, -1)])]
+    kombi += [(501, "DRIFT +EQX", [(EX, 1)]), (502, "DRIFT +EQZ", [(EZ, 1)]), (503, "DRIFT -EQX", [(EX, -1)]), (504, "DRIFT -EQZ", [(EZ, -1)])]
     LC_ORDE2 = 601                                   # beban tetap D+Po, dianalisis PDELTA di akhir (cek simpangan orde-2)
-    kombi += [(LC_ORDE2, "D+Po BEBAN TETAP ORDE-2 (PDELTA)", [(D, 1), (PO, 1)])]
+    kombi += [(LC_ORDE2, "D + P(O) BEBAN TETAP ORDE-2 (PDELTA)", [(D, 1), (PO, 1)])]
     asd_no = [k[0] for k in kombi if 100 < k[0] < 200]; lrfd_no = [k[0] for k in kombi if 300 < k[0] < 500]
+    # pemilihan kombinasi layan dari isi faktornya (bukan dari judul)
+    nW, nE, nT = {n_ for n_, _ in W}, {EX, EZ}, {n_ for n_, _ in FF}
+    def ada(isi, grup): return any(p_ in grup and f for p_, f in isi)
+    def fD(isi): return dict(isi).get(D, 0)
+    asd_k = [(n_, isi) for n_, _, isi in kombi if 100 < n_ < 200]
+    svc_hor = [n_ for n_, isi in asd_k if not ada(isi, nE) and abs(fD(isi) - 1) < 1e-9 and ada(isi, nW | nT)]
     if mode_k == "design_basis":
-        gempa_ = lambda j: "EX" in j or "EZ" in j
-        svc_grav = [n_ for n_, j, _ in kombi if 100 < n_ < 200 and not gempa_(j) and "W" not in j and not j.startswith("0.6")]
-        svc_hor = [n_ for n_, j, _ in kombi if 100 < n_ < 200 and not gempa_(j) and not j.startswith("0.6") and ("W" in j or "+T" in j)]
-        lc_tetap1 = [n_ for n_, j, _ in kombi if 100 < n_ < 200 and j == f"D+{lbt}"]
+        svc_grav = [n_ for n_, isi in asd_k if not ada(isi, nW | nE) and abs(fD(isi) - 1) < 1e-9]
+        lc_tetap1 = [n_ for n_, isi in asd_k if sorted(isi) == sorted([(D, 1), (PTX, 1)])][-1:]
     else:
-        svc_grav = [n_ for n_, j, _ in kombi if j in ("D+Po", "D+Pt")]
-        lc_tetap1 = [n_ for n_, j, _ in kombi if j == "D+Po" and n_ < 200]
-        svc_hor = [n_ for n_, j, _ in kombi if 100 < n_ < 200 and ("W" in j or "FF" in j or "FG" in j) and not j.startswith("0.6")]
+        svc_grav = [n_ for n_, isi in asd_k if not ada(isi, nW | nE | nT) and abs(fD(isi) - 1) < 1e-9]
+        lc_tetap1 = [n_ for n_, isi in asd_k if sorted(isi) == sorted([(D, 1), (PO, 1)])]
     if mode_k == "design_basis":
-        nama_p = {D: "D", PE: "Pe", PO: "Po", PT: "Pt", EX: "EX", EZ: "EZ"}
-        nama_p.update({n_: "T" + j[2:] for n_, j in FF}); nama_p.update({n_: j for n_, j in W})
+        nama_p = {D: "D", PE: "P(E)", PO: "P(O)", PT: "P(T)", EX: "EQX", EZ: "EQZ"}
+        nama_p.update({n_: j for n_, j in FF}); nama_p.update({n_: j for n_, j in W})
         lap += ["### Kombinasi - design basis proyek (ASCE 7-22, Tabel 15-2 ASD / 15-3 LRFD)", "",
                 f"- ASD {asd_no[0]}–{asd_no[-1]}, LRFD {lrfd_no[0]}–{lrfd_no[-1]}, drift QE 501–504, beban tetap orde-2 601.",
                 "- Pemetaan: P(E)/P(O)/P(T) = Pe/Po/Pt; T (thermal force) = friksi pipa μ·Po arah sumbu pipa (±Z); "

@@ -63,6 +63,7 @@ H_col = float(tp["tiang"]["tinggi"]) * 1000
 span = max(float(tp["level"][0].get("kiri", 0)), float(tp["level"][0].get("kanan", 0))) * 1000
 vmax = max(vdef[1:], key=lambda r: float(r[3])) if len(vdef) > 1 else None
 hmax = next((r for r in hdef[1:] if r[0] == "Max Res"), None)
+H_cek = float(hmax[8]) * 200 if hmax else H_col      # tinggi yang dipakai cek simpangan (batas H/200) = sumbu lengan atas dari dasar
 qmax = next((r for r in qdef[1:] if r[0] == "Max Res"), None)
 
 ok = lambda b: "OK" if b else "NOT OK"
@@ -101,7 +102,7 @@ summary = f"""
 <table class="res"><caption>Table 2-3 Maximum Deflection Check</caption>
 <tr><th rowspan="2">Type</th><th rowspan="2">Member</th><th rowspan="2">Span / height (mm)</th><th colspan="2">Deflection (mm)</th><th rowspan="2">Status</th></tr>
 <tr><th>Design</th><th>Allowable</th></tr>
-<tr><td rowspan="2">{tipe}</td><td>Column</td><td>{(H_col + 9 + 62.5) if tp['level'][0].get('elev') is None else H_col:.0f}</td><td class="hl">{hmax[7]}</td><td class="hl">{hmax[8]}</td><td>{hmax[9]}</td></tr>
+<tr><td rowspan="2">{tipe}</td><td>Column</td><td>{H_cek:.0f}</td><td class="hl">{hmax[7]}</td><td class="hl">{hmax[8]}</td><td>{hmax[9]}</td></tr>
 <tr><td>Beam</td><td>{span:.0f}</td><td class="hl">{vmax[3]}</td><td class="hl">{vmax[4]}</td><td>{vmax[5]}</td></tr></table>
 <p class="note">Seismic drift Δ·C<sub>d</sub>/I<sub>e</sub> = {qmax[9]} mm ≤ {qmax[10]} mm (0.02H): {qmax[11]}. Further checks (KL/r, torsion, displacement at the pipe point,
 permanent-load sway first / second order) in Appendix A.</p>

@@ -10,6 +10,7 @@ Config: blok "kantilever" di .ps.json (lihat contoh di proyek PT-TIP). Output <f
   python kantilever.py --folder <folder Kalkulasi> [--ps x.ps.json] [--tanpa-pdf] [--tanpa-staad]
 Model STAAD verifikasi (<nama>.std/.ANL) dibuat & dijalankan tanpa GUI kecuali --tanpa-staad."""
 import argparse, glob, html, importlib.util, json, math, os, re, subprocess, sys, urllib.parse
+NAMA = {"Pe": "P(E)", "Po": "P(O)", "T": "T", "Wx": "WX", "Wz": "WZ", "Ex": "EQX", "Ez": "EQZ", "Ev": "Ev"}
 
 sys.stdout.reconfigure(encoding="utf-8")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -72,19 +73,24 @@ def hitung(k, um):
 
     # ---- kombinasi ASD design basis (Tabel 15-2), gempa 100/30, angin & friksi dua arah
     k1, k2 = 1 + 0.14 * SDS, 1 + 0.105 * SDS
-    kom = [("D+Pe", {"D": 1, "Pe": 1}), ("D+Po", {"D": 1, "Po": 1})]
+    # judul mengikuti notasi laporan (Tabel 6-4): D, P(E), P(O), T, WX/WZ, EQX/EQZ (+ Ev komponen §13.3)
+    kom = [("D + P(E)", {"D": 1, "Pe": 1}), ("D + P(O)", {"D": 1, "Po": 1})]
     for s in (1, -1):
-        if prim["T"]: kom.append((f"D+Po{'+' if s > 0 else '-'}T", {"D": 1, "Po": 1, "T": s}))
+        sg = "+" if s > 0 else "-"
+        if prim["T"]: kom.append((f"D + P(O) {sg} T", {"D": 1, "Po": 1, "T": s}))
         for w in ("Wx", "Wz"):
             if prim[w]:
-                kom.append((f"D+Pe{'+' if s > 0 else '-'}0.6{w}", {"D": 1, "Pe": 1, w: 0.6 * s}))
-                kom.append((f"D+Po+T{'+' if s > 0 else '-'}0.45{w}", {"D": 1, "Po": 1, "T": 1, w: 0.45 * s} if prim["T"] else {"D": 1, "Po": 1, w: 0.45 * s}))
+                kom.append((f"D + P(E) {sg} 0.6{NAMA[w]}", {"D": 1, "Pe": 1, w: 0.6 * s}))
+                kom.append((f"D + P(O){' + T' if prim['T'] else ''} {sg} 0.45{NAMA[w]}",
+                            {"D": 1, "Po": 1, "T": 1, w: 0.45 * s} if prim["T"] else {"D": 1, "Po": 1, w: 0.45 * s}))
     for e1, e2 in (("Ex", "Ez"), ("Ez", "Ex")):
         for s1 in (1, -1):
             for s2 in (1, -1):
-                tag = f"{'+' if s1 > 0 else '-'}{e1}{'+' if s2 > 0 else '-'}0.3{e2}"
-                kom.append((f"(1+0.14SDS)(D+Pe)+0.7({tag})+0.7Ev", {"D": k1, "Pe": k1, e1: 0.7 * s1, e2: 0.21 * s2, "Ev": 0.7}))
-                kom.append((f"(1+0.105SDS)(D+Po)+T+0.525({tag})", {"D": k2, "Po": k2, "T": 1, e1: 0.525 * s1, e2: 0.1575 * s2, "Ev": 0.525}))
+                if e1 == "Ex": tag = f"{'' if s1 > 0 else '-'}EQX {'+' if s2 > 0 else '-'} 0.3EQZ"
+                else: tag = f"{'' if s2 > 0 else '-'}0.3EQX {'+' if s1 > 0 else '-'} EQZ"
+                kom.append((f"(1 + 0.14SDS)[D + P(E)] + 0.7({tag}) + 0.7Ev", {"D": k1, "Pe": k1, e1: 0.7 * s1, e2: 0.21 * s2, "Ev": 0.7}))
+                kom.append((f"(1 + 0.105SDS)[D + P(O)]{' + T' if prim['T'] else ''} + 0.525({tag}) + 0.525Ev",
+                            {"D": k2, "Po": k2, "T": 1, e1: 0.525 * s1, e2: 0.1575 * s2, "Ev": 0.525}))
     # ---- cek per kombinasi
     Om, Omw = 1.67, 2.0; Fb, Fv = Fy / Om, 0.6 * Fy / Om
     FEXX = float(k.get("FEXX_MPa", 490)); w_mm = float(k.get("las_mm", 6)); te = 0.707 * w_mm; Fw = 0.6 * FEXX / Omw
@@ -140,9 +146,9 @@ def model_staad(k, h, folder):
          "TYPE STEEL", f"STRENGTH FY {f3(h['Fy'] * 1000)} FU {f3(h['Fu'] * 1000)} RY 1.5 RT 1.2", "END DEFINE MATERIAL",
          "MEMBER PROPERTY JAPANESE", f"1 2 TABLE ST {h['pr']['nama']}", "CONSTANTS", "MATERIAL STEEL ALL",
          "BETA RANGLE MEMB 1 2", "SUPPORTS", "1 FIXED",
-         "LOAD 1 LOADTYPE Dead TITLE D SELFWEIGHT", f"SELFWEIGHT Y -{f3(h['k_sw'])}"]
+         "LOAD 1 LOADTYPE Dead TITLE D", f"SELFWEIGHT Y -{f3(h['k_sw'])}"]
     for n in urut:
-        o += [f"LOAD {nomor[n]} LOADTYPE {'Wind' if n.startswith('W') else 'Seismic' if n.startswith('E') else 'Live' if n == 'T' else 'Dead'} TITLE {n}",
+        o += [f"LOAD {nomor[n]} LOADTYPE {'Wind' if n.startswith('W') else 'Seismic' if n.startswith('E') else 'Live' if n == 'T' else 'Dead'} TITLE {NAMA[n]}",
               "JOINT LOAD"]
         for Fx, Fy, Fz, y, z in h["prim"][n]:
             mx = -Fy * (z - h["zsc"]) / 1000 + Fz * (y - h["ysc"]) / 1000; my = Fx * z / 1000; mz = -Fx * y / 1000
@@ -150,7 +156,7 @@ def model_staad(k, h, folder):
     lc = []
     for i, (nm, fak) in enumerate(h["kom"], 1):
         lc.append(100 + i)
-        o += [f"LOAD {100 + i} {nm[:60]}", "REPEAT LOAD", " ".join(f"{nomor[p]} {f3(v)}" for p, v in fak.items() if p in nomor)]   # primer kosong (mis. T pipa vertikal) dilewati
+        o += [f"LOAD {100 + i} {nm[:70]}", "REPEAT LOAD", " ".join(f"{nomor[p]} {f3(v)}" for p, v in fak.items() if p in nomor)]   # primer kosong (mis. T pipa vertikal) dilewati
     lst = f"{lc[0]} TO {lc[-1]}"          # rentang: daftar panjang melebihi lebar baris STAAD dan terpotong (WARNING)
     o += ["PERFORM ANALYSIS", f"LOAD LIST {lst}", "PRINT MEMBER FORCES LIST 1 2", "PRINT SUPPORT REACTION",
           "PARAMETER 1", "CODE AISC UNIFIED 2022", "METHOD ASD", f"FYLD {f3(h['Fy'] * 1000)} ALL", f"FU {f3(h['Fu'] * 1000)} ALL",
