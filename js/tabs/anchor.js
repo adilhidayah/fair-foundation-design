@@ -1,12 +1,13 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014l';
-import { getRadioVal, num } from '../core/dom.js?v=20261014l';
-import { fmt } from '../core/format.js?v=20261014l';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261014l';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014l';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261014l';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261014l';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014m';
+import { getRadioVal, num } from '../core/dom.js?v=20261014m';
+import { fmt } from '../core/format.js?v=20261014m';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261014m';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014m';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261014m';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261014m';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261014m';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -20,6 +21,15 @@ export function renderBoltTable() {
 // computeGoverningCa1(), computeAnchorCapacity() and evaluateAnchorCombo() live in lib/foundation/shared/pedestalCheck.js.
 const AB_HEAD = () => chapterHeader('09. Anchor Bolt Design', 'This chapter checks the anchor bolts at the base plate for tension, shear and their interaction under the factored LRFD combinations (LC201+) of Section 03, at the top of the pedestal — ACI 318M-19 Ch.17 (single-anchor simplification). The status of the check is shown in the Design Status panel.');
 export function calcAnchor() {
+  // Out of scope (Section 00 → Scope of Work): anchor bolts are designed and supplied by the mechanical vendor — no check here,
+  // and nothing from this tab counts toward the governing UC.
+  if (!inScope('anchor')) {
+    lastResults.anchor = { label: 'Anchor Bolt Design', status: 'NA', metric: SCOPE_NA_LABEL.anchor, detail: 'By mechanical vendor — not checked in this calculation.', notices: [] };
+    document.getElementById('calc-anchor').innerHTML = chapterHeader('09. Anchor Bolt Design', 'Anchor bolts are outside the scope of this calculation (Section 00 → Scope of Work).') +
+      `<div class="verdict na"><div class="stamp">BY MECHANICAL VENDOR</div><div class="uc"><div class="lbl">Not checked in this calculation</div></div></div>
+      <div class="note">Anchor bolt design (tension, shear and their interaction, ACI 318M-19 Ch.17) is by the mechanical vendor. The anchor bolt loads at the top of the pedestal are the factored combinations of Section 03.</div>`;
+    return;
+  }
   lastResults.anchor = { label: 'Anchor Bolt Design', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   if (boltList.length === 0) {
     document.getElementById('calc-anchor').innerHTML = AB_HEAD() + `<div class="warn-box"><strong>⚠  No bolts defined:</strong> add at least one bolt.</div>`;
@@ -79,7 +89,7 @@ export function calcAnchor() {
     html += sectionHeader('9.2', 'Anchor Capacity', 'Design strength of a single anchor in tension and shear for each failure mode; the smallest governs.');
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Per-anchor capacity (single anchor, ACI 318M-19 Ch.17)</caption>
-      <tr><th>Mode</th><th>Nominal</th><th>π </th><th>π ·Nominal</th></tr>
+      <tr><th>Mode</th><th>Nominal</th><th>φ</th><th>φ·Nominal</th></tr>
       <tr><td>Governing edge distance, c<sub>a1</sub> (computed)</td><td class="clause">B<sub>p</sub>/2 - |x - x̅|, min over bolts</td><td class="num" colspan="2">${fmt(ca1,1)} mm</td></tr>
       ${cap.modesN.map(m => `<tr class="${m.name === cap.govNMode ? 'governing' : ''}"><td>${m.name}</td><td class="num">${fmt(m.val/1000,2)} kN</td><td class="num">${fmt(m.phi,2)}</td><td class="num">${fmt(m.phi*m.val/1000,2)} kN</td></tr>`).join('')}
       ${cap.modesV.map(m => `<tr class="${m.name === cap.govVMode ? 'governing' : ''}"><td>${m.name}</td><td class="num">${fmt(m.val/1000,2)} kN</td><td class="num">${fmt(m.phi,2)}</td><td class="num">${fmt(m.phi*m.val/1000,2)} kN</td></tr>`).join('')}

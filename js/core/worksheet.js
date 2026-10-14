@@ -1,4 +1,4 @@
-import { fmt } from './format.js?v=20261014l';
+import { fmt } from './format.js?v=20261014m';
 
 // HTML snippets for calc worksheets: combo labels, worksheet rows, PASS/FAIL verdict + efficiency badge.
 // Combines a combo's separate LC-number and formula/description fields back into one label (e.g.
@@ -61,7 +61,7 @@ export function dlWorksheetTotal(desc, sym, val, unit, dec) {
     <td class="dl-unit">${unit}</td>
   </tr>`;
 }
-export function verdictHTML(uc, pass, title, ucLabel = 'UNITY CHECK (V_u / π V_c)') {
+export function verdictHTML(uc, pass, title, ucLabel = 'UNITY CHECK (V_u / φV_c)') {
   return `<div class="verdict ${pass ? '' : 'fail'}">
     <div class="stamp">${pass ? 'PASS' : 'FAIL'} — ${title}</div>
     <div class="uc"><div class="val">${fmt(uc,3)}</div><div class="lbl">${ucLabel}</div></div>
