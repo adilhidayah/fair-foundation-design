@@ -1,12 +1,12 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014a';
-import { fmt } from '../core/format.js?v=20261014a';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014a';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014a';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261014a';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261014a';
+import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
+import { fmt } from '../core/format.js?v=20261014k';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014k';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014k';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261014k';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261014k';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -84,14 +84,23 @@ export function calcFoundation() {
       ...evaluateBiaxialFooting(B, L, Pbot, Mx, Mz, eccRatioAllow, fsOTMin)
     };
   });
-  const governing = results.reduce((a, b) => b.governingUC > a.governingUC ? b : a);
+  // The status / UC of this chapter covers every check printed in 4.2-4.5: the four uniaxial checks of the lib
+  // (evaluateFoundationCombo) plus the biaxial kern and overturning checks (evaluateBiaxialFooting). A combination that
+  // could not be evaluated keeps governingUC = Infinity.
+  results.forEach(r => {
+    if (!r.valid) { r.ucAll = r.governingUC; return; }
+    r.allChecks = [...r.checks, { name: 'Eccentricity (biaxial kern)', uc: r.ucKernBiaxial }, { name: 'Overturning (biaxial)', uc: r.ucOTBiaxial }];
+    r.governingAll = r.allChecks.reduce((a, b) => b.uc > a.uc ? b : a);
+    r.ucAll = r.governingAll.uc;
+  });
+  const governing = results.reduce((a, b) => b.ucAll > a.ucAll ? b : a);
   lastResults.foundation = {
     label: 'Foundation Stability',
     // A combination the lib cannot evaluate (net uplift P ≤ 0, or e > B/2 = complete base separation) is a stability
     // failure, not a pending / input error — report FAIL so the Design Status panel does not show it as PENDING.
-    status: !governing.valid ? 'FAIL' : (governing.overallPass ? 'PASS' : 'FAIL'),
-    metric: governing.valid ? `UC = ${fmt(governing.governingUC,3)}` : 'UC = ∞ (base separation)',
-    detail: governing.valid ? `Governing: ${comboLabel(governing.combo)} — ${governing.governingCheck.name}, B=${fmt(B,2)}m, L=${fmt(L,2)}m` : `${comboLabel(governing.combo)}: ${governing.note}`
+    status: !governing.valid ? 'FAIL' : (governing.ucAll <= 1.0 ? 'PASS' : 'FAIL'),
+    metric: governing.valid ? `UC = ${fmt(governing.ucAll,3)}` : 'UC = ∞ (base separation)',
+    detail: governing.valid ? `Governing: ${comboLabel(governing.combo)} — ${governing.governingAll.name}, B=${fmt(B,2)}m, L=${fmt(L,2)}m` : `${comboLabel(governing.combo)}: ${governing.note}`
   };
   // Preview follows the chapter pattern of 02 / 04 (pile) / 5A / 5B / 09: chapter title, numbered sub-sections, "Table 4.n.m"
   // captions, no verdict box (the status is in the Design Status panel). A combination that cannot be evaluated (net uplift
@@ -99,7 +108,7 @@ export function calcFoundation() {
   // Status panel and in its table rows, and 4.1 shows the worst of the combinations that could be evaluated.
   const validResults = results.filter(r => r.valid);
   const invalidResults = results.filter(r => !r.valid);
-  const shown = validResults.length ? validResults.reduce((a, b) => b.governingUC > a.governingUC ? b : a) : null;
+  const shown = validResults.length ? validResults.reduce((a, b) => b.ucAll > a.ucAll ? b : a) : null;
   lastResults.foundation.notices = invalidResults.map(r => ({
     title: `${comboLabel(r.combo)} — not evaluated`,
     text: `${r.note} This combination fails the stability check; review its factors / loads or enlarge the footing.`
@@ -111,7 +120,7 @@ export function calcFoundation() {
     `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: eccentricity (kern), bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (Section 08), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh.`);
   html += untypedLoadTypesWarning();
   html += sectionHeader('4.1', 'Governing Load Combination', shown
-    ? `Combination with the highest utilization${invalidResults.length ? ' among those that could be evaluated' : ''}: ${escapeHtml(comboLabel(shown.combo))}, governed by ${shown.governingCheck.name.toLowerCase()}.${invalidResults.length ? ` ${invalidResults.length} combination(s) could not be evaluated (${invalidResults.map(r => escapeHtml(r.combo.lc || r.combo.name)).join(', ')}) and fail the check — see the tables below and the Design Status panel.` : ''}`
+    ? `Combination with the highest utilization${invalidResults.length ? ' among those that could be evaluated' : ''}: ${escapeHtml(comboLabel(shown.combo))}, governed by ${shown.governingAll.name.toLowerCase()}.${invalidResults.length ? ` ${invalidResults.length} combination(s) could not be evaluated (${invalidResults.map(r => escapeHtml(r.combo.lc || r.combo.name)).join(', ')}) and fail the check — see the tables below and the Design Status panel.` : ''}`
     : 'No combination could be evaluated — see the tables below and the Design Status panel.', true);
   if (shown) {
     html += foundationDiagramSVG(B, L, Bp, Lp, t, hp, shown.Habs, shown.Mabs, shown.e, shown.qmax, shown.qmin);
@@ -130,7 +139,7 @@ export function calcFoundation() {
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>${escapeHtml(comboLabel(shown.combo))} — utilization per check</caption>
       <tr><th>Check</th><th>UC</th><th>Status</th></tr>
-      ${shown.checks.map(c => `<tr class="${c === shown.governingCheck ? 'governing' : ''}"><td>${c.name}</td><td class="num">${fmt(c.uc,3)}</td><td>${okNg(c.uc)}</td></tr>`).join('')}
+      ${shown.allChecks.map(c => `<tr class="${c === shown.governingAll ? 'governing' : ''}"><td>${c.name}</td><td class="num">${fmt(c.uc,3)}</td><td>${okNg(c.uc)}</td></tr>`).join('')}
     </table></div>`;
   }
   // Kern (eccentricity), bearing pressure, sliding and overturning, each per load combination with its own governing
@@ -141,6 +150,14 @@ export function calcFoundation() {
   const bearingGov = validResults.length ? validResults.reduce((a, b) => ucOf(b, 'Bearing pressure') > ucOf(a, 'Bearing pressure') ? b : a) : null;
   const slidingGov = validResults.length ? validResults.reduce((a, b) => ucOf(b, 'Sliding') > ucOf(a, 'Sliding') ? b : a) : null;
   const otGov = validResults.length ? validResults.reduce((a, b) => b.ucOTBiaxial > a.ucOTBiaxial ? b : a) : null;
+  // Every check of this chapter with its governing combination (same UC / LC as the 4.2-4.5 tables) — the Design Status
+  // panel lists them under the Foundation Stability card (renderLiveBar()). Empty when no combination could be evaluated.
+  lastResults.foundation.checks = validResults.length ? [
+    { name: 'Eccentricity (kern)', uc: kernGov.ucKernBiaxial, lc: kernGov.combo.lc || kernGov.combo.name },
+    { name: 'Bearing pressure', uc: ucOf(bearingGov, 'Bearing pressure'), lc: bearingGov.combo.lc || bearingGov.combo.name },
+    { name: 'Sliding', uc: ucOf(slidingGov, 'Sliding'), lc: slidingGov.combo.lc || slidingGov.combo.name },
+    { name: 'Overturning', uc: otGov.ucOTBiaxial, lc: otGov.combo.lc || otGov.combo.name }
+  ] : [];
   const ratioTxt = fmt(1 / eccRatioAllow, 2);
   html += sectionHeader('4.2', 'Eccentricity (Kern) Check',
     `The resultant must stay inside the kern so the whole base remains in contact (q<sub>min</sub> ≥ 0). Both directions are checked together (biaxial): e<sub>x</sub> from the x-direction moments (WX, EQX), e<sub>z</sub> from the z-direction moments (WZ, EQZ).`);

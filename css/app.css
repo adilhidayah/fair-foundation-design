@@ -315,6 +315,15 @@
     flex: 1;
     min-width: 0;
   }
+  .live-bar-autosize { width: 100%; margin: 10px 0 0; padding: 6px 8px; font-size: 11px; }
+  .live-bar-sub { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+  .live-bar-sub-row { display: flex; align-items: baseline; gap: 6px; margin-bottom: 5px; font-size: 10px; }
+  .live-bar-sub-row:last-child { margin-bottom: 0; }
+  .live-bar-sub-name { flex: 1; min-width: 0; color: var(--ink); font-weight: 600; }
+  .live-bar-sub-lc { display: block; font-family: var(--mono); font-size: 9px; font-weight: 400; color: var(--ink-soft); }
+  .live-bar-sub-uc { font-family: var(--mono); font-weight: 700; color: var(--ink); }
+  .live-bar-sub-st { font-family: var(--mono); font-size: 9px; font-weight: 700; min-width: 20px; text-align: right; color: var(--pass); }
+  .live-bar-sub-uc.fail, .live-bar-sub-st.fail { color: var(--fail); }
   .live-bar-dcr-val { font-size: 13px; font-weight: 700; color: var(--ink); }
   .live-bar-dcr-limit { font-size: 9px; color: var(--ink-soft); }
   .live-bar-progress {

@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014a';
-import { fmt } from '../core/format.js?v=20261014a';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014a';
-import { calcAnchor } from '../tabs/anchor.js?v=20261014a';
-import { calcBearing } from '../tabs/bearing.js?v=20261014a';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014a';
-import { calcFoundation } from '../tabs/foundation.js?v=20261014a';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014a';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261014a';
-import { calcPile } from '../tabs/pile.js?v=20261014a';
-import { calcRebar } from '../tabs/rebar.js?v=20261014a';
-import { calcSettlement } from '../tabs/settlement.js?v=20261014a';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
+import { fmt } from '../core/format.js?v=20261014k';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014k';
+import { calcAnchor } from '../tabs/anchor.js?v=20261014k';
+import { calcBearing } from '../tabs/bearing.js?v=20261014k';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014k';
+import { calcFoundation } from '../tabs/foundation.js?v=20261014k';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014k';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261014k';
+import { calcPile } from '../tabs/pile.js?v=20261014k';
+import { calcRebar } from '../tabs/rebar.js?v=20261014k';
+import { calcSettlement } from '../tabs/settlement.js?v=20261014k';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014k';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -99,12 +99,13 @@ export function getWorkflowStepStatus(stepId) {
     const p = lastResults.pedestalRebar, c = lastResults.pileCapRebar;
     if (!p && !c) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 5A/5B)' };
     const pOk = p && p.status === 'PASS';
-    const cOk = support !== 'pile' || (c && c.status === 'PASS');
+    const cOk = !!(c && c.status === 'PASS'); // pile cap flexure (pile) or footing flexure (shallow) — both are required
     const ok = pOk && cOk;
-    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? 'PASS' : 'FAIL', note: (p ? p.detail : 'Pedestal') + (support === 'pile' ? (' | ' + (c ? c.detail : 'Cap')) : '') };
+    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? 'PASS' : 'FAIL', note: (p ? p.detail : 'Pedestal') + (' | ' + (c ? c.detail : (support === 'pile' ? 'Cap' : 'Footing'))) };
   }
   if (stepId === '11') {
-    const arr = ['oneway','twoway','foundation','pile','bearing','settlement','anchor','pedestalRebar','pileCapRebar'].map(k => lastResults[k]).filter(Boolean);
+    // 4A (shallow) and 4B (pile) are exclusive: only the stability check of the selected support belongs to the summary
+    const arr = ['oneway','twoway', support === 'pile' ? 'pile' : 'foundation','bearing','settlement','anchor','pedestalRebar','pileCapRebar'].map(k => lastResults[k]).filter(Boolean);
     const anyF = arr.some(e => e.status === 'FAIL');
     const ok = !anyF && arr.length >= 6;
     return { status: ok ? 'PASS' : (anyF ? 'FAIL' : '—'), metric: arr.filter(e => e.status === 'PASS').length + '/' + arr.length + ' OK', note: 'Summary report akhir' };
@@ -227,7 +228,19 @@ export function renderLiveBar() {
     const m = /UC\s*=\s*([\d.]+)/i.exec(st.metric) || /UC\s*=\s*([\d.]+)/i.exec(st.note);
     return m ? m[1] : null;
   };
-  bar.innerHTML = checks.map(([label, st]) => {
+  // Foundation Stability (4A) lists each of its checks under the card: governing LC, UC and status (lastResults.foundation.checks,
+  // set by calcFoundation() from the same values as tables 4.2-4.5 — nothing is recomputed here).
+  const subChecksHtml = (id) => {
+    const list = id === '4A' && lastResults.foundation && lastResults.foundation.checks ? lastResults.foundation.checks : [];
+    if (!list.length) return '';
+    return '<div class="live-bar-sub">' + list.map((c) => {
+      const bad = !(c.uc <= 1.0);
+      return '<div class="live-bar-sub-row"><span class="live-bar-sub-name">' + escapeHtml(c.name) + '<span class="live-bar-sub-lc">LC ' + escapeHtml(String(c.lc)) + '</span></span>' +
+        '<span class="live-bar-sub-uc' + (bad ? ' fail' : '') + '">' + (isFinite(c.uc) ? c.uc.toFixed(3) : '∞') + '</span>' +
+        '<span class="live-bar-sub-st' + (bad ? ' fail' : '') + '">' + (bad ? 'NG' : 'OK') + '</span></div>';
+    }).join('') + '</div>';
+  };
+  bar.innerHTML = checks.map(([label, st, id]) => {
     const failed = st.status === 'FAIL';
     const cls = failed ? 'fail' : 'pass'; // pending ('—') reads as an unfilled/gray "PASS" shell until computed
     const txt = st.status === '—' ? 'PENDING' : st.status;
@@ -242,7 +255,9 @@ export function renderLiveBar() {
       '<div class="live-bar-card-row">' +
         '<span class="live-bar-status-pill ' + cls + '"><span class="live-bar-status-icon"><svg viewBox="0 0 24 24" width="8" height="8" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">' + (failed ? LIVE_BAR_ICON_X : LIVE_BAR_ICON_CHECK) + '</svg></span>' + escapeHtml(txt) + '</span>' +
         '<div class="live-bar-dcr-wrap"><span class="live-bar-dcr-val">' + escapeHtml(dcr ?? '—') + '</span><span class="live-bar-dcr-limit">/ 1.00</span></div>' +
-      '</div>' +
+      '</div>' + subChecksHtml(id) +
+      // Design failed: offer the solver (docs/PROJECT_INSTRUCTIONS.md §9.3). Stability FAIL only — 4A is not shown for piles.
+      (id === '4A' && failed ? '<button type="button" class="combo-add-btn live-bar-autosize" data-autosize>Auto-Size Foundation</button>' : '') +
     '</div>';
   }).join('') + noticesHtml();
 }

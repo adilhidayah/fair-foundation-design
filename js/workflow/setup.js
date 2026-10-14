@@ -1,8 +1,8 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014a';
-import { getRadioVal } from '../core/dom.js?v=20261014a';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014a';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014k';
+import { getRadioVal } from '../core/dom.js?v=20261014k';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014k';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
@@ -15,6 +15,22 @@ export function updateFoundationTabVisibility() {
   const isPile = getRadioVal('fs-support') === 'pile';
   fdTab.style.display = isPile ? 'none' : 'block';
   plTab.style.display = isPile ? 'block' : 'none';
+  // 5B follows the support: pile cap check (pile reactions) or footing check (soil pressure) — label, notes and the V_u source choices.
+  const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+  const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
+  setTxt('capcheck-tab-label', isPile ? 'PILE CAP CHECK' : 'FOOTING CHECK');
+  setTxt('rb-summary-label', isPile ? 'Pile Cap Flexure' : 'Footing Flexure');
+  show('rb-note-piles', isPile); show('rb-note-soil', !isPile);
+  ['ow-vu-src', 'tw-vu-src'].forEach(id => {
+    const g = document.getElementById(id); if (!g) return;
+    const soilBtn = g.querySelector('button[data-val="soil"]'), pileBtn = g.querySelector('button[data-val="piles"]'), manBtn = g.querySelector('button[data-val="manual"]');
+    if (soilBtn) soilBtn.style.display = isPile ? 'none' : '';
+    if (pileBtn) pileBtn.style.display = isPile ? '' : 'none';
+    const sel = g.querySelector('button.sel');
+    // switching the support moves the V_u source to the one that exists for it (a pile source has no meaning for a footing and vice versa)
+    const want = isPile ? (sel && sel.dataset.val === 'soil' ? manBtn : null) : (sel && sel.dataset.val === 'soil' ? null : soilBtn);
+    if (want && want !== sel) { g.querySelectorAll('button').forEach(b => b.classList.remove('sel')); want.classList.add('sel'); }
+  });
   // If the tab that just got hidden was the active one, switch to its now-visible sibling instead of leaving
   // the user on a blank panel.
   const active = document.querySelector('.tab.active');

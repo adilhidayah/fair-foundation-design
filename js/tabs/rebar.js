@@ -1,14 +1,15 @@
 // 5A pedestal P-M reinforcement + 5B pile cap flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261014a';
-import { num } from '../core/dom.js?v=20261014a';
-import { fmt } from '../core/format.js?v=20261014a';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261014a';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014a';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261014a';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261014a';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261014a';
-import { pileComboLoads } from '../tabs/pile.js?v=20261014a';
+import { evaluatePileGroupCombo, flexuralDesign, pileCapMomentAxis, searchPedestalBars, stdComboVector } from '../../lib/foundation/index.js?v=20261014k';
+import { getRadioVal, num } from '../core/dom.js?v=20261014k';
+import { fmt } from '../core/format.js?v=20261014k';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261014k';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014k';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261014k';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261014k';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261014k';
+import { calcFootingFlexure } from '../tabs/footing.js?v=20261014k';
+import { pileComboLoads } from '../tabs/pile.js?v=20261014k';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -98,7 +99,9 @@ export function calcRebar() {
   </div>`;
   // Pedestal part -> 5A Pedestal Check (#calc-rebar); pile cap part -> 5B Pile Cap Check (#calc-rebarcap).
   document.getElementById('calc-rebar').innerHTML = numberTables(html, '5A');
-  calcPileCapFlexure({ fc, fy, Bp, Lp });
+  // Pile foundation: pile cap flexure from the pile reactions (4B model). Shallow foundation: spread footing flexure from the soil pressure.
+  if (getRadioVal('fs-support') === 'pile') calcPileCapFlexure({ fc, fy, Bp, Lp });
+  else calcFootingFlexure({ fc, fy, Bp, Lp });
 }
 
 // 5B pile cap flexure — both axes, bottom AND top face, from the pile reactions of the factored (LRFD) combinations.
