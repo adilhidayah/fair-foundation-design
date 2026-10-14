@@ -1,9 +1,9 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014m';
-import { getRadioVal } from '../core/dom.js?v=20261014m';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014m';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261014m';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014n';
+import { getRadioVal } from '../core/dom.js?v=20261014n';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014n';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261014n';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
@@ -14,10 +14,10 @@ export function updateFoundationTabVisibility() {
   const fdTab = document.querySelector('.tab[data-tab="foundation"]');
   const plTab = document.querySelector('.tab[data-tab="pile"]');
   if (!fdTab || !plTab) return;
-  if (SHOW_BOTH_FOUNDATION_TABS) { fdTab.style.display = 'block'; plTab.style.display = 'block'; return; }
+  if (SHOW_BOTH_FOUNDATION_TABS) { fdTab.style.display = ''; plTab.style.display = ''; return; }
   const isPile = getRadioVal('fs-support') === 'pile';
-  fdTab.style.display = isPile ? 'none' : 'block';
-  plTab.style.display = isPile ? 'block' : 'none';
+  fdTab.style.display = isPile ? 'none' : ''; // '' keeps the tab's flex layout (code + label gap); 'block' glued them ("4BPILE")
+  plTab.style.display = isPile ? '' : 'none';
   // 5B follows the support: pile cap check (pile reactions) or footing check (soil pressure) — label, notes and the V_u source choices.
   const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };

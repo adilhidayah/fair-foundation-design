@@ -1,12 +1,12 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261014m';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014m';
-import { fmt } from '../core/format.js?v=20261014m';
-import { comboState, state } from '../core/state.js?v=20261014m';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261014m';
-import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261014m';
-import { recalcAll } from '../workflow/recalc.js?v=20261014m';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261014n';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014n';
+import { fmt } from '../core/format.js?v=20261014n';
+import { comboState, state } from '../core/state.js?v=20261014n';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261014n';
+import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261014n';
+import { recalcAll } from '../workflow/recalc.js?v=20261014n';
 
 export const LC_LOADTYPE_DEFAULTS = {
   D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately

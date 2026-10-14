@@ -1,4 +1,4 @@
-import { fmt } from './format.js?v=20261014m';
+import { fmt } from './format.js?v=20261014n';
 
 // HTML snippets for calc worksheets: combo labels, worksheet rows, PASS/FAIL verdict + efficiency badge.
 // Combines a combo's separate LC-number and formula/description fields back into one label (e.g.
