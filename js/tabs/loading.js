@@ -1,12 +1,12 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261014k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
-import { fmt } from '../core/format.js?v=20261014k';
-import { comboState, state } from '../core/state.js?v=20261014k';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261014k';
-import { buildStdComboBase, renderComboTable } from '../tabs/combos.js?v=20261014k';
-import { recalcAll } from '../workflow/recalc.js?v=20261014k';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261014l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014l';
+import { fmt } from '../core/format.js?v=20261014l';
+import { comboState, state } from '../core/state.js?v=20261014l';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261014l';
+import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261014l';
+import { recalcAll } from '../workflow/recalc.js?v=20261014l';
 
 export const LC_LOADTYPE_DEFAULTS = {
   D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately
@@ -113,7 +113,16 @@ export function isLateralLoadType(lt) {
 }
 // Load Values table holds the actual P/H/M inputs, kept separate so registering a type doesn't force a value in.
 // Existing values in the DOM are preserved across re-renders (only a brand-new type falls back to its default/0).
+// Column meaning of the Load Values table: FAIR convention, or the components of a STAAD support reaction (see staadReactionToFair()).
+export function renderLoadValuesHeader() {
+  const head = document.getElementById('lc-loadvalue-head');
+  if (!head) return;
+  head.innerHTML = isStaadSignMode()
+    ? `<th>Load type</th><th>P = F<sub>Y</sub> <span class="unit">kN</span></th><th>H = F<sub>X</sub> (Z types: F<sub>Z</sub>) <span class="unit">kN</span></th><th>M = M<sub>Z</sub> (Z types: M<sub>X</sub>) <span class="unit">kN·m</span></th><th>H<sub>z</sub> = F<sub>Z</sub> <span class="unit">kN</span></th><th>M<sub>x</sub> = M<sub>X</sub> <span class="unit">kN·m</span></th>`
+    : `<th>Load type</th><th>P <span class="unit">kN</span></th><th>H / H<sub>x</sub> <span class="unit">kN</span></th><th>M / M<sub>z</sub> <span class="unit">kN·m</span></th><th>H<sub>z</sub> <span class="unit">kN</span></th><th>M<sub>x</sub> <span class="unit">kN·m</span></th>`;
+}
 export function renderLoadValuesTable() {
+  renderLoadValuesHeader();
   document.getElementById('lc-loadvalue-body').innerHTML = state.lcLoadTypes.map(lt => {
     const d = LC_LOADTYPE_DEFAULTS[lt.code] || {};
     const cur = (field, def) => { const el = document.getElementById(`lc-${lt.code}-${field}`); return el ? el.value : (def || 0); };

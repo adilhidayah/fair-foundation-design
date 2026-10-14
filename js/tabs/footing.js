@@ -1,12 +1,12 @@
 // Spread footing (shallow foundation) design from the soil pressure — 5B flexure, and the V_u source "From soil pressure" of the
 // one-way / punching shear checks. The contact pressure and the actions at the pedestal live in lib/foundation/shared/spreadFooting.js;
 // this file reads the inputs, runs it for every factored (LRFD) combination and renders the tables. Declarations only (wiring in app.js).
-import { eccentricPunchingStress, flexuralDesign, footingActions, soilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261014k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
-import { fmt } from '../core/format.js?v=20261014k';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014k';
-import { comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014k';
-import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261014k';
+import { eccentricPunchingStress, flexuralDesign, footingActions, soilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261014l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014l';
+import { fmt } from '../core/format.js?v=20261014l';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014l';
+import { comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014l';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261014l';
 
 // Contact pressure of every LRFD combination at the underside of the footing. Loads: the same biaxial vectors as 4A / 5A (Section 03),
 // P = total vertical load incl. the self-weight dW; moments about the footing centre = load-point moments + the offset of the column

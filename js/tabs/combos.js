@@ -1,16 +1,24 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261014k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
-import { fmt } from '../core/format.js?v=20261014k';
-import { comboState, state } from '../core/state.js?v=20261014k';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261014k';
+import { buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, staadReactionToFair, stdComboVector } from '../../lib/foundation/index.js?v=20261014l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014l';
+import { fmt } from '../core/format.js?v=20261014l';
+import { comboState, state } from '../core/state.js?v=20261014l';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261014l';
 
+// "STAAD support reactions (Y up)" applies to the typed Load Values of the Support Reaction mode only (the manual-mode worksheets write the
+// FAIR convention). The conversion lives in staadReactionToFair() (lib) and is applied here, at the one place the values are read.
+export function isStaadSignMode() {
+  const sign = document.getElementById('ld-sign');
+  return getRadioVal('ld-mode') === 'reaction' && !!sign && getRadioVal('ld-sign') === 'staad';
+}
+const toFairInput = (kind, raw) => (isStaadSignMode() ? (staadReactionToFair(kind, raw) || raw) : raw);
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
   const loads = {};
   state.lcLoadTypes.forEach(lt => {
-    loads[lt.code] = { P: num(`lc-${lt.code}-P`), H: num(`lc-${lt.code}-H`), M: num(`lc-${lt.code}-M`) };
+    const f = toFairInput(lt.kind, { P: num(`lc-${lt.code}-P`), H: num(`lc-${lt.code}-H`), M: num(`lc-${lt.code}-M`) });
+    loads[lt.code] = { P: f.P, H: f.H, M: f.M };
   });
   return loads;
 }
@@ -211,9 +219,9 @@ function buildComboBaseFor(dh, dWfoot) {
   const numOr0 = (id) => { const el = document.getElementById(id); if (!el) return 0; const v = parseFloat(el.value); return isFinite(v) ? v : 0; };
   const items = state.lcLoadTypes.map(lt => {
     const eqField = EQUIPMENT_CODE_TO_FIELD[lt.code];
-    return { code: lt.code, kind: lt.kind,
-      P: eqField ? num(eqField) : numOr0(`lc-${lt.code}-P`), H: numOr0(`lc-${lt.code}-H`), M: numOr0(`lc-${lt.code}-M`),
+    const raw = { P: eqField ? num(eqField) : numOr0(`lc-${lt.code}-P`), H: numOr0(`lc-${lt.code}-H`), M: numOr0(`lc-${lt.code}-M`),
       Hz: numOr0(`lc-${lt.code}-Hz`), Mx: numOr0(`lc-${lt.code}-Mx`) }; // Hz/Mx: vertical types only (absent -> 0)
+    return { code: lt.code, kind: lt.kind, ...toFairInput(lt.kind, raw) };
   });
   const { base, untyped } = buildComboBase(items, dh, dWfoot);
   state.lastUntypedLoadTypes = untyped;

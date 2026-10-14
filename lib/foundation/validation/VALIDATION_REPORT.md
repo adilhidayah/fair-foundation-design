@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 580 checks, 580 pass, 0 fail** (15 files, run 14 Oct 2026).
+**Total: 607 checks, 607 pass, 0 fail** (16 files, run 14 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -19,7 +19,8 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part13.mjs | autoSizeFooting() (B = L and H) + autoSizeDepth() (B, L, H fixed, Df only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
 | validation_shared_part14.mjs | audit fixes 14 Oct 2026: anchor Vb (SI 0.6 / 3.7), one-way shear Vc (Table 22.5.5.1 cases, no 0.17 floor without Av,min), pedestal P-M (phi from net tensile strain, pure-tension end, envelope lookup) | 38 |
 | validation_shared_part15.mjs | spread footing from the soil pressure: contact pressure (full / partial / biaxial, signs, pedestal offset), flexure at the pedestal faces, one-way shear at d, punching — closed forms + brute-force grid | 41 |
-| **Total** | | **580** |
+| validation_shared_part16.mjs | STAAD support reactions → FAIR load inputs (staadReactionToFair): worked example, +x / +z lateral loads, 300 random load sets vs vector statics, vertical rows, kinds | 27 |
+| **Total** | | **607** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -84,6 +85,13 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
   500×500, d = 400: bo = 3600, Jc = 204.0e9 mm⁴, γv = 0.4; Vu = 500 kN, Mz = 100 kN·m → 0.3472 + 0.0882 = 0.4355 MPa;
   equal biaxial moments add both terms; 600×400: γf 0.5729 / 0.6265, Jc 237.33e9 / 170.67e9; edge / corner → invalid.
 
+### part16 — STAAD support reactions → FAIR load inputs (14 Oct 2026)
+FAIR takes H and M of a lateral load with the same sign when they overturn the same way (P down +; Mz > 0 compresses +x, Mx > 0 compresses −z). STAAD (Y up) reports the forces the
+support exerts on the structure, so H = −FX, Hz = −FZ, M = +MZ (X types), M = −MX (Z types), P = FY, Mx = +MX (vertical rows). Check by vector statics (independent of the mapping):
+loads F at points r on the structure → reactions R = −ΣF, M_r = −Σ r×F → mapped → loadTypeVector() → the pressure centre (xe, ze) of the FAIR vector equals the one from statics
+(xe = −MZ_f/P, ze = MX_f/P for the action on the foundation): 300 random load sets, worst 3e-16. Worked example: +x load 100 kN at 5 m, dh 1.275 m: Mz at the underside = 627.5 kN·m;
+typing the STAAD numbers without the mapping gives 372.5 (41 % low, unconservative). In the browser: STAAD mode FX −100 / MZ +500 → Fx 100, Mz 500, dMz 127.5; FZ −60 / MX −240 → Fz 60, Mx −240, dMx −76.5.
+
 ### part15 — spread footing from the soil pressure (14 Oct 2026)
 Replaces the pile-derived footing flexure / V_u that the shallow mode used (Mu = 0, minimum steel, always PASS). Rigid footing, linear pressure q = q0 + a·x + c·z, no tension
 (partial contact solved by Newton on exact polygon integrals), net of the factored footing + backfill weight w (pedestal weight = column load). Vectors:
@@ -135,6 +143,7 @@ node lib/foundation/validation/validation_static_part12.mjs
 node lib/foundation/validation/validation_shared_part13.mjs
 node lib/foundation/validation/validation_shared_part14.mjs
 node lib/foundation/validation/validation_shared_part15.mjs
+node lib/foundation/validation/validation_shared_part16.mjs
 ```
 
 ## Notes

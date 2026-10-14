@@ -1,6 +1,6 @@
 # js/ — UI modules
 
-`FAIR Foundation Design.html` loads one entry script, `js/app.js`, which imports everything else.
+`index.html` loads one entry script, `js/app.js`, which imports everything else.
 
 **Split rule:** `lib/` = calculate + extract (pure, Node-testable). `js/` = display + wiring (touches the DOM).
 Calculation formulas never live in `js/` — modules here read inputs, call `lib/`, and render.

@@ -1,8 +1,8 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014k';
-import { getRadioVal } from '../core/dom.js?v=20261014k';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014k';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014l';
+import { getRadioVal } from '../core/dom.js?v=20261014l';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014l';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
@@ -46,6 +46,14 @@ export function toggleLoadInputMode() {
   document.getElementById('ld-manual-fields').style.display = isReaction ? 'none' : 'block';
   // Load Values (per-type P/H/M from the structural model) is only offered for Support Reaction input.
   document.getElementById('lc-values-group').style.display = isReaction ? '' : 'none';
+  // The sign convention of the typed values (FAIR / STAAD reactions) only exists for typed Support Reaction values.
+  const signField = document.getElementById('ld-sign-field');
+  if (signField) {
+    signField.style.display = isReaction ? '' : 'none';
+    const staad = getRadioVal('ld-sign') === 'staad';
+    document.getElementById('ld-sign-note-fair').style.display = staad ? 'none' : '';
+    document.getElementById('ld-sign-note-staad').style.display = staad ? '' : 'none';
+  }
   renderLoadCaseInputs(); // pick up any values edited in the Load Values dialog
 }
 // Setup Equipment Logic (UX Journey 9.1 — visual cards + dynamic adaptation)

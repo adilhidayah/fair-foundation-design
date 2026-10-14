@@ -6,7 +6,7 @@ Klik nama file untuk membukanya. Ukuran per 25 Sep 2026.
 
 ```
 MASTER CALCULATOR/
-├── FAIR Foundation Design.html      ← halaman utama (markup saja)
+├── index.html                         ← halaman utama (markup saja)
 ├── css/
 │   └── app.css                ← semua style
 ├── js/                        ← tampilan + wiring UI (menyentuh DOM)
@@ -49,14 +49,14 @@ MASTER CALCULATOR/
 | OCR / paste import | [js/ocr/review.js](../js/ocr/review.js), [js/ocr/tesseract.js](../js/ocr/tesseract.js) | [import/textParsers.js](../lib/foundation/import/textParsers.js) |
 | Tombol, event listener, urutan startup | [js/app.js](../js/app.js) | — |
 | Warna, layout, font | [css/app.css](../css/app.css) | — |
-| Teks / field di halaman | [FAIR Foundation Design.html](../FAIR%20Foundation%20Design.html) | — |
+| Teks / field di halaman | [index.html](../index.html) | — |
 
 ## Semua file
 
 ### Halaman & style
 | File | Ukuran | Isi |
 |---|---:|---|
-| [FAIR Foundation Design.html](../FAIR%20Foundation%20Design.html) | 92 KB | Markup semua tab (tanpa CSS/JS) |
+| [index.html](../index.html) | 92 KB | Markup semua tab (tanpa CSS/JS) |
 | [css/app.css](../css/app.css) | 52 KB | Semua style |
 
 ### js/ — tampilan & wiring
@@ -132,7 +132,7 @@ MASTER CALCULATOR/
 ## Alur saat halaman dibuka
 
 ```
-FAIR Foundation Design.html
+index.html
   └─ css/app.css
   └─ js/app.js  ──import──►  js/core/*  js/diagrams/*  js/tabs/*  js/ocr/*  js/report/*  js/workflow/*
                                    │
