@@ -1,0 +1,38 @@
+# Runs every hand-calc validation of the calculation library (lib/foundation/validation/*.mjs) and a syntax check of all
+# modules on each push / pull request to main. Exit code of each file: 0 = all checks pass, 1 = at least one fails.
+# Same commands as AGENTS.md section 7 (Node 22+ is required for the JSON import attribute).
+name: Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # node --check misses syntax errors in .js files that use import/export (module auto-detection), so every file is parsed as an
+      # ES module instead (no execution; imports are not resolved).
+      - name: Syntax check (js/ and lib/)
+        run: node --experimental-vm-modules --no-warnings .github/scripts/parse-check.mjs $(find js lib -name '*.js' -o -name '*.mjs' | sort)
+
+      - name: Run all validations
+        run: |
+          fail=0; total=0
+          for f in lib/foundation/validation/validation_*.mjs; do
+            total=$((total + 1))
+            echo "::group::$f"
+            if node "$f"; then echo "OK   $f"; else echo "::error file=$f::validation failed"; fail=$((fail + 1)); fi
+            echo "::endgroup::"
+          done
+          echo "$((total - fail)) of $total validation files passed"
+          exit $((fail > 0 ? 1 : 0))

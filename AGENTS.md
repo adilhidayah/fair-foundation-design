@@ -72,6 +72,7 @@ node lib/foundation/validation/validation_shared_part15.mjs
 node lib/foundation/validation/validation_shared_part16.mjs
 ```
 - Exit 0 = pass, 1 = ada fail. Toleransi: integer 1e-9, textbook 0.05-0.08. Jangan tambah jest/vitest tanpa izin.
+- CI: `.github/workflows/validation.yml` menjalankan semua `validation_*.mjs` + cek sintaks (`.github/scripts/parse-check.mjs`) di setiap push / PR ke `main` (Node 22). `node --check` tidak dipakai: meleset pada `.js` ber-`import`/`export`.
 
 ## 8. Aturan Kerja AI
 1. JANGAN otak-atik kode existing tanpa perintah eksplisit. Default: baca + jelaskan + propose patch kecil.
