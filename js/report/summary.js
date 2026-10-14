@@ -1,10 +1,12 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { lastResults } from '../core/state.js?v=20261014h';
-import { generateReport } from '../report/builder.js?v=20261014h';
+import { getRadioVal } from '../core/dom.js?v=20261014k';
+import { lastResults } from '../core/state.js?v=20261014k';
+import { generateReport } from '../report/builder.js?v=20261014k';
 
 export function buildQuickStatusHtml() {
-  const order = ['oneway', 'twoway', 'foundation', 'pile', 'bearing', 'settlement', 'anchor', 'pedestalRebar', 'pileCapRebar'];
+  // 4A (shallow) and 4B (pile) are exclusive: the stability check of the other support is not part of this design
+  const order = ['oneway', 'twoway', getRadioVal('fs-support') === 'pile' ? 'pile' : 'foundation', 'bearing', 'settlement', 'anchor', 'pedestalRebar', 'pileCapRebar'];
   const entries = order.map(key => lastResults[key]).filter(Boolean);
   const anyError = entries.some(e => e.status === 'ERROR');
   const anyFail = entries.some(e => e.status === 'FAIL');

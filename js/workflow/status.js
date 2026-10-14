@@ -1,18 +1,18 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014h';
-import { fmt } from '../core/format.js?v=20261014h';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014h';
-import { calcAnchor } from '../tabs/anchor.js?v=20261014h';
-import { calcBearing } from '../tabs/bearing.js?v=20261014h';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014h';
-import { calcFoundation } from '../tabs/foundation.js?v=20261014h';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014h';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261014h';
-import { calcPile } from '../tabs/pile.js?v=20261014h';
-import { calcRebar } from '../tabs/rebar.js?v=20261014h';
-import { calcSettlement } from '../tabs/settlement.js?v=20261014h';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014h';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
+import { fmt } from '../core/format.js?v=20261014k';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014k';
+import { calcAnchor } from '../tabs/anchor.js?v=20261014k';
+import { calcBearing } from '../tabs/bearing.js?v=20261014k';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014k';
+import { calcFoundation } from '../tabs/foundation.js?v=20261014k';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014k';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261014k';
+import { calcPile } from '../tabs/pile.js?v=20261014k';
+import { calcRebar } from '../tabs/rebar.js?v=20261014k';
+import { calcSettlement } from '../tabs/settlement.js?v=20261014k';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014k';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -99,12 +99,13 @@ export function getWorkflowStepStatus(stepId) {
     const p = lastResults.pedestalRebar, c = lastResults.pileCapRebar;
     if (!p && !c) return { status: '—', metric: '—', note: 'Belum dihitung (buka tab 5A/5B)' };
     const pOk = p && p.status === 'PASS';
-    const cOk = support !== 'pile' || (c && c.status === 'PASS');
+    const cOk = !!(c && c.status === 'PASS'); // pile cap flexure (pile) or footing flexure (shallow) — both are required
     const ok = pOk && cOk;
-    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? 'PASS' : 'FAIL', note: (p ? p.detail : 'Pedestal') + (support === 'pile' ? (' | ' + (c ? c.detail : 'Cap')) : '') };
+    return { status: ok ? 'PASS' : 'FAIL', metric: ok ? 'PASS' : 'FAIL', note: (p ? p.detail : 'Pedestal') + (' | ' + (c ? c.detail : (support === 'pile' ? 'Cap' : 'Footing'))) };
   }
   if (stepId === '11') {
-    const arr = ['oneway','twoway','foundation','pile','bearing','settlement','anchor','pedestalRebar','pileCapRebar'].map(k => lastResults[k]).filter(Boolean);
+    // 4A (shallow) and 4B (pile) are exclusive: only the stability check of the selected support belongs to the summary
+    const arr = ['oneway','twoway', support === 'pile' ? 'pile' : 'foundation','bearing','settlement','anchor','pedestalRebar','pileCapRebar'].map(k => lastResults[k]).filter(Boolean);
     const anyF = arr.some(e => e.status === 'FAIL');
     const ok = !anyF && arr.length >= 6;
     return { status: ok ? 'PASS' : (anyF ? 'FAIL' : '—'), metric: arr.filter(e => e.status === 'PASS').length + '/' + arr.length + ' OK', note: 'Summary report akhir' };

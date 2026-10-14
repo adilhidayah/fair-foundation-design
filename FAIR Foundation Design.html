@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261014h">
+<link rel="stylesheet" href="css/app.css?v=20261014k">
 </head>
 <body>
 <div class="sheet">
@@ -27,7 +27,7 @@
       <div class="tab" data-tab="pile"><span class="tab-code">4B</span><span class="tab-label">PILE FOUNDATION STABILITY</span></div>
       <span class="tab-group-label" title="05 — Structural Design">05 STRUCTURAL DESIGN</span>
       <div class="tab" data-tab="pedcheck"><span class="tab-code">5A</span><span class="tab-label">PEDESTAL CHECK</span></div>
-      <div class="tab" data-tab="capcheck"><span class="tab-code">5B</span><span class="tab-label">PILE CAP CHECK</span></div>
+      <div class="tab" data-tab="capcheck"><span class="tab-code">5B</span><span class="tab-label" id="capcheck-tab-label">PILE CAP CHECK</span></div>
       <div class="tab" data-tab="bearing"><span class="tab-code">08</span><span class="tab-label">BEARING CAPACITY (SOIL)</span></div>
       <div class="tab" data-tab="settlement"><span class="tab-code">08B</span><span class="tab-label">SETTLEMENT (SOIL)</span></div>
       <div class="tab" data-tab="anchor"><span class="tab-code">09</span><span class="tab-label">ANCHOR BOLT DESIGN</span></div>
@@ -668,6 +668,7 @@
           <div class="radio-row" id="ow-vu-src" role="radiogroup" aria-labelledby="ow-vu-src-label">
             <button data-val="manual" class="sel">Manual input</button>
             <button data-val="piles">From pile reactions (LRFD)</button>
+            <button data-val="soil" style="display:none;">From soil pressure (LRFD)</button>
           </div>
         </div>
         <div id="ow-vu-piles-fields" style="display:none;">
@@ -678,7 +679,8 @@
               <button data-val="y">⟂ z (b<sub>w</sub> = B<sub>f</sub>)</button>
             </div>
           </div>
-          <div class="note">Sections at d from the pedestal face (pedestal size and load point from Tab 02). b<sub>w</sub> must equal the cap width perpendicular to the section: <strong id="ow-bw-hint">—</strong> mm. Reactions come from the separate factored LRFD combinations.</div>
+          <div class="note" id="ow-note-piles">Sections at d from the pedestal face (pedestal size and load point from Tab 02). b<sub>w</sub> must equal the cap width perpendicular to the section: <strong id="ow-bw-hint">—</strong> mm. Reactions come from the separate factored LRFD combinations.</div>
+          <div class="note" id="ow-note-soil" style="display:none;">V<sub>u</sub> = the soil pressure beyond the section at d from the pedestal face (pedestal size and load point from Tab 02), over the whole footing width, from the separate factored LRFD combinations; b<sub>w</sub> is set to that width and ρ<sub>w</sub> to the designed bottom steel of 5B.3 (both read-only).</div>
           <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         <div class="field">
@@ -742,10 +744,12 @@
           <div class="radio-row" id="tw-vu-src" role="radiogroup" aria-labelledby="tw-vu-src-label">
             <button data-val="manual" class="sel">Manual input</button>
             <button data-val="piles">From pile reactions (LRFD)</button>
+            <button data-val="soil" style="display:none;">From soil pressure (LRFD)</button>
           </div>
         </div>
         <div id="tw-vu-piles-fields" style="display:none;">
-          <div class="note">V<sub>u</sub> = pile reactions outside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along z), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
+          <div class="note" id="tw-note-piles">V<sub>u</sub> = pile reactions outside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along z), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
+          <div class="note" id="tw-note-soil" style="display:none;">V<sub>u</sub> = the column load minus the soil pressure inside the critical perimeter at d/2 from the pedestal faces (c<sub>1</sub> along x, c<sub>2</sub> along z), centred on the pedestal (Tab 02 offset), from the separate factored LRFD combinations.</div>
           <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         <div class="field">
@@ -759,7 +763,7 @@
         <div class="field">
           <label for="tw-vu"><span>Factored shear, V<sub>u</sub></span> <span class="unit">kN</span></label>
           <input type="number" id="tw-vu" value="850" min="0">
-          <div class="note">The moments add the eccentric shear stress γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub> (§8.4.4.2). With "From pile reactions" they are filled from the same LRFD combination (base of pedestal).</div>
+          <div class="note">The moments add the eccentric shear stress γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub> (§8.4.4.2). With "From pile reactions" or "From soil pressure" they are filled from the same LRFD combination (base of pedestal).</div>
         </div>
         <div id="opt-twoway"></div>
       </div>
@@ -1224,7 +1228,7 @@
       <!-- PILE CAP FLEXURE INPUTS (split from the former combined rebar tab; still computed by calcRebar()) -->
       <div id="in-rebarcap" class="gen-tree" style="display:none;">
         <details class="gt-group" open>
-        <summary>Pile Cap Flexure</summary>
+        <summary id="rb-summary-label">Pile Cap Flexure</summary>
         <div class="gt-body">
         <div class="gt-sub">Pile Cap — Section &amp; Cover</div>
         <div class="field">
@@ -1248,7 +1252,8 @@
           <label for="rb-capbar"><span>Bar diameter (flexural), d<sub>b,cap</sub></span> <span class="unit">mm</span></label>
           <input type="number" id="rb-capbar" value="25" min="0">
         </div>
-        <div class="note">Critical section for moment is taken at the pedestal face (x = ±B<sub>p</sub>/2 from the pedestal centre), summing the pile reactions beyond that section. The pile layout, load point and group model come from "4B — PILE FOUNDATION STABILITY"; the reactions are those of the separate <strong>factored (LRFD)</strong> combinations below.</div>
+        <div class="note" id="rb-note-piles">Critical section for moment is taken at the pedestal face (x = ±B<sub>p</sub>/2 from the pedestal centre), summing the pile reactions beyond that section. The pile layout, load point and group model come from "4B — PILE FOUNDATION STABILITY"; the reactions are those of the separate <strong>factored (LRFD)</strong> combinations below.</div>
+        <div class="note" id="rb-note-soil" style="display:none;">Critical section for moment is taken at the pedestal face (x = ±B<sub>p</sub>/2 from the pedestal centre), integrating the soil pressure beyond that section over the full footing width. The footing size, pedestal and load point come from "02 — FOUNDATION DIMENSION"; the pressure is that of the separate <strong>factored (LRFD)</strong> combinations below (rigid footing, no tension, net of the footing + backfill weight).</div>
         <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
         </div>
         </details>
@@ -1697,6 +1702,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261014h"></script>
+<script type="module" src="js/app.js?v=20261014k"></script>
 </body>
 </html>

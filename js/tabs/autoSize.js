@@ -1,13 +1,13 @@
 // Auto-Size Foundation (Tab 02 button / Design Status panel button): smallest square footing B = L and thickness H, in
 // 0.05 m steps, for which 4A stability (kern, bearing pressure, sliding, overturning) and the one-way / punching shear checks
-// all PASS. With "Keep B × L × H" ticked the footing size is the user's (site limit) and only the depth D_f is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
+// all PASS (and the footing flexure is not "section too small"). With "Keep B × L × H" ticked the footing size is the user's (site limit) and only the depth D_f is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
 // size into Tab 02, runs calcFoundSize() (-> recalcAll(), the very checks the user sees) and reads the statuses back.
 // Shallow foundations only. Pedestal, D_f, grout and the load data are never changed; nothing is changed when no size passes.
-import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261014h';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014h';
-import { fmt } from '../core/format.js?v=20261014h';
-import { lastResults } from '../core/state.js?v=20261014h';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014h';
+import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261014k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014k';
+import { fmt } from '../core/format.js?v=20261014k';
+import { lastResults } from '../core/state.js?v=20261014k';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014k';
 
 const STEP = 0.05;          // m — grid of the result (B, L, H)
 const H_MIN = 0.3;          // m — thinnest footing the search starts from
@@ -53,8 +53,11 @@ export async function autoSizeFoundation() {
     const [ow, tw] = shearStatuses();
     return {
       geometryOk: issues.length === 0,
-      stabilityPass: !!lastResults.foundation && lastResults.foundation.status === 'PASS',
-      shearPass: !!ow && !!tw && ow.status === 'PASS' && tw.status === 'PASS',
+      // contact: with V_u / flexure from the soil pressure, a factored combination that loses contact entirely needs a bigger footing, not a thicker one
+      stabilityPass: !!lastResults.foundation && lastResults.foundation.status === 'PASS' && !(lastResults.pileCapRebar && lastResults.pileCapRebar.invalidCombos > 0),
+      // thickness checks: one-way + punching shear and the footing flexure ("section too small" is cured by a thicker footing; a combination
+      // that loses contact is not — it is part of stabilityPass above, so it must not push H up)
+      shearPass: !!ow && !!tw && ow.status === 'PASS' && tw.status === 'PASS' && !!lastResults.pileCapRebar && (lastResults.pileCapRebar.status === 'PASS' || lastResults.pileCapRebar.invalidCombos > 0),
       info: { stability: lastResults.foundation, oneway: ow, twoway: tw }
     };
   };
