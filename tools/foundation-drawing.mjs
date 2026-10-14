@@ -66,6 +66,8 @@ export function buildFoundationDrawing(r, opts = {}) {
   const bp = opts.baseplate || f.baseplate || null, bolts = opts.bolts || f.bolts || null;
   const colm = opts.column || f.column || null;
   const cc = D ? D.cc : 75, dbF = D ? D.bar : 13;
+  const AN = P && P.anchor ? P.anchor : null, AA = AN ? AN.A : null, AR = AN && AN.res ? AN.res.ar : null;   // anchors (ACI 318M-19 ch. 17) when checked
+  const hooked = !!(AA && AA.reinforcement);                                                              // pedestal bars = anchor reinforcement, 90° hook at the top
   const flex = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
   const barTxt = (c) => (c && c.required && c.s ? `D${dbF}-${c.s}` + (c.n ? ` (${c.n} bars)` : '') : null);
   const gap = 900;
@@ -102,7 +104,17 @@ export function buildFoundationDrawing(r, opts = {}) {
     S.rect('CONCRETE', X(ox - Bp / 2), -Dp, Bp, Dp + Gp);
     if (gr) S.rect('HIDDEN', X(ox - Bp / 2), Gp, Bp, gr);
     if (bp) S.rect('STEEL', X(ox - bp.B * 500), Gp + gr, bp.B * 1000, bp.t);
-    if (bolts) [-1, 1].forEach(a => S.line('STEEL', X(ox + a * bolts.sx / 2), Gp + gr + (bp ? bp.t : 0) + 60, X(ox + a * bolts.sx / 2), Gp - Math.min(Dp + Gp - 100, 400)));
+    const hef = AA ? AA.hef : null, tH = bolts ? 0.6 * bolts.dia : 0;
+    if (bolts) [-1, 1].forEach(a => {
+      const xb0 = ox + a * bolts.sx / 2, yBot = hef ? Gp - hef - tH : Gp - Math.min(Dp + Gp - 100, 400);
+      S.line('STEEL', X(xb0), Gp + gr + (bp ? bp.t : 0) + 60, X(xb0), yBot + tH);
+      if (hef) {                                                                // headed bolt, 35° breakout plane towards the pedestal face
+        S.rect('STEEL', X(xb0 - 0.75 * bolts.dia), yBot, 1.5 * bolts.dia, tH);
+        const xe = ox + a * Bp / 2, dxp = Math.abs(xe - xb0);
+        S.line('HIDDEN', X(xb0), Gp - hef, X(xe), Gp - hef + dxp * Math.tan(35 * Math.PI / 180));
+      }
+    });
+    if (bolts && hef) S.dim(X(ox - bolts.sx / 2), Gp, X(ox - bolts.sx / 2), Gp - hef, -140, `h_ef ${r0(hef)}`);
     if (colm) {                                                                  // column stub with a break line
       const e = columnElevation(colm), y0 = Gp + gr + (bp ? bp.t : 0), y1 = y0 + 350, zz = 25;
       S.line('STEEL', X(ox + e.x1), y0, X(ox + e.x1), y1); S.line('STEEL', X(ox + e.x2), y0, X(ox + e.x2), y1);
@@ -130,8 +142,11 @@ export function buildFoundationDrawing(r, opts = {}) {
   }
   // pedestal bars: vertical with 90° hook on the bottom mat; ties
   if (hasPed && P && P.pm && P.pm.found) {
-    const dpr = P.dPrime, xb = [ox - Bp / 2 + dpr, ox + Bp / 2 - dpr], yTop = Gp - 40, yBot = yb + dbF + P.bar / 2;
-    xb.forEach((x, i) => { S.line('REBAR', X(x), yBot, X(x), yTop); S.line('REBAR', X(x), yBot, X(x + (i ? 1 : -1) * 12 * P.bar), yBot); });
+    const dpr = P.dPrime, xb = [ox - Bp / 2 + dpr, ox + Bp / 2 - dpr], yTop = Gp - (hooked ? (AA.topCover ?? 50) : 40), yBot = yb + dbF + P.bar / 2;
+    xb.forEach((x, i) => {
+      S.line('REBAR', X(x), yBot, X(x), yTop); S.line('REBAR', X(x), yBot, X(x + (i ? 1 : -1) * 12 * P.bar), yBot);
+      if (hooked) S.line('REBAR', X(x), yTop, X(x + (i ? -1 : 1) * 12 * P.bar), yTop);        // 90° hook into the core, tail 12 d_b
+    });
     const tx1 = ox - Bp / 2 + (dpr - P.bar / 2 - P.tie / 2), tx2 = ox + Bp / 2 - (dpr - P.bar / 2 - P.tie / 2);
     const yTopT = P.topTies ? Gp - 125 : Gp - 40;                                // top 125 mm: the anchor-bolt ties
     for (let y = -Dp + 50; y < yTopT - 1e-6; y += P.tieS) S.line('REBAR', X(tx1), y, X(tx2), y);
@@ -139,6 +154,11 @@ export function buildFoundationDrawing(r, opts = {}) {
     S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2, TXT, `${P.pm.n * 2} D${P.bar}`);
     S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 60, TXT, `Ø${P.tie}-${P.tieS}`);
     if (P.topTies) S.text('TEXT', X(ox + Bp / 2 + 440), Gp - 90, TXT, `${P.topTies.n} Ø${P.topTies.dia} within 125 (top)`);
+    if (hooked) {
+      S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 140, TXT, `ANCHOR REINFORCEMENT (ACI 318M-19 17.5.2.1):`);
+      S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 200, TXT, `pedestal bars D${P.bar}, 90° hook at top, tail ${12 * P.bar} mm`);
+      if (AR) S.text('TEXT', X(ox + Bp / 2 + 440), -Dp / 2 - 260, TXT, `${AR.n} × D${P.bar} within 0.5 h_ef of tension anchors; l_dh ${r0(AR.ldh)} ≤ ${r0(AR.avail)} mm above 35° plane`);
+    }
   }
   if (barTxt(flex['x-bottom'])) S.text('TEXT', X(-B / 2 + 40), yb - TXT - 90, TXT, `${barTxt(flex['x-bottom'])} (B) both ways`);
   if (topReq) S.text('TEXT', X(-B / 2 + 40), -Df + t + 30, TXT, `${barTxt(flex['x-top']) || barTxt(flex['z-top'])} (T)`);
@@ -178,6 +198,11 @@ export function buildFoundationDrawing(r, opts = {}) {
     S.text('TEXT', PX(Bp / 2 + 80), PY(-30), TXT, `Ties Ø${P.tie}-${P.tieS}, ${P.legs} legs` + (P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} at top` : ''));
     if (P.topTies && bolts) [[-1, -1], [1, -1], [1, 1], [-1, 1]].slice(0, bolts.n || 4).forEach(([a, b]) => S.circle('STEEL', PX(a * bolts.sx / 2), PY(b * bolts.sz / 2), bolts.dia / 2));
     S.text('TEXT', PX(Bp / 2 + 80), PY(-100), TXT, `Clear cover ${r0(P.dPrime - P.bar / 2 - P.tie)} mm, ρ = ${(P.pm.rho * 100).toFixed(2)} %`);
+    if (bolts) {
+      S.dim(PX(-bolts.sx / 2), PY(Lp / 2), PX(bolts.sx / 2), PY(Lp / 2), 140, `${bolts.sx}`);
+      S.text('TEXT', PX(Bp / 2 + 80), PY(-170), TXT, `${bolts.n || 4}-M${bolts.dia} @ ${bolts.sx}×${bolts.sz}, headed (h_ef ${AA ? r0(AA.hef) : '-'})`);
+    }
+    if (hooked) S.text('TEXT', PX(Bp / 2 + 80), PY(-240), TXT, `Bars: anchor reinf., hooked at top`);
     S.text('TEXT', PX(0), PY(-Lp / 2 - 420), TXT_TITLE, 'PEDESTAL SECTION B-B', 'center');
   }
 
