@@ -150,8 +150,8 @@ def model_staad(k, h, folder):
     lc = []
     for i, (nm, fak) in enumerate(h["kom"], 1):
         lc.append(100 + i)
-        o += [f"LOAD {100 + i} {nm[:70]}", "REPEAT LOAD", " ".join(f"{nomor[p]} {f3(v)}" for p, v in fak.items() if p in nomor)]   # primer kosong (mis. T pipa vertikal) dilewati
-    lst = " ".join(map(str, lc))
+        o += [f"LOAD {100 + i} {nm[:60]}", "REPEAT LOAD", " ".join(f"{nomor[p]} {f3(v)}" for p, v in fak.items() if p in nomor)]   # primer kosong (mis. T pipa vertikal) dilewati
+    lst = f"{lc[0]} TO {lc[-1]}"          # rentang: daftar panjang melebihi lebar baris STAAD dan terpotong (WARNING)
     o += ["PERFORM ANALYSIS", f"LOAD LIST {lst}", "PRINT MEMBER FORCES LIST 1 2", "PRINT SUPPORT REACTION",
           "PARAMETER 1", "CODE AISC UNIFIED 2022", "METHOD ASD", f"FYLD {f3(h['Fy'] * 1000)} ALL", f"FU {f3(h['Fu'] * 1000)} ALL",
           f"LY {f3(L)} ALL", f"LZ {f3(L)} ALL", f"UNL {f3(L)} ALL", f"KY {h['K']} ALL", f"KZ {h['K']} ALL", "CB 1 ALL",
