@@ -1,12 +1,12 @@
 // Pile cap one-way and punching shear (5B).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261014g';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014g';
-import { fmt } from '../core/format.js?v=20261014g';
-import { lastResults, pileList } from '../core/state.js?v=20261014g';
-import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014g';
-import { pileComboLoads } from '../tabs/pile.js?v=20261014g';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261014g';
+import { eccentricPunchingStress, evaluatePileGroupCombo, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261014h';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014h';
+import { fmt } from '../core/format.js?v=20261014h';
+import { lastResults, pileList } from '../core/state.js?v=20261014h';
+import { chapterHeader, comboLabel, efficiencyBadge, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014h';
+import { pileComboLoads } from '../tabs/pile.js?v=20261014h';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261014h';
 
 // ----- V_u from the pile reactions of the factored (LRFD) combinations — 5B pile cap -----
 // The pile forces are those of evaluatePileGroupCombo() (biaxial, incl. the moment of the load point off the group
@@ -132,7 +132,7 @@ export function calcOneWay() {
     lastResults.oneway = { label: 'One-Way Shear', status: 'ERROR', metric: '—', detail: 'V_u from pile reactions not available: ' + pv.note };
     return;
   }
-  const { d, sqrtfc, vc_lower, vc_upper, vc, lambdaS, detail, phiVc, uc, pass, simplifiedAllowed, hMinRounded } = r;
+  const { d, sqrtfc, vc_lower, vc_upper, vc, lambdaS, useFloor, detail, phiVc, uc, pass, simplifiedAllowed, hMinRounded } = r;
   lastResults.oneway = { label: 'One-Way Shear', status: pass ? 'PASS' : 'FAIL', metric: `UC = ${fmt(uc,3)}`,
     detail: `b_w=${fmt(bw,0)}mm, d=${fmt(d,0)}mm, V_u=${fmt(vu,1)}kN${pv ? ` (piles, ${comboLabel(pv.gov.combo)})` : ''}, ${method}` };
   let suggestHtml = '';
@@ -157,11 +157,13 @@ export function calcOneWay() {
     <tr><td>Effective depth, d</td><td class="clause">h - cc - D</td><td class="num">${fmt(d,0)} mm</td></tr>
     <tr><td>↓f'c</td><td class="clause">—</td><td class="num">${fmt(sqrtfc,3)} MPa<sup>0.5</sup></td></tr>`;
   if (method === 'detailed') {
-    html += `<tr><td>Size effect factor, λ<sub>s</sub></td><td class="clause">Eq. 22.5.5.1.3</td><td class="num">${fmt(lambdaS,3)}</td></tr>
-      <tr><td>ρ<sub>w</sub></td><td class="clause">input</td><td class="num">${fmt(rho*100,3)}%</td></tr>
-      <tr><td>V<sub>c</sub>, unbounded</td><td class="clause">0.66λ<sub>s</sub>λ(ρ<sub>w</sub>)<sup>1/3</sup>↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(0.66 * lambdaS * lambda * Math.pow(Math.max(rho,0.0001),1/3) * sqrtfc * bw * d / 1000,1)} kN</td></tr>`;
+    const rhoCube = Math.pow(Math.max(rho,0.0001),1/3);
+    if (lambdaS !== null) html += `<tr><td>Size effect factor, λ<sub>s</sub></td><td class="clause">Eq. 22.5.5.1.3 (applies with A<sub>v</sub> &lt; A<sub>v,min</sub>)</td><td class="num">${fmt(lambdaS,3)}</td></tr>`;
+    html += `<tr><td>ρ<sub>w</sub></td><td class="clause">input</td><td class="num">${fmt(rho*100,3)}%</td></tr>
+      <tr><td>V<sub>c</sub>, ${lambdaS !== null ? 'Eq. (c)' : 'Eq. (b)'}</td><td class="clause">${lambdaS !== null ? '0.66λ<sub>s</sub>λ(ρ<sub>w</sub>)<sup>1/3</sup>↓f\'c·b<sub>w</sub>·d' : '0.66λ(ρ<sub>w</sub>)<sup>1/3</sup>↓f\'c·b<sub>w</sub>·d'}</td><td class="num">${fmt(0.66 * (lambdaS !== null ? lambdaS : 1) * lambda * rhoCube * sqrtfc * bw * d / 1000,1)} kN</td></tr>`;
   }
-  html += `<tr><td>V<sub>c,min</sub></td><td class="clause">0.17λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_lower/1000,1)} kN</td></tr>
+  // The 0.17 lower bound (Eq. a) exists only with A_v ≥ A_v,min (or the simplified method); with A_v < A_v,min Eq. (c) has no floor.
+  html += `${useFloor ? `<tr><td>V<sub>c</sub>, Eq. (a)</td><td class="clause">0.17λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_lower/1000,1)} kN</td></tr>` : ''}
     <tr><td>V<sub>c,max</sub></td><td class="clause">0.42λ↓f'c·b<sub>w</sub>·d</td><td class="num">${fmt(vc_upper/1000,1)} kN</td></tr>
     <tr class="governing"><td>V<sub>c</sub>, governing</td><td class="clause">${detail}</td><td class="num">${fmt(vc/1000,1)} kN</td></tr>
     <tr><td>π V<sub>c</sub></td><td class="clause">π  = 0.75</td><td class="num">${fmt(phiVc/1000,1)} kN</td></tr>

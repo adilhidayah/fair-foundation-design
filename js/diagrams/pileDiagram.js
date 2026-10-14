@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261014g';
+import { fmt } from '../core/format.js?v=20261014h';
 
 // Pile group plan: pile cap outline (Bf x Lf from "02", centred on the origin), piles at true diameter with their number
 // inside and the axial force beside them, optional coordinate rulers (x along the top, y along the left, with dotted

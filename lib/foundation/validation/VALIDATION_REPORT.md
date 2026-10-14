@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 501 checks, 501 pass, 0 fail** (13 files, run 14 Oct 2026).
+**Total: 539 checks, 539 pass, 0 fail** (14 files, run 14 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -17,7 +17,8 @@ Date: 18 Sep 2026, last updated 26 Sep 2026. Method: independent hand-calculatio
 | validation_shared_part11.mjs | punching shear with unbalanced moment | 16 |
 | validation_static_part12.mjs | foundation geometry consistency (+ cap-only above-grade warning) | 23 |
 | validation_shared_part13.mjs | autoSizeFooting() (B = L and H) + autoSizeDepth() (B, L, H fixed, Df only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
-| **Total** | | **501** |
+| validation_shared_part14.mjs | audit fixes 14 Oct 2026: anchor Vb (SI 0.6 / 3.7), one-way shear Vc (Table 22.5.5.1 cases, no 0.17 floor without Av,min), pedestal P-M (phi from net tensile strain, pure-tension end, envelope lookup) | 38 |
+| **Total** | | **539** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -82,6 +83,18 @@ Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 
   500×500, d = 400: bo = 3600, Jc = 204.0e9 mm⁴, γv = 0.4; Vu = 500 kN, Mz = 100 kN·m → 0.3472 + 0.0882 = 0.4355 MPa;
   equal biaxial moments add both terms; 600×400: γf 0.5729 / 0.6265, Jc 237.33e9 / 170.67e9; edge / corner → invalid.
 
+### part14 — audit fixes (14 Oct 2026)
+Found by an independent recalculation of the shallow workflow against the UI (loads, 4A, bearing, shear, pedestal P-M, anchors all agreed except these):
+- Anchor shear breakout: Vb used the US-customary coefficient 7 with SI units (11.67x too high). Now min[0.6(le/da)^0.2·√da·λ√f'c·ca1^1.5, 3.7λ√f'c·ca1^1.5]
+  (ACI 318M-19 §17.7.2.2.1). Hand vectors: da 20 / hef 300 / f'c 25 / ca1 100 → (a) 20,335 N, (b) 18,500 N → Vb 18,500 N; da 12 / hef 200 / f'c 30 / ca1 200 → (a) 48,805 N governs;
+  US-customary equation converted to SI (19.70 kN) agrees with (a) within 4 %.
+- One-way shear (bw 1000, d 341, f'c 30, rho 0.5 %): Av < Av,min → Eq. (c) with λs = 0.924 → Vc 194.78 kN (UC 220 kN → 1.506); the 0.17 floor (317.5 kN) is only for Av ≥ Av,min (larger of (a), (b)).
+  Before: UC 0.924 for the same section. λs is kept for footings (conservative; §13.2.6.2 may exempt shallow foundations — verify).
+- Pedestal P-M (600 × 600, d' 65, 8 D25 per layer, f'c 30, fy 420): φ was taken from the compressive-positive strain, so φ = 0.65 over the whole flexure range (φMn 18–30 % low).
+  Now φ = 0.90 at c = 120 mm (net tensile strain 0.0104), 0.7869 at c = 240 mm, 0.65 once c > d2; pure-tension point φPn = −0.9·Ast·fy = −2,969 kN; Pu beyond it is out of range.
+  The full 1250 × 1250 section: φMn at Pu = 0 changes from 2,437 to 3,374 kN·m (strain-compatibility with a finer grid gives 3,385).
+- Not changed (by design, documented): the bolt group is assumed centred on the pedestal (ca1 from the group centroid).
+
 ### part13 — autoSizeFooting (14 Oct 2026)
 The solver has no engineering formula; it searches B = L (stability) and H (shear) on a 0.05 m grid using caller-supplied checks. Vectors:
 stability needs B ≥ 2.37, shear needs H ≥ 0.62 → B = 2.40, H = 0.65 (20 trials, not a grid scan); thresholds on a grid point are accepted
@@ -110,6 +123,7 @@ node lib/foundation/validation/validation_shared_part10.mjs
 node lib/foundation/validation/validation_shared_part11.mjs
 node lib/foundation/validation/validation_static_part12.mjs
 node lib/foundation/validation/validation_shared_part13.mjs
+node lib/foundation/validation/validation_shared_part14.mjs
 ```
 
 ## Notes
