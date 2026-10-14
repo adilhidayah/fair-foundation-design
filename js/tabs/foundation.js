@@ -1,12 +1,12 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014d';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014d';
-import { fmt } from '../core/format.js?v=20261014d';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014d';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014d';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261014d';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261014d';
+import { LOAD_KINDS, bearingCapacityCheck, evaluateBiaxialFooting, evaluateFoundationCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261014f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014f';
+import { fmt } from '../core/format.js?v=20261014f';
+import { comboState, lastResults, state } from '../core/state.js?v=20261014f';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014f';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261014f';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261014f';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a

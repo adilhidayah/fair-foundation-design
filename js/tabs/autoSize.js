@@ -1,13 +1,13 @@
 // Auto-Size Foundation (Tab 02 button / Design Status panel button): smallest square footing B = L and thickness H, in
 // 0.05 m steps, for which 4A stability (kern, bearing pressure, sliding, overturning) and the one-way / punching shear checks
-// all PASS. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
+// all PASS. With "Keep B × L" ticked the plan is the user's (site limit) and only H is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
 // size into Tab 02, runs calcFoundSize() (-> recalcAll(), the very checks the user sees) and reads the statuses back.
 // Shallow foundations only. Pedestal, D_f, grout and the load data are never changed; nothing is changed when no size passes.
-import { autoSizeFooting } from '../../lib/foundation/index.js?v=20261014d';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014d';
-import { fmt } from '../core/format.js?v=20261014d';
-import { lastResults } from '../core/state.js?v=20261014d';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014d';
+import { autoSizeFooting, autoSizeThickness } from '../../lib/foundation/index.js?v=20261014f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014f';
+import { fmt } from '../core/format.js?v=20261014f';
+import { lastResults } from '../core/state.js?v=20261014f';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261014f';
 
 const STEP = 0.05;          // m — grid of the result (B, L, H)
 const H_MIN = 0.3;          // m — thinnest footing the search starts from
@@ -38,10 +38,13 @@ export async function autoSizeFoundation() {
   btns.forEach((b) => { b.disabled = true; });
   show('note', 'Auto-sizing…');
   let trial = 0;
+  // lockPlan: B and L stay as typed (site limit, any B x L) and only H is searched; otherwise B = L is searched as well.
+  const lockPlan = document.getElementById('fs-autosize-lock').checked;
   const evaluate = async ({ B, H }) => {
     trial += 1;
-    out.innerHTML = `Auto-sizing… trial ${trial}: B = L = ${fmt(B, 2)} m, H = ${fmt(H, 2)} m`;
-    setField('fs-Bf', B); setField('fs-Lf', B); setField('fs-Hf', H);
+    out.innerHTML = `Auto-sizing… trial ${trial}: ${B === undefined ? '' : `B = L = ${fmt(B, 2)} m, `}H = ${fmt(H, 2)} m`;
+    if (B !== undefined) { setField('fs-Bf', B); setField('fs-Lf', B); }
+    setField('fs-Hf', H);
     calcFoundSize();
     await yieldToUi();
     const issues = lastResults.foundsize && lastResults.foundsize.issues ? lastResults.foundsize.issues : [];
@@ -54,6 +57,29 @@ export async function autoSizeFoundation() {
     };
   };
   try {
+    if (lockPlan) {
+      const Bf = num('fs-Bf'), Lf = num('fs-Lf');
+      if (!(Bf > 0 && Lf > 0)) { show('warn-box', '<strong>Enter B<sub>f</sub> and L<sub>f</sub> first</strong> — with the plan size locked, only H is sized.'); return; }
+      const t = await autoSizeThickness({ evaluate, Hmin: H_MIN, Hmax, step: STEP });
+      if (t.ok) {
+        setField('fs-Hf', t.H.toFixed(2));
+        calcFoundSize();
+        const rows = (lastResults.foundation && lastResults.foundation.checks ? lastResults.foundation.checks : []).map((c) => `<li>${escapeHtml(c.name)}: UC = ${fmt(c.uc, 3)} (LC ${escapeHtml(String(c.lc))})</li>`).join('');
+        const ow = lastResults.oneway, tw = lastResults.twoway;
+        show('suggest-box', `<strong>✓ Auto-sized: H<sub>f</sub> = ${fmt(t.H, 2)} m</strong> with the plan size kept at B<sub>f</sub> × L<sub>f</sub> = ${fmt(Bf, 2)} × ${fmt(Lf, 2)} m — smallest thickness (${fmt(STEP * 1000, 0)} mm steps) passing the checks below, found in ${t.evals} trials. B<sub>f</sub>, L<sub>f</sub>, D<sub>f</sub>, the pedestal and the loads were not changed.`
+          + `<ul style="margin:6px 0 0 18px;padding:0;">${rows}<li>One-way shear: ${escapeHtml(ow ? ow.metric : '—')}</li><li>Punching shear: ${escapeHtml(tw ? tw.metric : '—')}</li></ul>`
+          + `<div class="clause" style="margin-top:6px;">Review the result (rebar, flexure, deflection) before using it.</div>`);
+      } else {
+        setField('fs-Hf', orig.Hf);
+        calcFoundSize();
+        const atMax = t.info && t.info.stability ? ` At H<sub>f</sub> = ${fmt(t.H, 2)} m the stability check gives ${escapeHtml(t.info.stability.metric || '—')}.` : '';
+        const hint = t.failed.includes('stability')
+          ? ` The plan size ${fmt(Bf, 2)} × ${fmt(Lf, 2)} m is too small for stability whatever the thickness — enlarge it (untick "Keep B × L" to let Auto-Size find the plan), or reduce the loads / soil demand.`
+          : ` Increase the limit by raising D<sub>f</sub>${hasPed ? ' (with a pedestal H ≤ D<sub>f</sub>)' : ''}, or check the shear inputs in 5B.`;
+        show('warn-box', `<strong>⚠  No thickness found for the fixed plan size — H<sub>f</sub> left unchanged.</strong> ${escapeHtml(t.reason)}${atMax}${hint}`);
+      }
+      return;
+    }
     const r = await autoSizeFooting({ evaluate, Bmin, Bmax: B_MAX, Hmin: H_MIN, Hmax, step: STEP, H0: num('fs-Hf') });
     if (r.ok) {
       setField('fs-Bf', r.B.toFixed(2)); setField('fs-Lf', r.B.toFixed(2)); setField('fs-Hf', r.H.toFixed(2));
