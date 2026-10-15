@@ -3,7 +3,7 @@
 ## Status repo
 - `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
 - Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
-- Cache-buster `?v=` saat ini `20261015i` (harus seragam di semua import `js/` + `index.html`).
+- Cache-buster `?v=` saat ini `20261015j` (harus seragam di semua import `js/` + `index.html`).
 - Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
 
 ## Fitur yang ditambahkan
@@ -38,6 +38,11 @@
 - Footing/pedestal dangkal (`staad-stability.mjs`) dan pile cap `SUPPORT PILE` (`staad-pile.mjs`: 4B, struktur 5B, auto-thickness).
 - CLI pile cap 5B sudah dibandingkan dengan tab 5B di app (6 kasus, semua sama; lihat catatan di VALIDATION_REPORT). Belum diuji dengan file STAAD proyek asli.
 - Belum: torsi MY STAAD untuk grup tiang (tanda belum terverifikasi), multi-titik beban di `.fnd`, campuran pile + dangkal dalam satu file.
+
+## Report generator (HTML + PDF)
+- CLI: `fair-run input.fnd [--pdf]` → `.md` + `.html` (A4, `css/report.css`) + `.pdf` (Chrome/Chromium/Edge terpasang; `FAIR_BROWSER`/`--browser`). `REPORT ...` di `.fnd` mengisi header (oleh, tanggal, rev, lokasi, nomor dokumen, halaman). Gambar DXF/SVG footing ikut tertanam bila `DRAWINGS ON`.
+- App: Summary → "Export report (HTML)" (satu file mandiri, tombol Print / Save as PDF di dalamnya). PDF di app = print browser; tidak ada library PDF.
+- Belum: logo di CLI, nomor halaman total di header dokumen, font IBM Plex di file mandiri (memakai font sistem).
 
 ## Ide lanjutan (belum diminta)
 Multi-titik di `.fnd`, pembanding model strip 5B.

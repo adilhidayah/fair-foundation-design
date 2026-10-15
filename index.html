@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261015i">
+<link rel="stylesheet" href="css/app.css?v=20261015j">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1369,6 +1369,7 @@
         <div class="note">Content for each section is whatever that tab last computed — open a tab at least once this session so it has a result before generating.</div>
         <button type="button" id="rpt-generate" class="combo-add-btn">» Generate / Refresh Report</button>
         <button type="button" id="summary-print" class="combo-add-btn">🖨 Print / Save as PDF</button>
+        <button type="button" id="summary-export" class="combo-add-btn" title="One standalone HTML file (same format as the command-line reports), with its own Print / Save as PDF button">⬇ Export report (HTML)</button>
         <div class="note">Printing hides the input sidebar and tab bar automatically, leaving only the assembled report below.</div>
       </div>
       <!-- FOUNDATION SIZING INPUTS -->
@@ -1842,6 +1843,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261015i"></script>
+<script type="module" src="js/app.js?v=20261015j"></script>
 </body>
 </html>

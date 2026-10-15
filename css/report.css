@@ -1,0 +1,102 @@
+/* FAIR Foundation Design — standalone calculation report (A4). Used by the CLI (tools/fair-run.mjs) and by the app's
+   "Export report" button (js/report/exportHtml.js), inlined by buildReportDocument() (lib/foundation/report/reportDocument.js).
+   Light palette only: the same file is the screen view and the print / PDF layout. Covers the markup of both sources:
+   the CLI Markdown converter (calc-table, section-label, report-header, ...) and the app's Summary panels (verdict, summary-row,
+   limits-box, warn-box, doc-header-table, report-block, lc-formula, SVG diagrams). */
+:root {
+  --ink: #0F172A; --ink-soft: #475569; --line: #CBD5E1; --navy: #1B365D; --accent: #2B547E; --soft: #EBF0F5;
+  --pass: #166534; --pass-bg: #F0FDF4; --pass-border: #86EFAC;
+  --fail: #991B1B; --fail-bg: #FEF2F2; --fail-border: #FCA5A5;
+  --warn: #92400E; --warn-bg: #FEF3C7; --warn-border: #FDE68A;
+  --sans: 'IBM Plex Sans', 'Segoe UI', Helvetica, Arial, sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, 'Courier New', monospace;
+}
+* { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+html { background: #E5E7EB; }
+body { margin: 0; font-family: var(--sans); font-size: 10pt; line-height: 1.45; color: var(--ink); }
+.report-doc { max-width: 190mm; margin: 12px auto; padding: 14mm 14mm 16mm; background: #fff; box-shadow: 0 1px 6px rgba(15, 23, 42, .25); }
+@page { size: A4; margin: 15mm 16mm 17mm; @bottom-right { content: counter(page) " / " counter(pages); font: 8pt var(--sans); color: #64748B; } }
+@media print {
+  html { background: #fff; }
+  .report-doc { max-width: none; margin: 0; padding: 0; box-shadow: none; }
+}
+
+/* ---- screen toolbar ---- */
+.report-toolbar { max-width: 190mm; margin: 10px auto 0; text-align: right; }
+.report-toolbar button { font: 600 10pt var(--sans); padding: 5px 12px; border: 1px solid var(--accent); background: #fff; color: var(--accent); border-radius: 3px; cursor: pointer; }
+.report-toolbar button:hover { background: var(--soft); }
+@media print { .report-toolbar { display: none; } }
+
+/* ---- document header ---- */
+.report-header { border-bottom: 2px solid var(--navy); padding-bottom: 6px; margin-bottom: 14px; }
+.report-header h2 { margin: 0 0 4px; font-size: 17pt; font-weight: 700; color: var(--navy); }
+.report-meta { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 9pt; color: var(--ink-soft); }
+.doc-header-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+.doc-header-table td { border: 1px solid var(--navy); padding: 5px 8px; font-size: 8.5pt; color: var(--ink-soft); vertical-align: top; }
+.doc-header-table td strong { display: block; color: var(--ink); font-size: 10pt; margin-top: 1px; }
+.doc-header-table .dh-title { text-align: center; vertical-align: middle; font-size: 13pt; font-weight: 700; color: var(--navy); width: 34%; }
+.doc-header-table .dh-logo { text-align: center; vertical-align: middle; width: 14%; }
+.doc-header-table .dh-logo img { max-height: 16mm; max-width: 100%; }
+
+/* ---- headings, text ---- */
+.section-label { margin: 18px 0 8px; padding: 4px 0 3px; font-size: 12pt; font-weight: 700; color: var(--navy); border-bottom: 1px solid var(--navy); break-after: avoid; }
+.section-label:first-child { margin-top: 0; }
+h3.sub-title, h4.sub-title { margin: 12px 0 6px; font-size: 10.5pt; color: var(--navy); break-after: avoid; }
+p { margin: 0 0 8px; }
+p, li, .note, .limits-box { orphans: 3; widows: 3; }
+ul { margin: 0 0 8px; padding-left: 18px; }
+code { font-family: var(--mono); font-size: 9pt; background: var(--soft); padding: 0 3px; border-radius: 2px; }
+sub { font-size: 70%; line-height: 0; }
+.report-block { margin-bottom: 22px; }
+.report-block.page-break-before { break-before: page; }
+.report-footer { margin-top: 20px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 8pt; color: var(--ink-soft); }
+
+/* ---- tables ---- */
+.overflow-x { overflow: visible; margin: 6px 0 12px; }
+table.calc-table { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+table.calc-table caption { caption-side: top; text-align: left; font-weight: 600; font-size: 9pt; color: var(--navy); padding: 0 0 3px; break-after: avoid; }
+table.calc-table th, table.calc-table td { border: 1px solid var(--line); padding: 3px 5px; vertical-align: top; text-align: left; }
+table.calc-table th { background: var(--soft); color: var(--navy); font-weight: 600; font-size: 8pt; }
+table.calc-table td.num, table.calc-table .num { text-align: right; font-family: var(--mono); font-size: 8pt; white-space: nowrap; }
+table.calc-table .clause { color: var(--ink-soft); font-size: 8pt; }
+table.calc-table tr { break-inside: avoid; }
+table.calc-table thead { display: table-header-group; }
+table.calc-table tr.governing td, table.calc-table tr.governing { background: #FFF7D6; font-weight: 600; }
+table.calc-table tr.calc-total td { background: var(--soft); font-weight: 600; }
+.lt-bar { display: none; }
+
+/* ---- boxes and verdicts ---- */
+.note, .limits-box, .suggest-box, .warn-box { margin: 8px 0 12px; padding: 6px 9px; border-left: 3px solid var(--accent); background: var(--soft); font-size: 9pt; break-inside: avoid; }
+.limits-box { border-left-color: var(--warn-border); background: var(--warn-bg); color: var(--warn); }
+.limits-box strong { color: var(--ink); }
+.warn-box { border-left-color: var(--fail-border); background: var(--fail-bg); color: var(--fail); }
+.warn-box strong { color: var(--fail); }
+.verdict { display: flex; align-items: center; justify-content: space-between; margin: 8px 0 12px; padding: 8px 12px; border: 1.5px solid var(--pass-border); background: var(--pass-bg); break-inside: avoid; }
+.verdict.fail { border-color: var(--fail-border); background: var(--fail-bg); }
+.verdict.na { border-color: #94A3B8; background: #F1F5F9; }
+.verdict .stamp { font-weight: 700; font-size: 11pt; letter-spacing: .03em; color: var(--pass); }
+.verdict.fail .stamp { color: var(--fail); }
+.verdict .uc { text-align: right; }
+.verdict .uc .val { font-family: var(--mono); font-weight: 700; font-size: 13pt; }
+.verdict .uc .lbl { font-size: 7.5pt; color: var(--ink-soft); letter-spacing: .06em; }
+.summary-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 4px; padding: 5px 10px; border: 1px solid var(--line); border-left: 4px solid var(--line); break-inside: avoid; }
+.summary-row.pass { border-left-color: var(--pass); }
+.summary-row.fail { border-left-color: var(--fail); }
+.summary-row.info { border-left-color: var(--accent); }
+.summary-row.na { border-left-color: #64748B; }
+.summary-row .sr-label { font-weight: 600; font-size: 9.5pt; }
+.summary-row .sr-detail { font-size: 8pt; color: var(--ink-soft); margin-top: 1px; }
+.summary-row .sr-metric { font-family: var(--mono); font-weight: 600; font-size: 9pt; white-space: nowrap; }
+.summary-row.pass .sr-metric { color: var(--pass); }
+.summary-row.fail .sr-metric { color: var(--fail); }
+.lc-formula { margin: 6px 0 10px; padding: 6px 9px; border: 1px solid var(--line); font-size: 9pt; break-inside: avoid; }
+.lc-formula-title { font-weight: 600; color: var(--navy); margin-bottom: 3px; }
+.lc-formula-where { color: var(--ink-soft); font-size: 8pt; margin-top: 3px; }
+
+/* ---- diagrams ---- */
+svg { max-width: 100%; height: auto; break-inside: avoid; }
+.diagram, figure { margin: 8px 0 14px; text-align: center; break-inside: avoid; }
+figure figcaption { font-size: 8.5pt; color: var(--ink-soft); }
+svg .dim, svg .dim-text { stroke: #475569; fill: none; font-family: var(--sans); }
+svg text { font-family: var(--sans); }
+@media print { .overflow-x, .fdn-diagram { content-visibility: visible; } }

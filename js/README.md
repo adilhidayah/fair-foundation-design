@@ -34,6 +34,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/anchor.js` | 09 — bolt table, `calcAnchor` |
 | `ocr/tesseract.js` | lazy Tesseract.js loader |
 | `ocr/review.js` | OCR / paste review tables (parsers are in `lib/foundation/import/textParsers.js`) |
+| `report/exportHtml.js` | "Export report (HTML)" on the Summary tab: the Summary panel + `css/report.css` as one standalone file (same document builder as the CLI, `lib/foundation/report/reportDocument.js`), SVG styles written inline, Print / Save as PDF button inside |
 | `report/summary.js`, `report/builder.js` | Summary tab; printable report builder |
 | `workflow/recalc.js` | `recalcAll`, `calcFoundationAndGeneral`, `calcBearingAndFoundation` |
 | `workflow/setup.js` | 00 — equipment setup, foundation-tab visibility, load input mode |
