@@ -1,37 +1,38 @@
 import {
   windForceASCE722, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261015a'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261015a';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261015a';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261015a';
-import { installLazyPanels, setActiveTab } from './core/lazyPanels.js?v=20261015a';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261015a';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261015a';
-import { loadTesseract } from './ocr/tesseract.js?v=20261015a';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261015a';
-import { renderSummaryReport } from './report/summary.js?v=20261015a';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261015a';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261015a';
-import { calcFoundation } from './tabs/foundation.js?v=20261015a';
-import { autoSizeFoundation } from './tabs/autoSize.js?v=20261015a';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261015a';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261015a';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderLoadValuesHeader, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261015a';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261015a';
-import { calcRebar } from './tabs/rebar.js?v=20261015a';
-import { calcSettlement } from './tabs/settlement.js?v=20261015a';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261015a';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261015a';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261015a';
-import { resolveCheckTab, sync5BSources, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261015a';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261015a';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261015a';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261015a';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261015a';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261015a';
-import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261015a';
-import { renderScopePanel } from './workflow/scope.js?v=20261015a';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261015a';
+} from '../lib/foundation/index.js?v=20261015e'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261015e';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261015e';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261015e';
+import { installLazyPanels, setActiveTab } from './core/lazyPanels.js?v=20261015e';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks, loadPointList } from './core/state.js?v=20261015e';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261015e';
+import { loadTesseract } from './ocr/tesseract.js?v=20261015e';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261015e';
+import { renderSummaryReport } from './report/summary.js?v=20261015e';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261015e';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261015e';
+import { calcFoundation } from './tabs/foundation.js?v=20261015e';
+import { autoSizeFoundation } from './tabs/autoSize.js?v=20261015e';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261015e';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261015e';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderLoadValuesHeader, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261015e';
+import { renderLoadPointTable } from './tabs/loadPoints.js?v=20261015e';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261015e';
+import { calcRebar } from './tabs/rebar.js?v=20261015e';
+import { calcSettlement } from './tabs/settlement.js?v=20261015e';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261015e';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261015e';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261015e';
+import { resolveCheckTab, sync5BSources, syncLoadPointBox, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261015e';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261015e';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261015e';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261015e';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261015e';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261015e';
+import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261015e';
+import { renderScopePanel } from './workflow/scope.js?v=20261015e';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261015e';
 
 installLazyPanels();
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
@@ -391,6 +392,25 @@ document.getElementById('pf-pm-reset').addEventListener('click', () => {
   calcPile();
 });
 renderPileTable();
+// Load points on the pile cap (Tab 02): Single / Multiple, and the table of points. Every change re-runs the cap checks (recalcAll).
+selectRadio('fs-lp-mode', () => { document.getElementById('lp-multi-box').style.display = getRadioVal('fs-lp-mode') === 'multi' ? '' : 'none'; calcFoundSize(); recalcAll(); });
+document.getElementById('lp-list').addEventListener('input', (e) => {
+  if (!e.target.classList.contains('lp-input')) return;
+  loadPointList[+e.target.dataset.i][e.target.dataset.f] = parseFloat(e.target.value) || 0;
+  recalcAll();
+});
+document.getElementById('lp-list').addEventListener('click', (e) => {
+  if (!e.target.classList.contains('combo-remove')) return;
+  loadPointList.splice(+e.target.dataset.i, 1);
+  renderLoadPointTable();
+  recalcAll();
+});
+document.getElementById('lp-add').addEventListener('click', () => {
+  loadPointList.push({ x: 0, y: 0, c1: 1.25, c2: 1.25, share: 1 });
+  renderLoadPointTable();
+  recalcAll();
+});
+renderLoadPointTable();
 
 // ---------- ANCHOR BOLT DESIGN (ACI 318-19 Chapter 17, single-anchor simplification) ----------
 document.getElementById('ab-bolt-table').addEventListener('input', (e) => {
@@ -639,7 +659,7 @@ selectRadio('bc-method', calcBearingAndFoundation);
 selectRadio('bc-failure', calcBearingAndFoundation);
 selectRadio('ab-type', calcAnchor);
 selectRadio('ab-crack', calcAnchor);
-selectRadio('fs-type', () => { calcFoundSize(); syncPedestalTab(); });
+selectRadio('fs-type', () => { calcFoundSize(); syncPedestalTab(); syncLoadPointBox(); recalcAll(); });
 
 selectRadio('fs-support', () => { sync5BSources(); calcFoundSize(); updateFoundationTabVisibility(); renderGeneralSummary(); });
 selectRadio('ld-mode', () => { toggleLoadInputMode(); renderLoadValuesHeader(); recalcAll(); });
@@ -933,6 +953,8 @@ function renderProjectLists() {
   renderLoadTypesTable(); // also the Load Values rows (lc-<code>-*)
   renderComboTable('lc'); // ASD and LRFD tables
   renderPileTable();
+  renderLoadPointTable();
+  document.getElementById('lp-multi-box').style.display = getRadioVal('fs-lp-mode') === 'multi' ? '' : 'none';
   renderBoltTable();
   renderDesignStandardsTable();
   renderBlockList();

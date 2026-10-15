@@ -11,6 +11,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 |---|---|
 | `app.js` | Entry point. **Only executable top-level code**: event wiring (`addEventListener`), startup renders, `window.*` exports for inline `onclick=`, the Wind/Seismic generator popup handlers. Kept in the original execution order. |
 | `core/format.js` | `fmt` (display number formatting) |
+| `tabs/loadPoints.js` | `loadPointsActive`, `activeLoadPoints`, `renderLoadPointTable` — Tab 02 list of load points (several equipment on one pile cap, `state.loadPointList`); consumed by `pileComboLoads()` (4B / 5B) and the 5B shear / flexure |
 | `core/lazyPanels.js` | `installLazyPanels`, `setActiveTab` — heavy result panels (`#calc-*`, `#focus-*`, Tab 03 summaries) keep a write as a string until their tab is open; `.innerHTML` reads still return the latest HTML (perf with 100+ combinations); long tables (> 40 rows) show their first rows + a "Show all N rows" button on screen (reports and print stay full) |
 | `core/dom.js` | `num`, `selectRadio`, `getRadioVal`, `escapeHtml`, `openModal`/`closeModal`, `wireDecimalAutoFormat` |
 | `core/worksheet.js` | `comboLabel`, `dlWorksheetItem`, `dlWorksheetTotal` (unused), `verdictHTML`, `efficiencyBadge` |

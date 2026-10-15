@@ -1,9 +1,9 @@
-import { fmt } from '../core/format.js?v=20261015a';
+import { fmt } from '../core/format.js?v=20261015e';
 
 // Foundation sizing plan + elevation. patch.js keeps its #fsize-arrow marker clean.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.
 // D = pile diameter in m (plan circles; 0 -> a fixed symbol size). Pile coordinates {x, y} = plan x, z (y field = plan z).
-export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, D = 0) {
+export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, D = 0, loadPoints = null) {
   const hasPed = type === 'pedestal';
   const isBlock = type === 'block';
   const HALO = 'paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round;';
@@ -36,6 +36,15 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
       <circle cx="${pedCx.toFixed(1)}" cy="${pedCy.toFixed(1)}" r="2.5" fill="var(--accent)"/>`;
     }
   }
+  // Load points on the pile cap (Tab 02 "Load points" = Multiple): each base plate / skid as a numbered rectangle.
+  let lpPlan = '';
+  if (loadPoints && loadPoints.length) {
+    lpPlan = loadPoints.map((q, k) => {
+      const w = Math.max((q.c1 || 0) * pScale, 4), h = Math.max((q.c2 || 0) * pScale, 4), cx = pcx + q.x * pScale, cy = pcy - q.y * pScale;
+      return `<rect class="outline-pedestal" x="${(cx - w / 2).toFixed(1)}" y="${(cy - h / 2).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>`
+        + `<text class="dim-text" style="${HALO}" x="${cx.toFixed(1)}" y="${(cy + 3.5).toFixed(1)}" text-anchor="middle">P${k + 1}</text>`;
+    }).join('');
+  }
   // Piles in plan (pile foundation): true diameter when D is known, dashed (they are below the cap), numbered as in 4B.
   let pilePlan = '';
   if (piles.length > 0) {
@@ -52,6 +61,7 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
       <rect class="outline-footing" x="${ffx.toFixed(1)}" y="${ffy.toFixed(1)}" width="${fW.toFixed(1)}" height="${fL.toFixed(1)}" fill="none" stroke="var(--line-strong)"/>
       ${pedPlan}
       ${pilePlan}
+      ${lpPlan}
       ${offNote ? `<text class="dim-text" x="${pX0}" y="${(pY0+pH+22).toFixed(1)}" fill="var(--accent)" font-weight="600">${offNote}</text>` : ''}
       <!-- Coordinate Axes: X to East(Right), Z to North(Up) — kept inside the footing outline so it never crosses the Bf/Lf dimension lines outside it -->
       <!-- X-axis -->

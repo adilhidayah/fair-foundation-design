@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 935 checks, 935 pass, 0 fail** (26 files, run 15 Oct 2026).
+**Total: 951 checks, 951 pass, 0 fail** (27 files, run 15 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -30,7 +30,8 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part24.mjs | cross-check footingDesign.js (app) vs spreadFooting.js (independent Newton-solver reference): contact plane, flexure at the pedestal faces, one-way shear, punching — 600 random cases, 449 with partial contact, agreement ≤ 1e-8 | 6 |
 | validation_shared_part25.mjs | pile group of the Filter Coalescer 101-F-2201 A/B/C foundation (12 piles): reactions with the correct moment lever arms (93.44 kN service / 119.5 kN factored vs 158.10 / 232.0 kN of the swapped pairing in the source document), lateral per pile, Converse–Labarre and manual Eg | 20 |
 | validation_shared_part26.mjs | pile settlement, Vesic (1977) / Das §11.18: S1, S2, S3, group factor, hand-worked values, negative control for the source document's tip-load error, scaling and invalid inputs | 17 |
-| **Total** | | **935** |
+| validation_shared_part27.mjs | several load points on one pile cap: equivalent group load, global and section equilibrium on 400 random layouts (couples, cap weight), hand-worked sections of the 12-pile / 3-vessel cap, one point = single-pedestal model | 16 |
+| **Total** | | **951** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 

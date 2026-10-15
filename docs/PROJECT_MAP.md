@@ -128,6 +128,7 @@ MASTER CALCULATOR/
 | [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 6 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak) |
 | [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) | 2 KB | Korelasi SPT (Peck/Stroud/Bowles) |
 | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js) | 3 KB | Penurunan elastis + konsolidasi |
+| [shared/loadPoints.js](../lib/foundation/shared/loadPoints.js) | 3 KB | Beberapa titik beban pada satu pile cap: `splitCombinationLoad()` (beban grup ekuivalen), `pointLoadsBeyond()` (netting di penampang) |
 | [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js) | 2 KB | Penurunan tiang tunggal + kelompok (Vesic 1977, Das §11.18): `pileSettlementVesic()` |
 | [shared/windLoad.js](../lib/foundation/shared/windLoad.js) | 2 KB | Beban angin |
 | [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) | 4 KB | Fa/Fv, S_DS, Cs |

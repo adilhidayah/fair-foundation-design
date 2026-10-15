@@ -1,21 +1,23 @@
 // Pile cap / shallow footing one-way and punching shear (tab 5B, report chapter 06, sections 6.1 and 6.2).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261015a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { lastResults, pileList } from '../core/state.js?v=20261015a';
-import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015a';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015a';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015a';
-import { renderShearFocus } from '../tabs/shearFocus.js?v=20261015a';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015a';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261015e';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015e';
+import { fmt } from '../core/format.js?v=20261015e';
+import { lastResults, pileList } from '../core/state.js?v=20261015e';
+import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015e';
+import { pileComboLoads } from '../tabs/pile.js?v=20261015e';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015e';
+import { renderShearFocus } from '../tabs/shearFocus.js?v=20261015e';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015e';
 
 // Geometry shared by the 5B Focus Canvas pictures (js/tabs/shearFocus.js): footing (m), pedestal centre / size (m), section depth.
 // Values only — read from the same fields the checks use; nothing here feeds a calculation.
-function vizBase({ h, cc, Dbar, d }) {
+function vizBase({ h, cc, Dbar, d }, pt = null) {
   const hasPed = getRadioVal('fs-type') === 'pedestal';
+  // pt = the governing load point when several are on the pile cap (Tab 02 "Load points"): the pictures show that point.
   return { B: num('fs-Bf'), L: num('fs-Lf'), H: h / 1000, cc: cc / 1000, db: Dbar / 1000, d: d / 1000, shallow: isShallow(),
-    ped: { x: hasPed ? num('fs-OffX') : 0, z: hasPed ? num('fs-OffZ') : 0, c1: num('rb-Bp') / 1000, c2: num('rb-Lp') / 1000, hasPed } };
+    ped: pt ? { x: pt.x, z: pt.y, c1: pt.c1, c2: pt.c2, hasPed: true }
+      : { x: hasPed ? num('fs-OffX') : 0, z: hasPed ? num('fs-OffZ') : 0, c1: num('rb-Bp') / 1000, c2: num('rb-Lp') / 1000, hasPed } };
 }
 const vizPlane = (it) => (it && it.pl ? { a: it.pl.a, b: it.pl.b, c: it.pl.c, qmax: it.pl.qmax } : null);
 
@@ -85,13 +87,13 @@ function soilShearHtml(pv) {
 // (lib/foundation/shared/pileCapShear.js) — this only reads the inputs and picks the governing combination.
 const NO_CAP = { Qc: 1e12, Qt: 1e12, Ql: 1e12 };
 function pileReactionsLrfd() {
-  const { at, items } = pileComboLoads('lrfd');
+  const { at, items, points } = pileComboLoads('lrfd');
   if (pileList.length === 0) return { valid: false, note: 'No piles defined — add piles in 4B.' };
   if (items.length === 0) return { valid: false, note: 'No factored (LRFD) combinations — load them with "Edit LRFD Combinations".' };
   const dp = num('pf-dia') / 1000;
   if (!(dp > 0)) return { valid: false, note: 'Pile diameter D is not set (01 — General Input Data).' };
-  const evals = items.map(({ combo, load }) => ({ combo, load, ev: evaluatePileGroupCombo(pileList, load, NO_CAP) }));
-  return { valid: true, at, dp, evals };
+  const evals = items.map(({ combo, load, pointLoads, Pcap }) => ({ combo, load, pointLoads, Pcap, ev: evaluatePileGroupCombo(pileList, load, NO_CAP) }));
+  return { valid: true, at, dp, evals, points };
 }
 function governingOf(per) {
   const ok = per.filter(p => p.res && p.res.valid);
@@ -103,13 +105,29 @@ function oneWayVuFromPiles({ axis, h, cc, Dbar }) {
   if (!base.valid) return base;
   const d = (h - cc - Dbar) / 1000;
   if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
-  const half = (axis === 'x' ? num('rb-Bp') : num('rb-Lp')) / 2000; // pedestal size from 5A, mm -> half-size in m
-  const center = axis === 'x' ? base.at.x : base.at.y;
-  const per = base.evals.map(e => ({ combo: e.combo, invalid: e.ev.valid ? null : e.ev.note,
-    res: e.ev.valid ? oneWayPileShear({ pileForces: e.ev.pileForces, axis, center, half, d, dp: base.dp }) : null }));
-  const gov = governingOf(per);
+  // Single pedestal: sections at d from its faces. Several load points (base.points): the same at every point, the point loads beyond
+  // a section netted against the pile reactions beyond it; the point with the largest V_u governs.
+  const runPoint = (center, half, usePoints) => {
+    const per = base.evals.map(e => ({ combo: e.combo, invalid: e.ev.valid ? null : e.ev.note,
+      res: e.ev.valid ? oneWayPileShear({ pileForces: e.ev.pileForces, axis, center, half, d, dp: base.dp, pointLoads: usePoints ? e.pointLoads : null,
+        capWeight: usePoints ? { P: e.Pcap, Bx: num('fs-Bf'), Ly: num('fs-Lf') } : null }) : null }));
+    return { per, gov: governingOf(per), center, half };
+  };
+  let best;
+  if (base.points) {
+    base.points.forEach((pt, j) => {
+      const r = runPoint(axis === 'x' ? pt.x : pt.y, (axis === 'x' ? pt.c1 : pt.c2) / 2, true);
+      r.point = { ...pt, index: j + 1 };
+      if (r.gov && (!best || !best.gov || r.gov.res.Vu > best.gov.res.Vu)) best = r;
+      if (!best) best = r;
+    });
+  } else {
+    best = runPoint(axis === 'x' ? base.at.x : base.at.y, (axis === 'x' ? num('rb-Bp') : num('rb-Lp')) / 2000, false); // pedestal size from 5A, mm -> half-size in m
+  }
+  const { per, gov, center, half } = best;
   if (!gov) return { valid: false, note: 'Pile force distribution invalid for every combination.' };
-  return { valid: true, kind: 'one-way', axis, d, half, center, dp: base.dp, per, gov, Vu: gov.res.Vu, invalid: per.filter(p => p.invalid) };
+  return { valid: true, kind: 'one-way', axis, d, half, center, dp: base.dp, per, gov, Vu: gov.res.Vu, invalid: per.filter(p => p.invalid),
+    point: best.point || null, nPoints: base.points ? base.points.length : 1 };
 }
 // Punching V_u per LRFD combination from the pile reactions, plus that combination's unbalanced moments at the base of the
 // pedestal (Section 03 table 3.3.4, incl. H·Hp) for the eccentric shear stress. The governing combination is the one with the
@@ -120,19 +138,30 @@ function punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) {
   const d = (h - cc - Dbar) / 1000;
   if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
   const pedBase = buildPedestalComboBase();
-  const per = base.evals.map(e => {
-    const res = e.ev.valid ? punchingPileShear({ pileForces: e.ev.pileForces, cx: base.at.x, cy: base.at.y, c1: c1 / 1000, c2: c2 / 1000, d, dp: base.dp }) : null;
-    const v = stdComboVector(e.combo.f, pedBase);
-    const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
-    const ecc = res && res.valid ? eccentricPunchingStress({ c1, c2, d: d * 1000, Vu: res.Vu, Mx, Mz, loc }) : null;
-    return { combo: e.combo, invalid: e.ev.valid ? null : e.ev.note, res, Mx, Mz, ecc };
+  // One entry per load point (a single pedestal = one point at base.at with the typed c1 × c2 and the whole load).
+  const sites = base.points
+    ? base.points.map((pt, j) => ({ x: pt.x, y: pt.y, c1: pt.c1, c2: pt.c2, f: pt.f, index: j + 1 }))
+    : [{ x: base.at.x, y: base.at.y, c1: c1 / 1000, c2: c2 / 1000, f: 1, index: 1 }];
+  let best = null;
+  sites.forEach((st, j) => {
+    const per = base.evals.map(e => {
+      const Pcol = base.points ? e.pointLoads[j].P + st.f * e.Pcap : null; // this point's load + its share of the cap weight
+      const res = e.ev.valid ? punchingPileShear({ pileForces: e.ev.pileForces, cx: st.x, cy: st.y, c1: st.c1, c2: st.c2, d, dp: base.dp, Pcol }) : null;
+      const v = stdComboVector(e.combo.f, pedBase);
+      const Mx = st.f * (v.Mx + v.dMx), Mz = st.f * (v.Mz + v.dMz);
+      const ecc = res && res.valid ? eccentricPunchingStress({ c1: st.c1 * 1000, c2: st.c2 * 1000, d: d * 1000, Vu: res.Vu, Mx, Mz, loc }) : null;
+      return { combo: e.combo, invalid: e.ev.valid ? null : e.ev.note, res, Mx, Mz, ecc };
+    });
+    const ok = per.filter(p => p.res && p.res.valid);
+    if (!ok.length) return;
+    const key = (p) => (p.ecc && p.ecc.valid ? p.ecc.vu : p.res.Vu);
+    const gov = ok.reduce((a2, b2) => (key(b2) > key(a2) ? b2 : a2));
+    if (!best || key(gov) > best.key) best = { key: key(gov), per, gov, st };
   });
-  const ok = per.filter(p => p.res && p.res.valid);
-  if (!ok.length) return { valid: false, note: 'Pile force distribution invalid for every combination.' };
-  const key = (p) => (p.ecc && p.ecc.valid ? p.ecc.vu : p.res.Vu);
-  const gov = ok.reduce((a, b) => (key(b) > key(a) ? b : a));
-  return { valid: true, kind: 'punching', d, c1: c1 / 1000, c2: c2 / 1000, center: base.at, dp: base.dp, per, gov, Vu: gov.res.Vu,
-    Mx: gov.Mx, Mz: gov.Mz, invalid: per.filter(p => p.invalid) };
+  if (!best) return { valid: false, note: 'Pile force distribution invalid for every combination.' };
+  const { per, gov, st } = best;
+  return { valid: true, kind: 'punching', d, c1: st.c1, c2: st.c2, center: { x: st.x, y: st.y }, dp: base.dp, per, gov, Vu: gov.res.Vu,
+    Mx: gov.Mx, Mz: gov.Mz, invalid: per.filter(p => p.invalid), point: base.points ? { ...st } : null, nPoints: sites.length };
 }
 // Preview of the pile-reaction shear: how V_u follows from the pile reactions (sentence), the governing combination's piles, then
 // every combination's V_u (report pattern: formulas in the sentence above the table, short caption).
@@ -262,7 +291,7 @@ function calcOneWayCore() {
   </table></div>`;
   if (pv) html += pv.soil ? soilShearHtml(pv) : pileShearHtml(pv);
   lastResults.oneway.limit = OW_LIMIT;
-  lastResults.oneway.viz = { ...vizBase({ h, cc, Dbar, d }), kind: 'oneway', src: pv ? (pv.soil ? 'soil' : 'piles') : 'manual',
+  lastResults.oneway.viz = { ...vizBase({ h, cc, Dbar, d }, pv && pv.point), kind: 'oneway', src: pv ? (pv.soil ? 'soil' : 'piles') : 'manual',
     axis: getRadioVal('ow-dir') === 'x' ? 'x' : 'z', side: pv ? pv.gov.res.side : null, Vu: vu, phiVc: phiVc / 1000, uc, pass,
     combo: pv ? comboLabel(pv.gov.combo) : null, plane: pv && pv.soil ? vizPlane(pv.gov.it) : null, w: pv && pv.soil ? pv.gov.it.w : 0,
     piles: pv && !pv.soil ? pv.gov.res.perPile : null, dp: pv && !pv.soil ? pv.dp : 0, method, bw };
@@ -275,7 +304,8 @@ function calcOneWayCore() {
 }
 // twoWayShearCheck() lives in lib/foundation/shared/footingCheck.js.
 function calcTwoWayCore() {
-  const c1 = num('tw-c1'), c2 = num('tw-c2'), h = num('tw-h'), cc = num('tw-cc'), Dbar = num('tw-D'), fc = num('gen-fc');
+  let c1 = num('tw-c1'), c2 = num('tw-c2');
+  const h = num('tw-h'), cc = num('tw-cc'), Dbar = num('tw-D'), fc = num('gen-fc');
   let vu = num('tw-vu');
   const src = autoSrc(getRadioVal('tw-vu-src'));
   const fromPiles = src === 'piles', fromSoil = src === 'soil', auto = fromPiles || fromSoil;
@@ -290,6 +320,10 @@ function calcTwoWayCore() {
   document.getElementById('tw-mux').readOnly = auto; document.getElementById('tw-muz').readOnly = auto;
   if (pv && pv.valid) {
     vu = pv.Vu; Mx = pv.Mx; Mz = pv.Mz;
+    if (pv.point) { // several load points: the capacity is that of the governing point's perimeter
+      c1 = Math.round(pv.c1 * 1000); c2 = Math.round(pv.c2 * 1000);
+      document.getElementById('tw-c1').value = c1; document.getElementById('tw-c2').value = c2;
+    }
     document.getElementById('tw-vu').value = vu.toFixed(1);
     document.getElementById('tw-mux').value = Mx.toFixed(1); document.getElementById('tw-muz').value = Mz.toFixed(1);
   }
@@ -379,7 +413,7 @@ function calcTwoWayCore() {
   </table></div>`;
   if (pv) html += pv.soil ? soilShearHtml(pv) : pileShearHtml(pv);
   {
-    const base = vizBase({ h, cc, Dbar, d });
+    const base = vizBase({ h, cc, Dbar, d }, pv && pv.point);
     const hx = base.ped.c1 / 2 + base.d / 2, hz = base.ped.c2 / 2 + base.d / 2;
     lastResults.twoway.viz = { ...base, kind: 'twoway', src: pv ? 'piles' : 'manual', loc, alphaS, bo: bo / 1000, boFormula,
       rect: { X1: base.ped.x - hx, X2: base.ped.x + hx, Z1: base.ped.z - hz, Z2: base.ped.z + hz }, free: null,

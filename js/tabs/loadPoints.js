@@ -1,0 +1,28 @@
+// Load points on the pile cap (Tab 02, pile support + "Footing Only"): several equipment / base plates on one cap.
+// The list lives in state.loadPointList; this module renders its table and says whether multi-point mode is active.
+// Mode off (or one point and Single selected) = the single load point of the pedestal model, unchanged.
+import { getRadioVal } from '../core/dom.js?v=20261015e';
+import { loadPointList } from '../core/state.js?v=20261015e';
+
+// Multi-point statics apply to a pile cap without pedestal only (a pedestal / anchor design is per pedestal).
+export function loadPointsActive() {
+  const g = document.getElementById('fs-lp-mode');
+  return !!g && getRadioVal('fs-support') === 'pile' && getRadioVal('fs-type') === 'block' && getRadioVal('fs-lp-mode') === 'multi' && loadPointList.length > 0;
+}
+// Points in the form lib/foundation/shared/loadPoints.js takes (m).
+export function activeLoadPoints() {
+  return loadPointsActive() ? loadPointList.map(p => ({ x: p.x, y: p.y, c1: p.c1, c2: p.c2, share: p.share })) : null;
+}
+export function renderLoadPointTable() {
+  const body = document.getElementById('lp-list');
+  if (!body) return;
+  const FIELDS = [['x', 'x', 0.05], ['y', 'z', 0.05], ['c1', 'c₁', 0.05], ['c2', 'c₂', 0.05], ['share', 'Share', 0.1]];
+  body.innerHTML = loadPointList.map((p, i) => `
+    <div class="lp-card">
+      <div class="lp-head"><span>Load point ${i + 1}</span><button type="button" class="combo-remove" data-i="${i}" title="Remove load point">•</button></div>
+      <div class="lp-grid">${FIELDS.map(([f, lbl, st]) => `<label>${lbl}<input type="number" step="${st}" class="lp-input" data-i="${i}" data-f="${f}" value="${p[f]}"></label>`).join('')}</div>
+    </div>`).join('');
+  const sum = loadPointList.reduce((s, p) => s + (p.share > 0 ? p.share : 0), 0);
+  const note = document.getElementById('lp-share-note');
+  if (note) note.textContent = loadPointList.length ? `Shares are normalised: ${loadPointList.map(p => (sum > 0 ? 100 * Math.max(p.share, 0) / sum : 100 / loadPointList.length).toFixed(1) + '%').join(' / ')}.` : 'No load points — add at least one.';
+}

@@ -9,14 +9,14 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, pileList, reportBlocks, state } from '../core/state.js?v=20261015a';
+import { boltList, comboState, designStandards, loadPointList, pileList, reportBlocks, state } from '../core/state.js?v=20261015e';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
 export const PROJECT_EXT = '.fair.json';
 const STATE_KEYS = ['lcLoadTypes', 'windDirState', 'seismicDirState', 'rptLogo1', 'rptLogo2'];
-const LIST_KEYS = ['designStandards', 'pileList', 'boltList', 'reportBlocks'];
-const LISTS = { designStandards, pileList, boltList, reportBlocks };
+const LIST_KEYS = ['designStandards', 'pileList', 'loadPointList', 'boltList', 'reportBlocks'];
+const LISTS = { designStandards, pileList, loadPointList, boltList, reportBlocks };
 const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 
 // Inputs that are NOT stored by id: file pickers, buttons, and rows rebuilt from `lists` / load types (their values are in the
