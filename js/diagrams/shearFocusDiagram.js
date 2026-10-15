@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261014n';
+import { fmt } from '../core/format.js?v=20261014s';
 
 // 5B (report chapter 06) — Focus Canvas pictures of the two shear checks of a footing / pile cap: one-way shear (§22.5) and
 // two-way / punching shear (§22.6), each as plan, elevation and isometric 2.5D. Pure SVG string builders (no DOM access):

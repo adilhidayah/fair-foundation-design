@@ -1,8 +1,8 @@
 // Printable report builder (sections, logos, document header).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261014n';
-import { reportBlocks, state } from '../core/state.js?v=20261014n';
-import { buildQuickStatusHtml } from '../report/summary.js?v=20261014n';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261014s';
+import { reportBlocks, state } from '../core/state.js?v=20261014s';
+import { buildQuickStatusHtml } from '../report/summary.js?v=20261014s';
 
 export function renderBlockList() {
   document.getElementById('rpt-block-body').innerHTML = reportBlocks.map((b, i) => `
