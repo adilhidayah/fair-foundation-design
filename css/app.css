@@ -2031,3 +2031,13 @@
     .calc-panel .overflow-x, .focus-panel .overflow-x, .fdn-diagram { content-visibility: auto; contain-intrinsic-size: auto 240px; }
   }
   @media print { .overflow-x, .fdn-diagram { content-visibility: visible; } }
+
+  /* Long result tables (one row per load combination): first rows on screen + "Show all N rows" (js/core/lazyPanels.js). Print shows all. */
+  @media screen {
+    table[data-lt]:not([data-lt-open]) tr:nth-child(n+22) { display: none; }
+    .lt-bar { margin: 6px 0 14px; }
+    .lt-more { font-family: var(--sans); font-size: 11px; font-weight: 600; padding: 4px 12px; color: var(--accent); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; }
+    .lt-more:hover { background: var(--accent-soft); }
+    .lt-more.lt-bad { color: var(--fail); background: var(--fail-bg); border-color: var(--fail-border); }
+  }
+  @media print { .lt-bar { display: none; } }

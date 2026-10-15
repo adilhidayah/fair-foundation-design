@@ -12,9 +12,29 @@ const TAB_OF = {
   'lrfd-summary-top': 'loadingdata', 'lrfd-summary-ped': 'loadingdata', 'lrfd-summary-bottom': 'loadingdata'
 };
 const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
-const pending = new Map(); // element -> html not yet applied
+const raw = new Map();     // element -> the full HTML last written (what .innerHTML returns, what the report builder reads)
+const pending = new Map(); // element -> html (display version) not yet applied
+const openTables = new Set(); // 'panel#n' of long tables the user expanded; survives re-renders
 let activeTab = 'setup';
 
+// Long tables (one row per load combination: 100+ rows) are shown with their first rows on screen and a "Show all N rows" button;
+// the full table stays in the DOM text of .innerHTML (reports) and prints in full. This is the display version only.
+const LONG_ROWS = 40, SHOWN_ROWS = 21; // SHOWN_ROWS must match the nth-child(n+22) rule in css/app.css
+function collapseLong(html, id) {
+  let k = 0;
+  return html.replace(/<table\b[^>]*>[\s\S]*?<\/table>/g, (t) => {
+    const n = (t.match(/<tr\b/g) || []).length;
+    k += 1;
+    if (n <= LONG_ROWS) return t;
+    const key = id + '#' + k, open = openTables.has(key);
+    // A failing row must never hide behind the button: count the NG / FAIL rows among the collapsed ones and say so on it.
+    const bad = t.split(/<tr\b/).slice(SHOWN_ROWS + 1).filter((r) => />\s*(NG|FAIL)\s*</.test(r) || /class="[^"]*\bfail\b/.test(r)).length;
+    const more = 'Show all ' + (n - 1) + ' rows' + (bad ? ' — ' + bad + ' failing hidden' : '');
+    return t.replace('<table', '<table data-lt="' + key + '"' + (open ? ' data-lt-open' : '')) +
+      '<div class="lt-bar"><button type="button" class="lt-more' + (bad ? ' lt-bad' : '') + '" data-lt-key="' + key + '" data-more="' + more.replace(/"/g, '&quot;') + '">' +
+      (open ? 'Show first ' + (SHOWN_ROWS - 1) + ' rows' : more) + '</button></div>';
+  });
+}
 function apply(el) {
   if (!pending.has(el)) return;
   const html = pending.get(el);
@@ -27,12 +47,28 @@ export function installLazyPanels() {
     if (!el || Object.prototype.hasOwnProperty.call(el, 'innerHTML')) return;
     Object.defineProperty(el, 'innerHTML', {
       configurable: true,
-      get() { return pending.has(el) ? pending.get(el) : desc.get.call(el); },
-      set(v) { if (TAB_OF[id] === activeTab) { pending.delete(el); desc.set.call(el, v); } else pending.set(el, String(v)); }
+      get() { return raw.has(el) ? raw.get(el) : desc.get.call(el); },
+      set(v) {
+        const s = String(v);
+        raw.set(el, s);
+        const html = collapseLong(s, id);
+        if (TAB_OF[id] === activeTab) { pending.delete(el); desc.set.call(el, html); } else pending.set(el, html);
+      }
     });
   });
   // Printing / saving as PDF renders every panel that is not display:none — make them all current first.
   window.addEventListener('beforeprint', () => { pending.forEach((_, el) => apply(el)); });
+  // "Show all N rows" / "Show first rows" under a long table.
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('.lt-more');
+    if (!b) return;
+    const key = b.dataset.ltKey, t = b.parentElement.previousElementSibling;
+    if (!t || t.dataset.lt !== key) return;
+    const open = !openTables.has(key);
+    if (open) openTables.add(key); else openTables.delete(key);
+    t.toggleAttribute('data-lt-open', open);
+    b.textContent = open ? 'Show first ' + (SHOWN_ROWS - 1) + ' rows' : b.dataset.more;
+  });
 }
 // Called by the tab click handler (app.js) after the tab is made active.
 export function setActiveTab(tab) {
