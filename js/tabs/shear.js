@@ -1,14 +1,14 @@
 // Pile cap / shallow footing one-way and punching shear (tab 5B, report chapter 06, sections 6.1 and 6.2).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261015e';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015e';
-import { fmt } from '../core/format.js?v=20261015e';
-import { lastResults, pileList } from '../core/state.js?v=20261015e';
-import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015e';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015e';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015e';
-import { renderShearFocus } from '../tabs/shearFocus.js?v=20261015e';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015e';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck, pilePunchingCheck } from '../../lib/foundation/index.js?v=20261015f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015f';
+import { fmt } from '../core/format.js?v=20261015f';
+import { lastResults, pileList } from '../core/state.js?v=20261015f';
+import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015f';
+import { pileComboLoads } from '../tabs/pile.js?v=20261015f';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015f';
+import { renderShearFocus } from '../tabs/shearFocus.js?v=20261015f';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015f';
 
 // Geometry shared by the 5B Focus Canvas pictures (js/tabs/shearFocus.js): footing (m), pedestal centre / size (m), section depth.
 // Values only — read from the same fields the checks use; nothing here feeds a calculation.
@@ -162,6 +162,35 @@ function punchingVuFromPiles({ c1, c2, h, cc, Dbar, loc }) {
   const { per, gov, st } = best;
   return { valid: true, kind: 'punching', d, c1: st.c1, c2: st.c2, center: { x: st.x, y: st.y }, dp: base.dp, per, gov, Vu: gov.res.Vu,
     Mx: gov.Mx, Mz: gov.Mz, invalid: per.filter(p => p.invalid), point: base.points ? { ...st } : null, nPoints: sites.length };
+}
+// Punching of each pile through the cap (6.2, below the column punching): V_u = the largest |factored reaction| the pile gets in any LRFD
+// combination, section at d/2 from the pile faces cut by the cap edges (lib pilePunchingCheck). The pile section (square / circular) is
+// the one chosen in 08B.
+function pilePunchingThroughCap({ h, cc, Dbar, fc, lambda }) {
+  const base = pileReactionsLrfd();
+  if (!base.valid) return base;
+  const d = (h - cc - Dbar) / 1000;
+  if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
+  const env = pileList.map((p, k) => ({ i: k + 1, x: p.x, y: p.y, F: 0, combo: null }));
+  base.evals.forEach(e => {
+    if (!e.ev.valid) return;
+    e.ev.pileForces.forEach((pf, k) => { if (!env[k].combo || Math.abs(pf.F) > Math.abs(env[k].F)) { env[k].F = pf.F; env[k].combo = e.combo; } });
+  });
+  const shape = (document.getElementById('st-pile-shape') || {}).value === 'circular' ? 'circular' : 'square';
+  const r = pilePunchingCheck({ piles: env, D: base.dp, shape, B: num('fs-Bf'), L: num('fs-Lf'), d, fc, lambda });
+  return { ...r, d, shape, D: base.dp };
+}
+function pilePunchHtml(pp) {
+  const g = pp.gov;
+  let html = introPara(`Punching of a pile through the cap: critical section at d/2 from the pile faces (§22.6.4) — ${pp.shape === 'circular' ? 'a circular pile as the square of equal area, side ' + fmt(pp.c, 3) + ' m' : 'square pile ' + fmt(pp.D, 3) + ' m'} — cut by the cap edges (edge pile α<sub>s</sub> = 30, corner pile 20). V<sub>u</sub> = the largest factored reaction of the pile in any LRFD combination (tension piles pull through the same section); no moment from a pinned pile head. φV<sub>c</sub> = φ·v<sub>c</sub>·b<sub>o</sub>·d with v<sub>c</sub> the least of Table 22.6.5.2 (a)–(c), φ = 0.75. Governing: pile ${g.i} (${g.loc || '—'}), V<sub>u</sub> = ${fmt(g.Vu || 0, 1)} kN, UC = ${fmt(pp.governingUC, 3)}.`);
+  html += `<div class="overflow-x"><table class="calc-table">
+    <caption>Punching of the piles through the pile cap</caption>
+    <tr><th>Pile</th><th>x (m)</th><th>z (m)</th><th>Location</th><th>b<sub>o</sub> (mm)</th><th>α<sub>s</sub></th><th>Governing combination</th><th>V<sub>u</sub> (kN)</th><th>φV<sub>c</sub> (kN)</th><th>UC</th></tr>
+    ${pp.items.map(it => it.valid
+      ? `<tr class="${it === g ? 'governing' : ''}"><td>${it.i}</td><td class="num">${fmt(it.x, 2)}</td><td class="num">${fmt(it.y, 2)}</td><td>${it.loc}</td><td class="num">${fmt(it.bo * 1000, 0)}</td><td class="num">${it.sec.alphaS}</td><td>${escapeHtml(comboLabel(it.combo))}</td><td class="num">${fmt(it.Vu, 1)}</td><td class="num">${fmt(it.phiVc, 1)}</td><td class="num">${fmt(it.uc, 3)}</td></tr>`
+      : `<tr><td>${it.i}</td><td class="num">${fmt(it.x, 2)}</td><td class="num">${fmt(it.y, 2)}</td><td colspan="7">${escapeHtml(it.note || 'invalid')}</td></tr>`).join('')}
+  </table></div>`;
+  return html;
 }
 // Preview of the pile-reaction shear: how V_u follows from the pile reactions (sentence), the governing combination's piles, then
 // every combination's V_u (report pattern: formulas in the sentence above the table, short caption).
@@ -365,6 +394,16 @@ function calcTwoWayCore() {
       <strong>Depth reduction potential:</strong> minimum h for UC ≤ 1.00, rounded up to the nearest 50 mm, is <strong>${fmt(hMinRounded,0)} mm</strong> (current h = ${fmt(h,0)} mm) — a potential reduction of <strong>${fmt(h - hMinRounded,0)} mm</strong>, holding c<sub>1</sub>, c<sub>2</sub>, cc, D, f'c and λ constant. This ignores unbalanced moment transfer (γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub>, §8.4.4.2) and the slab's flexural/deflection requirements — re-check those before reducing h.
     </div>`;
   }
+  // Piles: the pile punching through the cap joins the column punching in the status (worst UC governs).
+  const pp = isShallow() ? null : pilePunchingThroughCap({ h, cc, Dbar, fc, lambda });
+  if (pp && !pp.valid) {
+    lastResults.twoway.status = 'ERROR'; lastResults.twoway.metric = '—'; lastResults.twoway.detail = 'Pile punching: ' + pp.note;
+  } else if (pp) {
+    const ucAll = Math.max(uc, pp.governingUC);
+    lastResults.twoway.status = pass && pp.overallPass ? 'PASS' : 'FAIL';
+    lastResults.twoway.metric = `UC = ${fmt(ucAll, 3)}`;
+    lastResults.twoway.detail += ` | pile punching UC=${fmt(pp.governingUC, 3)} (pile ${pp.gov.i}, ${pp.gov.loc})`;
+  }
   lastResults.twoway.notices = [];
   let html = TW_HEAD();
   html += introPara(`Critical section at d/2 from the pedestal faces (§22.6.4), ${loc} location (α<sub>s</sub> = ${alphaS}, §22.6.5.3): b<sub>o</sub> = ${boFormula} = ${fmt(bo,0)} mm with d = ${fmt(d,0)} mm.`);
@@ -412,6 +451,8 @@ function calcTwoWayCore() {
     <tr class="governing"><td>UC</td><td class="clause">v<sub>u</sub> / (φ·v<sub>c</sub>)</td><td class="num">${fmt(uc,3)}</td></tr>
   </table></div>`;
   if (pv) html += pv.soil ? soilShearHtml(pv) : pileShearHtml(pv);
+  if (pp && pp.valid) html += pilePunchHtml(pp);
+  else if (pp) html += `<div class="warn-box"><strong>⚠  Pile punching not available:</strong> ${escapeHtml(pp.note)}</div>`;
   {
     const base = vizBase({ h, cc, Dbar, d }, pv && pv.point);
     const hx = base.ped.c1 / 2 + base.d / 2, hz = base.ped.c2 / 2 + base.d / 2;

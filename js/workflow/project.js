@@ -9,7 +9,7 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, loadPointList, pileList, reportBlocks, state } from '../core/state.js?v=20261015e';
+import { boltList, comboState, designStandards, loadPointList, pileList, reportBlocks, state } from '../core/state.js?v=20261015f';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
