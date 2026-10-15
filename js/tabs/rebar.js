@@ -1,15 +1,16 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015h';
-import { getRadioVal, num } from '../core/dom.js?v=20261015h';
-import { fmt } from '../core/format.js?v=20261015h';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015h';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015h';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015h';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015h';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015h';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015h';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015h';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015i';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015i';
+import { fmt } from '../core/format.js?v=20261015i';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015i';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015i';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015i';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015i';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261015i';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015i';
+import { pileComboLoads } from '../tabs/pile.js?v=20261015i';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015i';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -47,7 +48,7 @@ export function calcRebar() {
   // shared load vectors) and P includes the pedestal self-weight. Mu is the resultant of the two moment components,
   // as in 4A (uniaxial design in the resultant direction). Fields keep the names Ptop / Mtop that searchPedestalBars() reads.
   const pedBase = buildPedestalComboBase();
-  const combosTop = comboState.lrfd.map(combo => {
+  let combosTop = comboState.lrfd.map(combo => {
     const v = stdComboVector(combo.f, pedBase);
     const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
     return { combo, Ptop: v.P + v.dP, Mtop: Math.hypot(Mx, Mz), Mx, Mz };
@@ -56,8 +57,37 @@ export function calcRebar() {
   if (combosTop.length === 0) {
     html += `<div class="warn-box"><strong>⚠  No factored (LRFD) combinations:</strong> load the standard set with "Edit LRFD Combinations" in the 5B input panel — the pedestal is designed for factored loads.</div>`;
   }
-  const Bp = num('rb-Bp'), Lp = num('rb-Lp'), dPrime = num('rb-cover');
+  let Bp = num('rb-Bp'), Lp = num('rb-Lp');
+  const dPrime = num('rb-cover');
   const fc = num('gen-fc'), fy = num('gen-fy'), barDia = num('rb-bar');
+  // Pile cap with SEVERAL load points and a pedestal under each: every pedestal (c1 × c2 of its point) is designed for its own share of the
+  // factored loads at its base (pedestalBaseActions, lib); the governing one (a failing one first, else the most bars, then the highest
+  // UC) is detailed below, all of them are listed in 5.0. Status = the worst pedestal.
+  let multiPeds = null;
+  if (loadPointsPedestals() && comboState.lrfd.length) {
+    const pts = activeLoadPoints(), base = buildStdComboBase(), dW = num('lc-dW');
+    const per = comboState.lrfd.map(combo => {
+      const v = stdComboVector(combo.f, base);
+      return { combo, acts: pedestalBaseActions(pts, { P: v.P, Fx: v.Fx, Fz: v.Fz, Mx: v.Mx, Mz: v.Mz }, dW > 0 ? v.dP / dW : 0, state.pedHp, state.pedPointW) };
+    });
+    multiPeds = pts.map((p, j) => {
+      const ct = per.map(it => { const a = it.acts[j]; return { combo: it.combo, Ptop: a.P, Mtop: Math.hypot(a.Mx, a.Mz), Mx: a.Mx, Mz: a.Mz }; });
+      const B = Math.round(p.c1 * 1000), L = Math.round(p.c2 * 1000);
+      return { idx: j + 1, p: { ...p, f: per[0].acts[j].f }, Bp: B, Lp: L, combosTop: ct, search: B > 0 && L > 0 && dPrime * 2 < Math.min(B, L) ? searchPedestalBars(B, L, dPrime, fc, fy, barDia, ct) : { found: false, reason: 'Invalid pedestal section (check c1, c2 and the cover d′).' } };
+    });
+    const bad = multiPeds.find(m => !m.search.found);
+    const gov = bad || multiPeds.reduce((a, b) => (b.search.n > a.search.n || (b.search.n === a.search.n && b.search.maxUC > a.search.maxUC) ? b : a));
+    multiPeds.gov = gov;
+    Bp = gov.Bp; Lp = gov.Lp; combosTop = gov.combosTop;
+    html += sectionHeader('5.0', 'Pedestals (one per load point)', `${multiPeds.length} pedestals, each designed for its share of the factored loads at its base (P = share·P + kD·W<sub>ped</sub>, M = share·(M + H·H<sub>p</sub>)). The governing pedestal (${gov.idx}) is detailed below.`, true);
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Pedestal design per load point</caption>
+      <tr><th>Pedestal</th><th>x, z (m)</th><th>c<sub>1</sub> × c<sub>2</sub> (mm)</th><th>Share</th><th>Reinforcement</th><th>ρ</th><th>Governing UC</th><th>Governing combination</th><th>Status</th></tr>
+      ${multiPeds.map(m => m.search.found
+        ? `<tr class="${m === gov ? 'governing' : ''}"><td>${m.idx}</td><td class="num">${fmt(m.p.x,2)}, ${fmt(m.p.y,2)}</td><td class="num">${fmt(m.Bp,0)} × ${fmt(m.Lp,0)}</td><td class="num">${fmt(m.p.f*100,1)}%</td><td class="num">${m.search.n*2} — D${fmt(barDia,0)}</td><td class="num">${fmt(m.search.rho*100,2)}%</td><td class="num">${fmt(m.search.maxUC,3)}</td><td>${m.search.worstCombo ? comboLabel(m.search.worstCombo) : '—'}</td><td>${m.search.maxUC <= 1 ? 'PASS' : 'FAIL'}</td></tr>`
+        : `<tr class="governing"><td>${m.idx}</td><td class="num">${fmt(m.p.x,2)}, ${fmt(m.p.y,2)}</td><td class="num">${fmt(m.Bp,0)} × ${fmt(m.Lp,0)}</td><td class="num">${fmt(m.p.f*100,1)}%</td><td colspan="5">${escapeHtml(m.search.reason || 'No adequate reinforcement')}</td></tr>`).join('')}
+    </table></div>`;
+  }
   if (Bp <= 0 || Lp <= 0 || dPrime * 2 >= Bp) {
     html += `<div class="warn-box"><strong>⚠  Invalid pedestal section:</strong> check B<sub>p</sub>, L<sub>p</sub> and cover d′ (2·d′ must be less than B<sub>p</sub>).</div>`;
     lastResults.pedestalRebar.detail = 'Invalid pedestal section.';
@@ -73,7 +103,7 @@ export function calcRebar() {
       lastResults.pedestalRebar = {
         label: 'Pedestal Reinforcement',
         status: 'PASS',
-        metric: `${search.n*2} — D${fmt(barDia,0)}`,
+        metric: multiPeds ? multiPeds.map(m => m.search.found ? `P${m.idx} ${m.search.n*2}—D${fmt(barDia,0)}` : `P${m.idx} none`).join(', ') : `${search.n*2} — D${fmt(barDia,0)}`,
         detail: `ρ=${fmt(search.rho*100,2)}%, governing UC=${fmt(search.maxUC,3)} (${comboLabel(search.worstCombo)})`
       };
       // Detailing check on the bars just designed: clear spacing along the face ≥ max(1.5·db, 40 mm) — ACI 318M-19 §25.2.3

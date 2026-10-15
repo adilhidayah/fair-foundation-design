@@ -3,7 +3,7 @@
 ## Status repo
 - `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
 - Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
-- Cache-buster `?v=` saat ini `20261015h` (harus seragam di semua import `js/` + `index.html`).
+- Cache-buster `?v=` saat ini `20261015i` (harus seragam di semua import `js/` + `index.html`).
 - Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
 
 ## Fitur yang ditambahkan
@@ -19,7 +19,7 @@
 - Lentur penuh dari reaksi tiang di FAIR lebih konservatif daripada model strip dokumen.
 
 ## Keterbatasan diketahui
-- Multi-titik beban belum untuk desain pedestal (5A / anchor per pedestal).
+- Multi-titik beban dengan pedestal per titik (Pile Cap + Pedestal): pedestal = c1×c2 titik, tinggi Hp Tab 02; 5A dan 09 dicek per pedestal dengan share beban. Berat pedestal bekerja di titiknya; bukan satu `Bp×Lp` Tab 02 (Bp, Lp, Off X/Z diabaikan). Pola baut Tab 09 sama untuk semua pedestal. Belum ada di `.fnd`.
 - 4A mengabaikan momen P·offset.
 - Eq. (c) / λs untuk footing dan pemetaan STAAD perlu diverifikasi user.
 - Summary tab: sudah dioptimasi (buka pertama ~178→~66 ms, buka ulang tanpa perubahan ~117→~13 ms @130 kombinasi, headless). Bila masih terasa lambat, sisa biaya = layout 500 KB report (35k node).
@@ -40,4 +40,4 @@
 - Belum: torsi MY STAAD untuk grup tiang (tanda belum terverifikasi), multi-titik beban di `.fnd`, campuran pile + dangkal dalam satu file.
 
 ## Ide lanjutan (belum diminta)
-Multi-titik untuk pedestal/anchor, pembanding model strip 5B.
+Multi-titik di `.fnd`, pembanding model strip 5B.

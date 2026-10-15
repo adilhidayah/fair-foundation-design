@@ -2,15 +2,15 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector, normalisePoints, splitCombinationLoad } from '../../lib/foundation/index.js?v=20261015h';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015h';
-import { fmt as fmtRaw } from '../core/format.js?v=20261015h';
-import { comboState, lastResults, pileList } from '../core/state.js?v=20261015h';
-import { comboLabel } from '../core/worksheet.js?v=20261015h';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20261015h';
-import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261015h';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015h';
-import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015h';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector, normalisePoints, splitCombinationLoad } from '../../lib/foundation/index.js?v=20261015i';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015i';
+import { fmt as fmtRaw } from '../core/format.js?v=20261015i';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015i';
+import { comboLabel } from '../core/worksheet.js?v=20261015i';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20261015i';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261015i';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015i';
+import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015i';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);
@@ -102,10 +102,14 @@ export function pileComboLoads(set = 'lc') {
   const at = pts ? { x: 0, y: 0 } : (hasPed ? { x: num('fs-OffX'), y: num('fs-OffZ') } : { x: 0, y: 0 });
   const base = buildStdComboBase();
   let points = null;
+  // Pile Cap + Pedestal with several load points: the pedestals are one per point — their self-weight (state.pedPointW, kN) acts at the point
+  // (part of the dead-load transfer dW of Tab 02), the rest of the cap weight at the cap centre.
+  const dW = num('lc-dW');
+  const pedFrac = pts && hasPed && state.pedPointW.length === pts.length && dW > 0 ? state.pedPointW.map(w => w / dW) : null;
   const items = comboState[set].map(combo => {
     const v = stdComboVector(combo.f, base);
     if (pts) {
-      const sp = splitCombinationLoad(pts, { P: v.P, Pcap: v.dP, Hx: v.Fx, Hz: v.Fz, Mx: v.Mx + v.dMx, Mz: v.Mz + v.dMz });
+      const sp = splitCombinationLoad(pts, { P: v.P, Pcap: v.dP, Hx: v.Fx, Hz: v.Fz, Mx: v.Mx + v.dMx, Mz: v.Mz + v.dMz, pedFrac });
       if (!points) points = normalisePoints(pts);
       return { combo, load: sp.group, pointLoads: sp.pointLoads, Pcap: sp.Pcap };
     }
