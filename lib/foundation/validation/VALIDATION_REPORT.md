@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 989 checks, 989 pass, 0 fail** (29 files, run 15 Oct 2026).
+**Total: 1010 checks, 1010 pass, 0 fail** (30 files, run 15 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -31,6 +31,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part25.mjs | pile group of the Filter Coalescer 101-F-2201 A/B/C foundation (12 piles): reactions with the correct moment lever arms (93.44 kN service / 119.5 kN factored vs 158.10 / 232.0 kN of the swapped pairing in the source document), lateral per pile, Converse–Labarre and manual Eg | 20 |
 | validation_shared_part26.mjs | pile settlement, Vesic (1977) / Das §11.18: S1, S2, S3, group factor, hand-worked values, negative control for the source document's tip-load error, scaling and invalid inputs | 17 |
 | validation_shared_part27.mjs | several load points on one pile cap: equivalent group load, global and section equilibrium on 400 random layouts (couples, cap weight), hand-worked sections of the 12-pile / 3-vessel cap, one point = single-pedestal model | 16 |
+| validation_import_part30.mjs | FAIR command input for a pile cap (SUPPORT PILE) + tools/staad-pile.mjs: parser, 3 × 3 pile group hand calculation (ΔW 251.424 kN, Eg 0.7269, F_max 83.49 / 89.05 kN, lateral 3.514 kN), CLI = tool, NOT SET limits fail | 21 |
 | validation_import_part29.mjs | FAIR command input (.fnd, STAAD style): every command → its config field, line-numbered errors, CLI report identical to the JSON route | 24 |
 | validation_shared_part28.mjs | punching of a pile through the pile cap (ACI 318M-19 §22.6, Table 22.6.5.2): interior / edge / corner sections, λs, φV_c = 797.2 kN for the Filter Coalescer pile (source document 797.22), tension pile, circular pile | 14 |
 | **Total** | | **965** |
