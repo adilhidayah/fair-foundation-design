@@ -13,7 +13,8 @@ const TAB_OF = {
 };
 const desc = Object.getOwnPropertyDescriptor(Element.prototype, 'innerHTML');
 const raw = new Map();     // element -> the full HTML last written (what .innerHTML returns, what the report builder reads)
-const pending = new Map(); // element -> html (display version) not yet applied
+const pending = new Map(); // element -> { html (display version), s (full HTML) } not yet applied
+const shown = new WeakMap(); // element -> the full HTML its DOM currently shows
 const openTables = new Set(); // 'panel#n' of long tables the user expanded; survives re-renders
 let activeTab = 'setup';
 
@@ -37,9 +38,10 @@ function collapseLong(html, id) {
 }
 function apply(el) {
   if (!pending.has(el)) return;
-  const html = pending.get(el);
+  const { html, s } = pending.get(el);
   pending.delete(el);
   desc.set.call(el, html);
+  shown.set(el, s);
 }
 export function installLazyPanels() {
   Object.keys(TAB_OF).forEach((id) => {
@@ -51,8 +53,10 @@ export function installLazyPanels() {
       set(v) {
         const s = String(v);
         raw.set(el, s);
+        // The DOM already shows exactly this HTML (e.g. reopening Summary with no change): skip collapseLong, the parse and the layout.
+        if (shown.get(el) === s) { pending.delete(el); return; }
         const html = collapseLong(s, id);
-        if (TAB_OF[id] === activeTab) { pending.delete(el); desc.set.call(el, html); } else pending.set(el, html);
+        if (TAB_OF[id] === activeTab) { pending.delete(el); desc.set.call(el, html); shown.set(el, s); } else pending.set(el, { html, s });
       }
     });
   });

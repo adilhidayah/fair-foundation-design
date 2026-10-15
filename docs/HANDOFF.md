@@ -3,7 +3,7 @@
 ## Status repo
 - `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
 - Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
-- Cache-buster `?v=` saat ini `20261015f` (harus seragam di semua import `js/` + `index.html`).
+- Cache-buster `?v=` saat ini `20261015h` (harus seragam di semua import `js/` + `index.html`).
 - Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
 
 ## Fitur yang ditambahkan
@@ -22,8 +22,8 @@
 - Multi-titik beban belum untuk desain pedestal (5A / anchor per pedestal).
 - 4A mengabaikan momen P·offset.
 - Eq. (c) / λs untuk footing dan pemetaan STAAD perlu diverifikasi user.
-- Summary di Focus Canvas ±370 ms (belum diselidiki).
-- Kotak "Limitation" 5B baru terisi setelah recalc kedua.
+- Summary tab: sudah dioptimasi (buka pertama ~178→~66 ms, buka ulang tanpa perubahan ~117→~13 ms @130 kombinasi, headless). Bila masih terasa lambat, sisa biaya = layout 500 KB report (35k node).
+- Kotak "Limitation" 5B: sudah diperbaiki (`renderCh6Limits` menulis lewat string HTML panel, bukan DOM).
 
 ## Gotcha teknis
 - Line ending campuran (CRLF/LF): edit binary-safe.

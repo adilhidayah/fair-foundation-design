@@ -1,11 +1,11 @@
 // 5B shallow footing — factored (LRFD) soil pressure per combination, shared by the one-way shear, punching and flexure panels.
 // Function/const declarations only; event wiring stays in app.js.
-import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261015f';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015f';
-import { fmt } from '../core/format.js?v=20261015f';
-import { comboState, lastResults, state } from '../core/state.js?v=20261015f';
-import { comboLabel, introPara } from '../core/worksheet.js?v=20261015f';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261015f';
+import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261015h';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015h';
+import { fmt } from '../core/format.js?v=20261015h';
+import { comboState, lastResults, state } from '../core/state.js?v=20261015h';
+import { comboLabel, introPara } from '../core/worksheet.js?v=20261015h';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261015h';
 
 export const isShallow = () => getRadioVal('fs-support') !== 'pile';
 
@@ -64,9 +64,14 @@ export function soilPressureHtml(fa, extraCols = null, caption = 'Design soil pr
 // .twoway.limit, .pileCapRebar.limit). The box sits at the end of 6.3 (#calc-rebarcap .ch6-limits); calcRebar() runs before
 // calcOneWay() / calcTwoWay(), so each of the three calls this after storing its text.
 export function renderCh6Limits() {
-  const el = document.querySelector('#calc-rebarcap .ch6-limits');
-  if (!el) return;
+  // Write through the panel's HTML string, not the DOM: the panel is lazy (core/lazyPanels.js) and its report text is what the Summary / print read,
+  // so a box filled in the DOM only showed up after a second recalculation and never reached the report.
+  const panel = document.getElementById('calc-rebarcap');
+  if (!panel) return;
   const parts = [['One-way shear', lastResults.oneway], ['Punching shear', lastResults.twoway], ['Flexure', lastResults.pileCapRebar]]
     .filter(([, r]) => r && r.limit);
-  el.innerHTML = parts.length ? `<div class="limits-box"><strong>Limitation:</strong> ${parts.map(([n, r]) => `${n}: ${r.limit}`).join(' ')}</div>` : '';
+  const box = parts.length ? `<div class="limits-box"><strong>Limitation:</strong> ${parts.map(([n, r]) => `${n}: ${r.limit}`).join(' ')}</div>` : '';
+  const html = panel.innerHTML;
+  const next = html.replace(/<div class="ch6-limits">(?:<div class="limits-box">[^]*?<\/div>)?<\/div>/, () => `<div class="ch6-limits">${box}</div>`);
+  if (next !== html) panel.innerHTML = next;
 }
