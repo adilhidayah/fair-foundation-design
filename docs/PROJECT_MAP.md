@@ -26,6 +26,7 @@ MASTER CALCULATOR/
 │   └── validation/            ← test hand-calc (node ...mjs)
 ├── patch.js                   ← fixer marker SVG (idempotent)
 ├── tools/
+│   ├── fair-run.mjs           ← CLI input gaya STAAD (.fnd → config → staad-stability); parser: lib/foundation/import/fndCommands.js
 │   ├── staad-stability.mjs    ← CLI: reaksi STAAD → stabilitas + desain footing/pedestal (laporan .md)
 │   └── foundation-drawing.mjs ← gambar pondasi (DXF R12 + SVG) dari hasil staad-stability
 ├── AGENTS.md                  ← aturan kerja AI assistant (harus di root)
