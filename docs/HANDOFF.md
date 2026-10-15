@@ -1,0 +1,37 @@
+# HANDOFF — FAIR Foundation Design (per 15 Okt 2026)
+
+## Status repo
+- `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
+- Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
+- Cache-buster `?v=` saat ini `20261015f` (harus seragam di semua import `js/` + `index.html`).
+- Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
+
+## Fitur yang ditambahkan
+1. **Pile settlement Vesic / Das §11.18** — `lib/foundation/shared/pileSettlement.js` (`pileSettlementVesic`: S1+S2+S3, Fg=√(Bg/D)). UI: Tab 08B mode Pile (`js/tabs/settlement.js`, beban kerja otomatis dari kombinasi servis gravitasi). Asumsi Es, shaft share, ξ, Iwp wajib dari laporan geotek.
+2. **Beberapa titik beban pada satu pile cap** — `lib/foundation/shared/loadPoints.js`; UI Tab 02 "Load Points" (`js/tabs/loadPoints.js`). Beban grup ekuivalen di pusat cap + netting beban titik di balik penampang untuk geser/lentur. Hanya pile cap tanpa pedestal.
+3. **Punching tiang menembus pile cap** — `lib/foundation/shared/pilePunching.js` (ACI §22.6, λs, αs 40/30/20, dipotong tepi cap). Status Two-Way Shear = max(UC kolom, UC tiang).
+4. **Performa** — `js/core/lazyPanels.js` (panel lazy, tabel panjang >40 baris diciutkan di layar), `content-visibility:auto`. Ketik 143/279→92/63 ms; pindah tab Report Preview 2–4× lebih cepat.
+5. **Font** — tab bar dan Focus Canvas diseragamkan (IBM Plex Sans 12px, skala tipe Focus Canvas di `css/app.css`).
+
+## Temuan audit PDF Filter Coalescer 101-F-2201
+- Reaksi tiang: FAIR = hand calc (F = P/n + Mz·x/Σx² + Mx·z/Σz²); angka di dokumen yang salah.
+- Efisiensi grup: FAIR default Converse–Labarre (0.816); dokumen memakai Feld 0.9375 → isi Eg manual bila ingin sama.
+- Lentur penuh dari reaksi tiang di FAIR lebih konservatif daripada model strip dokumen.
+
+## Keterbatasan diketahui
+- Multi-titik beban belum untuk desain pedestal (5A / anchor per pedestal).
+- 4A mengabaikan momen P·offset.
+- Eq. (c) / λs untuk footing dan pemetaan STAAD perlu diverifikasi user.
+- Summary di Focus Canvas ±370 ms (belum diselidiki).
+- Kotak "Limitation" 5B baru terisi setelah recalc kedua.
+
+## Gotcha teknis
+- Line ending campuran (CRLF/LF): edit binary-safe.
+- `node --check` tidak menangkap error ESM; pakai `node --experimental-vm-modules --no-warnings .github/scripts/parse-check.mjs`.
+- Jangan set `style.display='block'` pada tab 4A/4B (tab menempel); pakai `''`.
+- Kombinasi beban yang di-inject harus punya `lc` bertipe string.
+- Test browser: jaga `?v=` konsisten agar modul tidak terduplikasi.
+- GitHub Pages deploy dari `main`.
+
+## Ide lanjutan (belum diminta)
+Multi-titik untuk pedestal/anchor, pembanding model strip 5B, optimasi Summary Focus Canvas, perbaikan Limitation 5B.
