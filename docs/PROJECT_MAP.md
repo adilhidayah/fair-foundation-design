@@ -46,7 +46,7 @@ MASTER CALCULATOR/
 | 5A — Pedestal (P-M) | [js/tabs/rebar.js](../js/tabs/rebar.js), diagram [pmDiagram.js](../js/diagrams/pmDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
 | 5B — Pile cap / footing shear + flexure | [js/tabs/shear.js](../js/tabs/shear.js), [js/tabs/rebar.js](../js/tabs/rebar.js), [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js), [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js), [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) |
 | 08 — Bearing Capacity | [js/tabs/bearing.js](../js/tabs/bearing.js) | [shared/bearingCapacity.js](../lib/foundation/shared/bearingCapacity.js) |
-| 08B — Settlement | [js/tabs/settlement.js](../js/tabs/settlement.js) | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js), [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) |
+| 08B — Settlement (footing: elastis + konsolidasi; pile: Vesic) | [js/tabs/settlement.js](../js/tabs/settlement.js) | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js), [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js), [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) |
 | 09 — Anchor Bolt | [js/tabs/anchor.js](../js/tabs/anchor.js), diagram [anchorDiagram.js](../js/diagrams/anchorDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
 | Summary / laporan cetak | [js/report/summary.js](../js/report/summary.js), [js/report/builder.js](../js/report/builder.js) | — |
 | Status workflow / live bar | [js/workflow/status.js](../js/workflow/status.js) | — |
@@ -128,6 +128,7 @@ MASTER CALCULATOR/
 | [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 6 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak) |
 | [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) | 2 KB | Korelasi SPT (Peck/Stroud/Bowles) |
 | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js) | 3 KB | Penurunan elastis + konsolidasi |
+| [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js) | 2 KB | Penurunan tiang tunggal + kelompok (Vesic 1977, Das §11.18): `pileSettlementVesic()` |
 | [shared/windLoad.js](../lib/foundation/shared/windLoad.js) | 2 KB | Beban angin |
 | [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) | 4 KB | Fa/Fv, S_DS, Cs |
 | [static/](../lib/foundation/static/) | 6 KB | Vessel/tank/HE: `loadingData`, `foundationSizing` |

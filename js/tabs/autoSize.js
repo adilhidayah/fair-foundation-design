@@ -3,11 +3,11 @@
 // all PASS (and the footing flexure is not "section too small"). With "Keep B × L × H" ticked the footing size is the user's (site limit) and only the depth D_f is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
 // size into Tab 02, runs calcFoundSize() (-> recalcAll(), the very checks the user sees) and reads the statuses back.
 // Shallow foundations only. Pedestal, D_f, grout and the load data are never changed; nothing is changed when no size passes.
-import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261014v';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014v';
-import { fmt } from '../core/format.js?v=20261014v';
-import { lastResults } from '../core/state.js?v=20261014v';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261014v';
+import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261015a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
+import { fmt } from '../core/format.js?v=20261015a';
+import { lastResults } from '../core/state.js?v=20261015a';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261015a';
 
 const STEP = 0.05;          // m — grid of the result (B, L, H)
 const H_MIN = 0.3;          // m — thinnest footing the search starts from
