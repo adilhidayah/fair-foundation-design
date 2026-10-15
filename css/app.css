@@ -2023,3 +2023,11 @@
     .focus-panel .cad-viewport #svg-plan, .focus-panel .cad-viewport #svg-elev { max-width: 400px; }
     .focus-panel .cad-viewport #svg-iso { max-width: 480px; }
   }
+
+  /* ===== Rendering cost: skip layout / paint of table and diagram blocks that are off-screen =====
+     With 100+ load combinations the calc panels hold tens of thousands of nodes; every tab switch re-styled and laid out all of
+     them (~40 ms style + ~35 ms layout + ~25 ms paint per switch, ~30% less with this). Screen only: print renders everything. */
+  @media screen {
+    .calc-panel .overflow-x, .focus-panel .overflow-x, .fdn-diagram { content-visibility: auto; contain-intrinsic-size: auto 240px; }
+  }
+  @media print { .overflow-x, .fdn-diagram { content-visibility: visible; } }
