@@ -1,13 +1,18 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261014v';
-import { getRadioVal } from '../core/dom.js?v=20261014v';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261014v';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261014v';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261015f';
+import { getRadioVal } from '../core/dom.js?v=20261015f';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261015f';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261015f';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
 export const SHOW_BOTH_FOUNDATION_TABS = false;
+// "Load points" (several equipment on one pile cap): offered for a pile cap without pedestal only.
+export function syncLoadPointBox() {
+  const el = document.getElementById('fs-lp-fields');
+  if (el) el.style.display = (getRadioVal('fs-support') === 'pile' && getRadioVal('fs-type') === 'block') ? '' : 'none';
+}
 export function updateFoundationTabVisibility() {
   sync5BSources();
   syncPedestalTab();
@@ -22,6 +27,11 @@ export function updateFoundationTabVisibility() {
   const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
   const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
   setTxt('capcheck-tab-label', isPile ? 'PILE CAP CHECK' : 'FOOTING CHECK');
+  // 08B follows the support: pile group settlement (Vesic) for piles, the elastic / consolidation settlement of a footing otherwise.
+  // Load points: several equipment on one pile cap — pile support, cap without pedestal only.
+  syncLoadPointBox();
+  show('st-shallow-box', !isPile); show('st-diff-box', !isPile); show('st-pile-box', isPile);
+  setTxt('settlement-tab-label', isPile ? 'PILE SETTLEMENT' : 'SETTLEMENT (SOIL)');
   setTxt('rb-summary-label', isPile ? 'Pile Cap Flexure' : 'Footing Flexure');
   show('rb-note-piles', isPile); show('rb-note-soil', !isPile);
   ['ow-vu-src', 'tw-vu-src'].forEach(id => {

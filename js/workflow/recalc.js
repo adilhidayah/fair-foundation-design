@@ -1,15 +1,16 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20261014v';
-import { calcBearing } from '../tabs/bearing.js?v=20261014v';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261014v';
-import { calcFoundation } from '../tabs/foundation.js?v=20261014v';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261014v';
-import { renderLoadSummary } from '../tabs/loading.js?v=20261014v';
-import { calcPile } from '../tabs/pile.js?v=20261014v';
-import { calcRebar } from '../tabs/rebar.js?v=20261014v';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261014v';
-import { renderWorkflowLive } from '../workflow/status.js?v=20261014v';
+import { calcAnchor } from '../tabs/anchor.js?v=20261015f';
+import { calcBearing } from '../tabs/bearing.js?v=20261015f';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261015f';
+import { calcFoundation } from '../tabs/foundation.js?v=20261015f';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261015f';
+import { renderLoadSummary } from '../tabs/loading.js?v=20261015f';
+import { calcPile } from '../tabs/pile.js?v=20261015f';
+import { calcSettlement } from '../tabs/settlement.js?v=20261015f';
+import { calcRebar } from '../tabs/rebar.js?v=20261015f';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261015f';
+import { renderWorkflowLive } from '../workflow/status.js?v=20261015f';
 
 export function recalcAll() {
   // Tab 08 reads its footing size / depth from Tab 02 (mirrored in calcFoundSize()), so q_a, the Table 1.3.1 summary
@@ -20,7 +21,7 @@ export function recalcAll() {
   // Pile cap flexure / shear (5B) read the pile reactions of the factored combinations, so they follow every change
   // in loads, pile layout or cap geometry — not only edits of their own inputs.
   // (each guarded: a failure in one of these must not stop the summaries and status below from refreshing)
-  [calcRebar, calcOneWay, calcTwoWay, calcAnchor].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
+  [calcRebar, calcOneWay, calcTwoWay, calcAnchor, calcSettlement].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
   renderLcSummary();
   renderGeneralSummary();
   if (typeof renderStdComboTables === 'function') renderStdComboTables();

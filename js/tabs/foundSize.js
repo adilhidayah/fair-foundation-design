@@ -1,13 +1,14 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261014v';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014v';
-import { fmt } from '../core/format.js?v=20261014v';
-import { lastResults, pileList, state } from '../core/state.js?v=20261014v';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261014v';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261014v';
-import { recalcAll } from '../workflow/recalc.js?v=20261014v';
-import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261014v';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015f';
+import { fmt } from '../core/format.js?v=20261015f';
+import { lastResults, pileList, state } from '../core/state.js?v=20261015f';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015f';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015f';
+import { recalcAll } from '../workflow/recalc.js?v=20261015f';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261015f';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015f';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -123,7 +124,7 @@ export function calcFoundSize() {
     html += `<div class="warn-box"><strong>⚠  Pile Foundation selected but no piles defined:</strong> add piles in "4B — PILE FOUNDATION STABILITY", or switch Foundation Type to "Shallow Foundation" in "01 — GENERAL INPUT DATA".</div>`;
   }
   html += sectionHeader('2.1', 'Foundation Layout', `Plan (x, z) and elevation (x, y); origin at the ${isPile ? 'pile cap' : 'footing'} centre.${isPile && piles.length ? ' Piles are shown dashed (below the cap), numbered as in 4B.' : ''}`, true);
-  const diagramSvg = foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0);
+  const diagramSvg = foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0, activeLoadPoints());
   html += diagramSvg;
   const fWord = isPile ? 'pile cap' : 'footing';
   html += sectionHeader('2.2', isPile ? 'Pile Cap' : 'Footing');

@@ -1,11 +1,11 @@
 // 5B shallow footing — factored (LRFD) soil pressure per combination, shared by the one-way shear, punching and flexure panels.
 // Function/const declarations only; event wiring stays in app.js.
-import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261014v';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261014v';
-import { fmt } from '../core/format.js?v=20261014v';
-import { comboState, lastResults, state } from '../core/state.js?v=20261014v';
-import { comboLabel, introPara } from '../core/worksheet.js?v=20261014v';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261014v';
+import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261015f';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015f';
+import { fmt } from '../core/format.js?v=20261015f';
+import { comboState, lastResults, state } from '../core/state.js?v=20261015f';
+import { comboLabel, introPara } from '../core/worksheet.js?v=20261015f';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261015f';
 
 export const isShallow = () => getRadioVal('fs-support') !== 'pile';
 

@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261014v';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261015f';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -18,6 +18,12 @@ export const comboState = { lc: defaultCombos(), lrfd: [] };
 // ---------- Pile layout table ----------
 export const pileList = [
   { x: -0.6, y: -0.6 }, { x: 0.6, y: -0.6 }, { x: -0.6, y: 0.6 }, { x: 0.6, y: 0.6 }
+];
+// ---------- Load points on the pile cap (several equipment on one cap; used when Tab 02 "Load points" = Multiple) ----------
+// x, y (= z in the UI) = centre of the base plate / skid on the cap (m, cap-centre frame), c1 × c2 = its size (m), share = its part of
+// the superstructure loads of Section 03 (normalised in lib/foundation/shared/loadPoints.js).
+export const loadPointList = [
+  { x: 0, y: 0, c1: 1.25, c2: 1.25, share: 1 }
 ];
 // ---------- Anchor bolt layout ----------
 export const boltList = [

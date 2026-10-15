@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261014v">
+<link rel="stylesheet" href="css/app.css?v=20261015f">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -41,7 +41,7 @@
       <div class="tab" data-tab="pedcheck"><span class="tab-code">5A</span><span class="tab-label">PEDESTAL CHECK</span></div>
       <div class="tab" data-tab="capcheck"><span class="tab-code">5B</span><span class="tab-label" id="capcheck-tab-label">PILE CAP CHECK</span></div>
       <div class="tab" data-tab="bearing"><span class="tab-code">08</span><span class="tab-label">BEARING CAPACITY (SOIL)</span></div>
-      <div class="tab" data-tab="settlement"><span class="tab-code">08B</span><span class="tab-label">SETTLEMENT (SOIL)</span></div>
+      <div class="tab" data-tab="settlement"><span class="tab-code">08B</span><span class="tab-label" id="settlement-tab-label">SETTLEMENT (SOIL)</span></div>
       <div class="tab" data-tab="anchor"><span class="tab-code">09</span><span class="tab-label">ANCHOR BOLT DESIGN</span></div>
       <div class="tab" data-tab="summary"><span class="tab-code">11</span><span class="tab-label">SUMMARY REPORT</span></div>
   </div>
@@ -1053,6 +1053,7 @@
       </div>
       <!-- SETTLEMENT (SOIL) INPUTS -->
       <div id="in-settlement" style="display:none;">
+        <div id="st-shallow-box">
         <div class="section-label">Soil — SPT Correlation (soilProperties.js)</div>
         <div class="field">
           <label for="st-N">Field SPT, N <span class="unit">blows/300mm</span></label>
@@ -1138,11 +1139,27 @@
           <label for="st-pc">Preconsolidation pc <span class="unit">kPa</span> (blank = NC)</label>
           <input type="number" id="st-pc" placeholder="e.g. 80 — empty = normally consolidated" min="0" step="1">
         </div>
+        </div>
+        <div id="st-pile-box" style="display:none;">
+        <div class="section-label">Pile Group Settlement (Vesic, Das §11.18)</div>
+        <div class="field"><label for="st-pile-Q"><span>Working load per pile, Q<sub>w</sub> (blank = auto)</span> <span class="unit">kN</span></label><input type="number" id="st-pile-Q" value="" min="0" step="1" placeholder="auto"></div>
+        <div class="note" id="st-pile-Q-note">Auto: the largest P / n of the service combinations without lateral load or moment (sustained gravity load).</div>
+        <div class="field"><label for="st-pile-shaft"><span>Shaft share of Q<sub>w</sub>, Q<sub>ws</sub> / Q<sub>w</sub></span> <span class="unit">%</span></label><input type="number" id="st-pile-shaft" value="67" min="0" max="100" step="1"></div>
+        <div class="field"><label for="st-pile-xi"><span>Shaft friction distribution, ξ</span></label><select id="st-pile-xi"><option value="0.67" selected>0.67 — triangular / parabolic (friction piles)</option><option value="0.5">0.5 — uniform</option></select></div>
+        <div class="field"><label for="st-pile-shape">Pile section</label><select id="st-pile-shape"><option value="square" selected>Square (A<sub>p</sub> = D², p = 4D)</option><option value="circular">Circular (A<sub>p</sub> = πD²/4, p = πD)</option></select></div>
+        <div class="field"><label for="st-pile-L"><span>Pile length, L</span> <span class="unit">m</span></label><input type="number" id="st-pile-L" value="14" min="0" step="0.1"></div>
+        <div class="field"><label for="st-pile-Ep"><span>Pile modulus, E<sub>p</sub></span> <span class="unit">MPa</span></label><input type="number" id="st-pile-Ep" value="29725" min="0" step="100"></div>
+        <div class="field"><label for="st-pile-Es"><span>Soil modulus at / below the tip, E<sub>s</sub></span> <span class="unit">kPa</span></label><input type="number" id="st-pile-Es" value="48000" min="0" step="1000"></div>
+        <div class="field"><label for="st-pile-mu"><span>Poisson ratio of the soil, μ<sub>s</sub></span></label><input type="number" id="st-pile-mu" value="0.3" min="0" max="0.49" step="0.05"></div>
+        <div class="field"><label for="st-pile-Iwp"><span>Tip influence factor, I<sub>wp</sub></span></label><input type="number" id="st-pile-Iwp" value="0.85" min="0" step="0.05"></div>
+        <div class="note">Pile width D, the pile layout (group width B<sub>g</sub> = shorter side + D) and the cap come from "4B — Pile Foundation Stability" / Tab 02. E<sub>s</sub> must come from the geotechnical report.</div>
+        </div>
         <div class="section-label">Allowable Limits</div>
         <div class="field">
           <label for="st-allowTotal">Allowable total settlement <span class="unit">mm</span></label>
           <input type="number" id="st-allowTotal" value="25" min="0" step="1">
         </div>
+        <div id="st-diff-box">
         <div class="field">
           <label for="st-diff">Estimated differential settlement <span class="unit">mm</span></label>
           <input type="number" id="st-diff" value="5" min="0" step="1">
@@ -1150,6 +1167,7 @@
         <div class="field">
           <label for="st-allowDiff">Allowable differential <span class="unit">mm</span></label>
           <input type="number" id="st-allowDiff" value="19" min="0" step="1">
+        </div>
         </div>
         <div class="note">Methods: elastic Se = q·B·(1−ν²)/Es·If (Steinbrenner fit, rigid ×0.8); consolidation Sc 1-D single layer (Cc/Cr, log10). Limits default 25 mm total / 19 mm differential for static equipment — verify vs project criteria.</div>
       </div>
@@ -1461,6 +1479,24 @@
           <div class="field">
             <label for="fs-hpile">Embedded pile in pile cap, h <span class="unit">m</span></label>
             <input type="number" id="fs-hpile" value="0.10" min="0" step="0.01">
+          </div>
+        </div>
+        </details>
+        <details class="gt-group" id="fs-lp-fields" style="display:none;" open>
+        <summary>Load Points (several equipment on the cap)</summary>
+        <div class="gt-body">
+          <div class="field">
+            <span id="fs-lp-mode-label" class="sr-only">Load points</span>
+            <div class="radio-row gt-radio" id="fs-lp-mode" role="radiogroup" aria-labelledby="fs-lp-mode-label">
+              <button data-val="single" class="sel">Single</button>
+              <button data-val="multi">Multiple</button>
+            </div>
+          </div>
+          <div id="lp-multi-box" style="display:none;">
+            <div id="lp-list"></div>
+            <button type="button" id="lp-add" class="combo-add-btn">+ Add load point</button>
+            <div class="note" id="lp-share-note"></div>
+            <div class="note">Each point is a base plate / skid on the cap (x, z = centre from the cap centre, m; c<sub>1</sub> × c<sub>2</sub> = size along x × along z, m). The superstructure loads of Section 03 are shared out by "Share"; the cap weight acts at the cap centre. 4B uses the statically equivalent group load; 5B checks flexure, one-way and punching shear at every point and governs on the worst (the other points' loads beyond a section are netted against the pile reactions).</div>
           </div>
         </div>
         </details>
@@ -1806,6 +1842,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261014v"></script>
+<script type="module" src="js/app.js?v=20261015f"></script>
 </body>
 </html>
