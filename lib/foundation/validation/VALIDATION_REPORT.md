@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 898 checks, 898 pass, 0 fail** (24 files, run 14 Oct 2026).
+**Total: 918 checks, 918 pass, 0 fail** (25 files, run 15 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -28,7 +28,8 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part22.mjs | independent spread-footing reference (spreadFooting.js): contact pressure (full / partial / biaxial), flexure at the pedestal faces, one-way shear at d, punching — closed forms + brute-force grid | 41 |
 | validation_shared_part23.mjs | STAAD support reactions → FAIR load inputs (staadReactionToFair): worked example, +x / +z lateral loads, 300 random load sets vs vector statics, vertical rows, kinds | 27 |
 | validation_shared_part24.mjs | cross-check footingDesign.js (app) vs spreadFooting.js (independent Newton-solver reference): contact plane, flexure at the pedestal faces, one-way shear, punching — 600 random cases, 449 with partial contact, agreement ≤ 1e-8 | 6 |
-| **Total** | | **898** |
+| validation_shared_part25.mjs | pile group of the Filter Coalescer 101-F-2201 A/B/C foundation (12 piles): reactions with the correct moment lever arms (93.44 kN service / 119.5 kN factored vs 158.10 / 232.0 kN of the swapped pairing in the source document), lateral per pile, Converse–Labarre and manual Eg | 20 |
+| **Total** | | **918** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
