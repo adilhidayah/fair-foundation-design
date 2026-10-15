@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 1026 checks, 1026 pass, 0 fail** (31 files, run 15 Oct 2026).
+**Total: 1038 checks, 1038 pass, 0 fail** (32 files, run 15 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -31,6 +31,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part25.mjs | pile group of the Filter Coalescer 101-F-2201 A/B/C foundation (12 piles): reactions with the correct moment lever arms (93.44 kN service / 119.5 kN factored vs 158.10 / 232.0 kN of the swapped pairing in the source document), lateral per pile, Converse–Labarre and manual Eg | 20 |
 | validation_shared_part26.mjs | pile settlement, Vesic (1977) / Das §11.18: S1, S2, S3, group factor, hand-worked values, negative control for the source document's tip-load error, scaling and invalid inputs | 17 |
 | validation_shared_part27.mjs | several load points on one pile cap: equivalent group load, global and section equilibrium on 400 random layouts (couples, cap weight), hand-worked sections of the 12-pile / 3-vessel cap, one point = single-pedestal model | 16 |
+| validation_import_part32.mjs | auto-thickness of a pile cap (AUTO THICKNESS with SUPPORT PILE): H = 0.30 m punching of the pedestal UC 1.136 by hand (ΔW 100.224 kN, d 209 mm, v_u 1.4063 / φv_c 1.2375 MPa), smallest passing H confirmed by single runs, Dp lock, no passing H, invalid trial | 12 |
 | validation_import_part31.mjs | pile cap structure from STAAD factored combinations (tools/staad-pile.mjs): flexure M_u = 359.01 kN·m, A_s,min governs, one-way V_u 190.5 kN, punching of the pedestal 908.19 kN and of the pile 132.97 kN (hand calculation), thin cap fails, missing LRFD reaction reported | 16 |
 | validation_import_part30.mjs | FAIR command input for a pile cap (SUPPORT PILE) + tools/staad-pile.mjs: parser, 3 × 3 pile group hand calculation (ΔW 251.424 kN, Eg 0.7269, F_max 83.49 / 89.05 kN, lateral 3.514 kN), CLI = tool, NOT SET limits fail | 21 |
 | validation_import_part29.mjs | FAIR command input (.fnd, STAAD style): every command → its config field, line-numbered errors, CLI report identical to the JSON route | 24 |

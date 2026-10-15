@@ -23,6 +23,8 @@
 //   "criteria": { "design": { "fc": 21.7, "fy": 420, "cover": 75, "bar": 16, "lambda": 1, "asMin": "slab", "spacingStep": 25 },
 //                 "pile": { "shape": "square" } }                     // pile shape for the punching of the piles ("square" | "circular")
 //   (Hf = cap thickness; pedestal Bp × Lp, OffX / OffZ = load point; the check is as 5B of the app, one-way / punching "detailed")
+//   "design": { "autoThickness": { "from": 0.5, "to": 1.5, "step": 0.05 } }   // optional: smallest cap thickness H that passes 4B + structure
+//                                          // (needs "lc_lrfd"; "Dp" on the foundation locks the pedestal depth below grade: Df = Dp + H)
 // Units of the .ANL reaction table must be KN / METER. STAAD torsion (MY) is not applied to the pile group (as the app's 4B).
 import fs from 'node:fs';
 import path from 'node:path';
@@ -33,7 +35,7 @@ import {
   oneWayPileShear, punchingPileShear, pilePunchingCheck, pileCapMomentAxis, flexuralDesign, barLayout,
   oneWayShearCheck, twoWayShearCheck, eccentricPunchingStress
 } from '../lib/foundation/index.js';
-import { footingWeights, loadConfig } from './staad-stability.mjs';
+import { footingWeights, loadConfig, resolveFoundation } from './staad-stability.mjs';
 
 const TEMPORARY_TYPE_RE = /wind|seismic/i;
 const n = (v, d = 2) => (v === undefined || v === null || Number.isNaN(v) ? '-' : (!Number.isFinite(v) ? '∞' : v.toFixed(d)));
@@ -208,6 +210,10 @@ function designReport(r) {
     o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
       `${c.s ? `D${D.bar} @ ${n(c.s, 0)} (${c.n} bars)` : 'spacing < step'} | ${n(c.AsProv, 0)} | ${c.ok ? 'OK' : 'NOT OK'} |`);
   }
+  if (r.thTrials) o.push('', `Auto-thickness (H ${n(r.thTrials[0].Hf)}–${n(r.thTrials[r.thTrials.length - 1].Hf)} m, each thickness re-runs 4B and the structure; the smallest passing H is kept): ` +
+      (r.thFound ? `**H = ${n(f.Hf)} m**.` : '**no thickness in the range passes** — results shown for the last one.'), '',
+    '| H (m) | 4B governing UC | Structure governing | Structure UC | Status |', '|---|---|---|---|---|',
+    ...r.thTrials.map(t => t.note ? `| ${n(t.Hf)} | - | ${t.note} | - | FAIL |` : `| ${n(t.Hf)}${t.pass ? ' ◄' : ''} | ${n(t.gov4B, 3)} | ${t.desGov} | ${n(t.desUC, 3)} | ${t.pass ? 'PASS' : 'FAIL'} |`));
   if (D.notes.length) o.push('', ...D.notes.map(x => `**${x}**`));
   o.push('', `Pile cap design: **${D.pass ? 'OK' : 'NOT OK'}** — governing ${D.gov.name}, UC ${n(D.gov.uc, 3)}.`);
   return o;
@@ -277,13 +283,36 @@ export function runPileConfig(cfgPath) {
       cache[key] = { loads: parseStaadLoads(rd(stdP)), reac: reac.reactions };
     }
     const { loads, reac } = cache[key];
-    const r = evaluatePileCap(f, cfg.criteria, loads, reac, f.lc ? parseCaseList(f.lc) : lcList, f.dead_case ?? cfg.dead_case);
-    const lrfd = f.lc_lrfd || cfg.lc_lrfd;
-    if (cfg.criteria.design && lrfd) {
-      r.design = pileCapDesignCheck(f, cfg.criteria, loads, reac, parseCaseList(lrfd), f.dead_case ?? cfg.dead_case);
-      r.pass = r.pass && r.design.pass;
+    const lrfd = f.lc_lrfd || cfg.lc_lrfd, dc = f.dead_case ?? cfg.dead_case, lcs = f.lc ? parseCaseList(f.lc) : lcList;
+    // 4B + cap structure for one thickness
+    const evalOne = (g) => {
+      const r = evaluatePileCap(g, cfg.criteria, loads, reac, lcs, dc);
+      if (cfg.criteria.design && lrfd) {
+        r.design = pileCapDesignCheck(g, cfg.criteria, loads, reac, parseCaseList(lrfd), dc);
+        r.pass = r.pass && r.design.pass;
+      }
+      return r;
+    };
+    const at = cfg.criteria.design && cfg.criteria.design.autoThickness;
+    if (!at || !lrfd) return evalOne(f);
+    // auto-thickness: the cap thickness H goes up in steps from `from` (default the given Hf) to `to`; every H re-runs the whole
+    // foundation (the cap weight ΔW changes the pile forces) and the smallest H that passes 4B and the structure is kept. B × L are
+    // fixed by the pile layout, so the smallest H is also the smallest volume. With "Dp" the pedestal depth below grade is locked
+    // (Df = Dp + H, as the shallow auto-thickness); without it Df stays and H cannot exceed it.
+    const step = at.step ?? 0.05, to = at.to ?? 1.0, trials = [];
+    let best = null, last = null;
+    for (let h = at.from ?? f.Hf; h <= to + 1e-9; h = Math.round((h + step) * 1000) / 1000) {
+      const g = resolveFoundation(cfg)({ ...f, Hf: h, Df: f.Dp != null ? undefined : f.Df });
+      let r;
+      try { r = evalOne(g); } catch (e) { trials.push({ Hf: h, note: e.message, pass: false }); break; }
+      const d = r.design;
+      trials.push({ Hf: h, gov4B: r.gov ? r.gov.governingUC : Infinity, desGov: d.gov.name, desUC: d.gov.uc, pass: r.pass });
+      last = r;
+      if (r.pass) { best = r; break; }
     }
-    return r;
+    const res = best || last || evalOne(f);
+    res.thTrials = trials; res.thFound = !!best;
+    return res;
   });
   return { cfg, results, md: renderPileReport(cfg, results) };
 }
