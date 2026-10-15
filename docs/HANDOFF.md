@@ -33,5 +33,11 @@
 - Test browser: jaga `?v=` konsisten agar modul tidak terduplikasi.
 - GitHub Pages deploy dari `main`.
 
+## Input command `.fnd` (CLI)
+- `node tools/fair-run.mjs input.fnd [--out report.md] [--check]`; sintaks di header `lib/foundation/import/fndCommands.js`, contoh `docs/examples/`.
+- Footing/pedestal dangkal (`staad-stability.mjs`) dan pile cap `SUPPORT PILE` (`staad-pile.mjs`: 4B, struktur 5B, auto-thickness).
+- CLI pile cap 5B sudah dibandingkan dengan tab 5B di app (6 kasus, semua sama; lihat catatan di VALIDATION_REPORT). Belum diuji dengan file STAAD proyek asli.
+- Belum: torsi MY STAAD untuk grup tiang (tanda belum terverifikasi), multi-titik beban di `.fnd`, campuran pile + dangkal dalam satu file.
+
 ## Ide lanjutan (belum diminta)
-Multi-titik untuk pedestal/anchor, pembanding model strip 5B, optimasi Summary Focus Canvas, perbaikan Limitation 5B.
+Multi-titik untuk pedestal/anchor, pembanding model strip 5B.

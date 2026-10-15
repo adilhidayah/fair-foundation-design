@@ -223,3 +223,11 @@ node lib/foundation/validation/validation_shared_part16.mjs
 - The library tests do not cover the UI wiring (unit conversions, which combinations a tab uses). Those were checked in a
   headless browser against independent hand calculations (see docs/PROJECT_INSTRUCTIONS.md §11) — the anchor-bolt unit bug
   found on 26 Sep 2026 was of that kind.
+- CLI pile cap 5B vs the app (15 Oct 2026, headless browser, not part of the CI): tools/staad-pile.mjs (`pileCapDesignCheck`) and the app's 5B tab
+  (Tab 02 pile support, Tab 03 STAAD support-reaction mode, LRFD combinations, 6.1 / 6.2 / 6.3 from the pile reactions) were run on the same
+  inputs: 2 geometries (centred 3 × 3 piles with a 0.6 × 0.6 pedestal; 2 × 4 piles with a 0.8 × 0.5 pedestal offset (0.15, −0.2) m) × 3 load sets
+  (gravity with small lateral, large biaxial lateral, net uplift with hogging) × 4 combinations. Compared: ΔW, M_u of the four sections (bottom and
+  top, x and z), V_u and UC of the one-way shear in both directions, V_u / v_u / UC of the pedestal punching, UC of the pile punching —
+  all equal (ΔW to 0.03 kN, forces and moments to ≤ 0.06, UC to ≤ 0.002; the app rounds its display). The STAAD → FAIR sign mapping is
+  independent in the two (`staadReactionToFair` in the app, `reactionToFoundationLoad` in the CLI). The app's equipment load types (E(E), E(O), E(T)) take
+  P from the equipment inputs, so a free-form vertical load type (Lr) was used for the third load set.
