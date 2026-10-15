@@ -1,13 +1,14 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, stdComboVector } from '../../lib/foundation/index.js?v=20261015h';
-import { getRadioVal, num } from '../core/dom.js?v=20261015h';
-import { fmt } from '../core/format.js?v=20261015h';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261015h';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015h';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015h';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261015h';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015h';
+import { computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261015i';
+import { getRadioVal, num } from '../core/dom.js?v=20261015i';
+import { fmt } from '../core/format.js?v=20261015i';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261015i';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015i';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015i';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015i';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261015i';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015i';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -41,21 +42,13 @@ export function calcAnchor() {
     lastResults.anchor.detail = 'No load combinations defined.';
     return;
   }
-  const Bp = num('ab-Bp'), Lp = num('ab-Lp');
-  const ca1 = computeGoverningCa1(boltList, Bp);
-  if (!isFinite(ca1) || ca1 <= 0) {
-    document.getElementById('calc-anchor').innerHTML = AB_HEAD() + `<div class="warn-box"><strong>⚠  Invalid layout:</strong> one or more bolts fall outside the pedestal width B<sub>p</sub> (computed edge distance c<sub>a1</sub> ≤ 0). Increase B<sub>p</sub> or move the bolts inward.</div>`;
-    lastResults.anchor.detail = 'Invalid layout (bolt outside pedestal width).';
-    return;
-  }
-  const cap = computeAnchorCapacity({
-    ca1,
-    da: num('ab-da'), Ase: num('ab-Ase'), futa: num('ab-futa'), hef: num('ab-hef'), Abrg: num('ab-Abrg'),
-    fc: num('gen-fc'), lambda: num('ab-lambda'),
-    anchorType: getRadioVal('ab-type'), cracked: getRadioVal('ab-crack') === 'cracked',
-    phiNsa: num('ab-phi-Nsa'), phiNcb: num('ab-phi-Ncb'), phiNpn: num('ab-phi-Npn'),
-    phiVsa: num('ab-phi-Vsa'), phiVcb: num('ab-phi-Vcb'), phiVcp: num('ab-phi-Vcp')
-  });
+  // Pedestals to check: the one pedestal of Tab 02 (size from ab-Bp / ab-Lp), or — pile cap with SEVERAL load points and a pedestal under
+  // each — every pedestal (c1 × c2 of its point) with its share of the loads. The same bolt pattern is checked on each; the pedestal with
+  // the highest governing UC is shown in detail and all of them are listed.
+  const multi = loadPointsPedestals();
+  const pts = multi ? normalisePoints(activeLoadPoints()) : null;
+  const sites = multi ? pts.map((p, j) => ({ idx: j + 1, Bp: p.c1 * 1000, Lp: p.c2 * 1000, f: p.f, x: p.x, y: p.y }))
+    : [{ idx: 1, Bp: num('ab-Bp'), Lp: num('ab-Lp'), f: 1, x: 0, y: 0 }];
   // Anchor design loads: the factored LRFD combinations (LC201+, comboState.lrfd) at the TOP of the pedestal (base plate) —
   // ACI 318M-19 Ch.17 compares φN_n / φV_n with factored actions. Same biaxial vectors as Section 03 table 3.3.3, without any
   // top -> bottom transfer; the bolt group is checked about one axis with the resultants H = √(Fx² + Fz²), M = √(Mx² + Mz²).
@@ -64,22 +57,52 @@ export function calcAnchor() {
   // (F = P/n + M·dx/Σdx²). Passing mm made the moment term 1000× too small — convert here, and convert the returned
   // bolt positions back to mm for the table and the drawing.
   const boltsM = boltList.map(b => ({ x: b.x / 1000, y: b.y / 1000 }));
-  const results = comboState.lrfd.map(combo => {
-    const v = stdComboVector(combo.f, base);
-    const Ptop = v.P, Htop = Math.hypot(v.Fx, v.Fz), Mtop = Math.hypot(v.Mx, v.Mz);
-    const r = evaluateAnchorCombo(boltsM, Ptop, Htop, Mtop, cap);
-    if (r.boltForces) r.boltForces = r.boltForces.map(bf => ({ ...bf, x: bf.x * 1000, y: bf.y * 1000 }));
-    return { combo, P: Ptop, H: Htop, M: Mtop, ...r };
-  });
-  const governing = results.reduce((a, b) => b.governingUC > a.governingUC ? b : a);
+  const evalSite = (st) => {
+    const ca1 = computeGoverningCa1(boltList, st.Bp);
+    if (!isFinite(ca1) || ca1 <= 0) return { ...st, invalidLayout: true, ca1 };
+    const cap = computeAnchorCapacity({
+      ca1,
+      da: num('ab-da'), Ase: num('ab-Ase'), futa: num('ab-futa'), hef: num('ab-hef'), Abrg: num('ab-Abrg'),
+      fc: num('gen-fc'), lambda: num('ab-lambda'),
+      anchorType: getRadioVal('ab-type'), cracked: getRadioVal('ab-crack') === 'cracked',
+      phiNsa: num('ab-phi-Nsa'), phiNcb: num('ab-phi-Ncb'), phiNpn: num('ab-phi-Npn'),
+      phiVsa: num('ab-phi-Vsa'), phiVcb: num('ab-phi-Vcb'), phiVcp: num('ab-phi-Vcp')
+    });
+    const results = comboState.lrfd.map(combo => {
+      const v = stdComboVector(combo.f, base);
+      const Ptop = st.f * v.P, Htop = st.f * Math.hypot(v.Fx, v.Fz), Mtop = st.f * Math.hypot(v.Mx, v.Mz);
+      const r = evaluateAnchorCombo(boltsM, Ptop, Htop, Mtop, cap);
+      if (r.boltForces) r.boltForces = r.boltForces.map(bf => ({ ...bf, x: bf.x * 1000, y: bf.y * 1000 }));
+      return { combo, P: Ptop, H: Htop, M: Mtop, ...r };
+    });
+    const governing = results.reduce((a, b) => b.governingUC > a.governingUC ? b : a);
+    return { ...st, ca1, cap, results, governing };
+  };
+  const siteRes = sites.map(evalSite);
+  const badSite = siteRes.find(r => r.invalidLayout);
+  if (badSite) {
+    document.getElementById('calc-anchor').innerHTML = AB_HEAD() + `<div class="warn-box"><strong>⚠  Invalid layout${multi ? ` (pedestal ${badSite.idx})` : ''}:</strong> one or more bolts fall outside the pedestal width B<sub>p</sub> = ${fmt(badSite.Bp, 0)} mm (computed edge distance c<sub>a1</sub> ≤ 0). Move the bolts inside${multi ? ' every pedestal (c<sub>1</sub> of each load point)' : ' or increase the pedestal width'}.</div>`;
+    lastResults.anchor.detail = 'Invalid layout (bolt outside pedestal width).';
+    return;
+  }
+  const worstSite = siteRes.reduce((a, b) => (!b.governing.valid || (a.governing.valid && b.governing.governingUC > a.governing.governingUC) ? b : a));
+  const { Bp, Lp, ca1, cap, results, governing } = worstSite;
   lastResults.anchor = {
     label: 'Anchor Bolt Design',
     status: !governing.valid ? 'ERROR' : (governing.overallPass ? 'PASS' : 'FAIL'),
     metric: governing.valid ? `UC = ${fmt(governing.governingUC,3)}` : '—',
-    detail: governing.valid ? `Governing: ${comboLabel(governing.combo)} — ${governing.governingCheck.name}, n=${boltList.length} bolts` : `${governing.note}`
+    detail: governing.valid ? `${multi ? `Pedestal ${worstSite.idx} of ${sites.length}: ` : ''}Governing: ${comboLabel(governing.combo)} — ${governing.governingCheck.name}, n=${boltList.length} bolts` : `${governing.note}`
   };
   lastResults.anchor.notices = [];
   let html = AB_HEAD();
+  if (multi) {
+    html += sectionHeader('9.0', 'Pedestals (one per load point)', `The bolt pattern of this tab is checked on each of the ${sites.length} pedestals with its share of the factored loads at the top (P, H, M × share); c<sub>a1</sub> follows each pedestal width c<sub>1</sub>. The governing pedestal (${worstSite.idx}) is detailed below.`, true);
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Anchor bolts per pedestal</caption>
+      <tr><th>Pedestal</th><th>x, z (m)</th><th>c<sub>1</sub> × c<sub>2</sub> (mm)</th><th>Share</th><th>c<sub>a1</sub> (mm)</th><th>Governing combination</th><th>Governing check</th><th>UC</th><th>Status</th></tr>
+      ${siteRes.map(r => `<tr class="${r === worstSite ? 'governing' : ''}"><td>${r.idx}</td><td class="num">${fmt(r.x,2)}, ${fmt(r.y,2)}</td><td class="num">${fmt(r.Bp,0)} × ${fmt(r.Lp,0)}</td><td class="num">${fmt(r.f*100,1)}%</td><td class="num">${fmt(r.ca1,1)}</td><td>${comboLabel(r.governing.combo)}</td><td>${r.governing.valid ? r.governing.governingCheck.name : '—'}</td><td class="num">${r.governing.valid ? fmt(r.governing.governingUC,3) : '—'}</td><td>${!r.governing.valid ? 'ERROR' : (r.governing.overallPass ? 'PASS' : 'FAIL')}</td></tr>`).join('')}
+    </table></div>`;
+  }
   if (!governing.valid) {
     html += `<div class="warn-box"><strong>⚠  Invalid:</strong> ${governing.note}</div>`;
   }

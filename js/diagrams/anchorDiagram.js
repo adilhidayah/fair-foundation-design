@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261015h';
+import { fmt } from '../core/format.js?v=20261015i';
 
 // Anchor bolt plan with tension per bolt.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.

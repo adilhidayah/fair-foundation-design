@@ -1,17 +1,17 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261015h';
-import { getRadioVal } from '../core/dom.js?v=20261015h';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261015h';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261015h';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261015i';
+import { getRadioVal } from '../core/dom.js?v=20261015i';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261015i';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261015i';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
 export const SHOW_BOTH_FOUNDATION_TABS = false;
-// "Load points" (several equipment on one pile cap): offered for a pile cap without pedestal only.
+// "Load points" (several equipment on one pile cap): offered for a pile cap, with or without pedestals (one pedestal per point).
 export function syncLoadPointBox() {
   const el = document.getElementById('fs-lp-fields');
-  if (el) el.style.display = (getRadioVal('fs-support') === 'pile' && getRadioVal('fs-type') === 'block') ? '' : 'none';
+  if (el) el.style.display = (getRadioVal('fs-support') === 'pile' && ['block', 'pedestal'].includes(getRadioVal('fs-type'))) ? '' : 'none';
 }
 export function updateFoundationTabVisibility() {
   sync5BSources();

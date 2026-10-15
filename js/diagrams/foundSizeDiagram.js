@@ -1,9 +1,9 @@
-import { fmt } from '../core/format.js?v=20261015h';
+import { fmt } from '../core/format.js?v=20261015i';
 
 // Foundation sizing plan + elevation. patch.js keeps its #fsize-arrow marker clean.
 // Pure SVG string builder (no DOM access) — values in, markup out. Moved verbatim from app.js.
 // D = pile diameter in m (plan circles; 0 -> a fixed symbol size). Pile coordinates {x, y} = plan x, z (y field = plan z).
-export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, D = 0, loadPoints = null) {
+export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, D = 0, loadPoints = null, multiPed = false) {
   const hasPed = type === 'pedestal';
   const isBlock = type === 'block';
   const HALO = 'paint-order:stroke;stroke:var(--panel);stroke-width:3px;stroke-linejoin:round;';
@@ -14,7 +14,8 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
   const ffx = pcx - (Bf * pScale) / 2, ffy = pcy - (Lf * pScale) / 2;
   const fW = Bf * pScale, fL = Lf * pScale;
   let pedPlan = '';
-  if (hasPed) {
+  // multiPed: one pedestal under every load point — the plan shows them as the numbered P1..Pn rectangles below; the elevation draws the first.
+  if (hasPed && !multiPed) {
     const pedCx = pcx + OffX * pScale, pedCy = pcy - OffZ * pScale;
     const px = pedCx - (Bp * pScale) / 2, py = pedCy - (Lp * pScale) / 2;
     // Pedestal dimensions are drawn OUTSIDE the footing (Bp above, Lp on the left) with dotted extension lines, so they
@@ -55,7 +56,7 @@ export function foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, 
         + (rP >= 7 ? `<text class="dim-text" x="${cx.toFixed(1)}" y="${(cy+3.5).toFixed(1)}" text-anchor="middle">${k + 1}</text>` : '');
     }).join('');
   }
-  const offNote = hasPed && (OffX !== 0 || OffZ !== 0) ? `Pedestal offset: Off X = ${fmt(OffX,2)} m, Off Z = ${fmt(OffZ,2)} m` : '';
+  const offNote = hasPed && !multiPed && (OffX !== 0 || OffZ !== 0) ? `Pedestal offset: Off X = ${fmt(OffX,2)} m, Off Z = ${fmt(OffZ,2)} m` : '';
       const planHtml = `
       <text class="panel-title" x="${pX0}" y="16">Foundation Plan</text>
       <rect class="outline-footing" x="${ffx.toFixed(1)}" y="${ffy.toFixed(1)}" width="${fW.toFixed(1)}" height="${fL.toFixed(1)}" fill="none" stroke="var(--line-strong)"/>
