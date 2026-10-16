@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261015l';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261015q';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -91,6 +91,8 @@ export const state = {
   // Several load points on a pile cap WITH pedestals (one pedestal per point): the self-weight of each pedestal (kN, concrete + grout),
   // in the order of loadPointList; pedW is then their sum. [] otherwise. Set by calcFoundSize().
   pedPointW: [],
+  // Tab 03 STAAD import: the chosen .std / .ANL texts (js/tabs/staadImport.js), kept until another file is chosen.
+  staadImport: { std: '', anl: '', stdName: '', anlName: '' },
   // Backfill above the footing / pile cap (kN, footing area minus pedestal, over the pedestal depth below ground) — set by
   // calcFoundSize(); 4A places it at its own centroid when the pedestal is offset (pedestalOffsetMoments()).
   footSoilW: 0,

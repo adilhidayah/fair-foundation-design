@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261015l">
+<link rel="stylesheet" href="css/app.css?v=20261015q">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -301,6 +301,19 @@
       <div class="note" id="ld-sign-note-staad" style="display:none;">Type the support reactions as STAAD reports them (global axes, <strong>Y up</strong>, forces the support exerts on the structure): vertical types P = F<sub>Y</sub>, H = F<sub>X</sub>, M = M<sub>Z</sub>, H<sub>z</sub> = F<sub>Z</sub>, M<sub>x</sub> = M<sub>X</sub>; X-direction types (WX, EQX …) H = F<sub>X</sub>, M = M<sub>Z</sub>; Z-direction types (WZ, EQZ …) H = F<sub>Z</sub>, M = M<sub>X</sub>. FAIR flips the signs itself (H = −F<sub>X</sub>, H<sub>z</sub> = −F<sub>Z</sub>, M of Z types = −M<sub>X</sub>). Not valid for a Z-up model or another software — use the FAIR convention there.</div>
     </div>
     </div>
+    </details>
+    <details class="gt-group" id="sti-group">
+      <summary>Import STAAD reactions (.std + .ANL)</summary>
+      <div class="gt-body">
+        <div class="note">Support reactions per combination of one node: the combination factors and the dead / wind / seismic cases from the .std, the reactions from the last table of the .ANL (KN / METER). Replaces the load types and both combination sets of this tab (Support Reaction mode, STAAD sign).</div>
+        <div class="field"><label for="sti-std">STAAD input (.std)</label><input type="file" id="sti-std" accept=".std,.STD,.txt"></div>
+        <div class="field"><label for="sti-anl">STAAD output (.ANL)</label><input type="file" id="sti-anl" accept=".anl,.ANL,.txt"></div>
+        <div class="field"><label for="sti-node">Support node</label><select id="sti-node"></select></div>
+        <div class="field"><label for="sti-asd">ASD combinations (stability, anchor bolts)</label><input type="text" id="sti-asd" placeholder="101-164" value="101-164"></div>
+        <div class="field"><label for="sti-lrfd">LRFD combinations (pedestal, footing design)</label><input type="text" id="sti-lrfd" placeholder="301-400" value="301-400"></div>
+        <button type="button" id="sti-import" class="combo-add-btn">⤓ Import STAAD reactions</button>
+        <div id="sti-msg" class="note"></div>
+      </div>
     </details>
     <!-- Hidden from view per user request — "lc-dW"/"lc-dh" stay in the DOM (readonly, auto-filled by
          calcFoundSize()) since calcOneWay/calcTwoWay/etc. still read them via num('lc-dW')/num('lc-dh')
@@ -814,6 +827,11 @@
           </div>
         </div>
         <div class="field">
+          <label for="fd-mincontact">Minimum contact area (% of the base, empty = not checked)</label>
+          <input type="number" id="fd-mincontact" value="" min="0" max="100" step="5" placeholder="e.g. 70">
+          <div class="note">Project criterion: share of the footing base that stays in contact (rigid footing, soil without tension). Checked as UC = min / contact ratio and part of the governing UC.</div>
+        </div>
+        <div class="field">
           <span id="fd-bearmeth-label" class="sr-only">Bearing pressure when e &gt; B/6</span>
           <div class="gt-sub" style="margin-top:2px;">Bearing pressure when e &gt; B/6</div>
           <div class="radio-row gt-radio" id="fd-bearmeth" role="radiogroup" aria-labelledby="fd-bearmeth-label">
@@ -1233,6 +1251,92 @@
             <button data-val="cracked" class="sel">Cracked</button>
             <button data-val="uncracked">Uncracked</button>
           </div>
+        </div>
+        <div class="section-label">Check Method &amp; Anchor Reinforcement</div>
+        <div class="field">
+          <label id="ab-method-label">Check method</label>
+          <div class="radio-row" id="ab-method" role="radiogroup" aria-labelledby="ab-method-label">
+            <button data-val="single" class="sel">Single anchor</button>
+            <button data-val="group">ACI 17 group (4 anchors)</button>
+          </div>
+        </div>
+        <div id="ab-group-box" style="display:none;">
+        <div class="note">Group of 4 cast-in headed anchors in a rectangle, centred in the pedestal (anchorGroupCheck, the same check as the CLI): projected areas A<sub>Nc</sub> / A<sub>Vc</sub>, h<sub>ef</sub>′ near 3+ edges, side-face blowout, P with M<sub>x</sub>, M<sub>z</sub>, F<sub>x</sub>, F<sub>z</sub> of each combination. Cracked concrete. The φ factors below are used.</div>
+        <div class="field check-field">
+          <label for="ab-seismic">
+            <input type="checkbox" id="ab-seismic" checked>
+            <span>Seismic design category C–F: concrete-governed strengths × 0.75 (§17.10.5.4, §17.10.6.4)</span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="ab-reinf">Tension anchor reinforcement (§17.5.2.1(a))</label>
+          <select id="ab-reinf">
+            <option value="none" selected>None (concrete breakout N_cbg)</option>
+            <option value="bars">Pedestal bars (5A), hooked at the top</option>
+            <option value="hairpin">Hairpins at each anchor (U-bend at the top)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ab-vreinf">Shear anchor reinforcement (§17.5.2.1(b))</label>
+          <select id="ab-vreinf">
+            <option value="none" selected>None (concrete breakout V_cbg)</option>
+            <option value="ties">Ties in the top 125 mm (SP-17M Example 18)</option>
+            <option value="hairpin">Hairpins around the front anchors</option>
+          </select>
+        </div>
+        <div id="ab-tie-box" style="display:none;">
+        <div class="field">
+          <label for="ab-tie-n"><span>Ties in the top 125 mm, n (min 2 × D13 / 3 × D10, §10.7.6.1.6)</span></label>
+          <input type="number" id="ab-tie-n" value="2" min="1" step="1">
+        </div>
+        <div class="field">
+          <label for="ab-tie-db"><span>Tie bar, d<sub>b</sub></span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-tie-db" value="13" min="0">
+        </div>
+        <div class="field">
+          <label for="ab-tie-case">Shear per anchor</label>
+          <select id="ab-tie-case">
+            <option value="2" selected>Case 2: V/2 (two anchors take all of V)</option>
+            <option value="1">Case 1: V/4 (oversized holes, V shared by 4)</option>
+          </select>
+        </div>
+        <div class="field check-field">
+          <label for="ab-tie-diamond">
+            <input type="checkbox" id="ab-tie-diamond">
+            <span>Diamond ties provided (alternate strut to the middle bars; detail only, no strength added)</span>
+          </label>
+        </div>
+        <div class="note">Strut-and-tie (SP-17M(14) Anchorage Example 18, Steps 17b / 17c): strut at 45° from the anchor to the corner bar, tie tension T = V<sub>a</sub>; φT<sub>n</sub> = 0.75·n·A<sub>b</sub>·f<sub>y</sub>.</div>
+        </div>
+        <div id="ab-hp-box" style="display:none;">
+        <div class="field">
+          <label for="ab-hp-db"><span>Hairpin bar, d<sub>b</sub></span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-hp-db" value="13" min="0">
+        </div>
+        <div class="field">
+          <label for="ab-hp-n"><span>Hairpins per anchor</span></label>
+          <input type="number" id="ab-hp-n" value="1" min="0" step="1">
+        </div>
+        <div class="field">
+          <label for="ab-hp-r"><span>Leg offset from the anchor axis, r (empty = in contact)</span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-hp-r" value="" min="0" placeholder="contact">
+        </div>
+        <div class="field">
+          <label for="ab-hp-leg">Shear hairpin legs (shear hairpins)</label>
+          <select id="ab-hp-leg">
+            <option value="hook" selected>Hooked ends (l_dh)</option>
+            <option value="straight">Straight (l_d)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ab-hp-cover"><span>Side cover at the end of the legs</span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-hp-cover" value="40" min="0">
+        </div>
+        </div>
+        <div class="field">
+          <label for="ab-topcover"><span>Top cover to the hooks of the anchor reinforcement</span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-topcover" value="50" min="0">
+        </div>
         </div>
         <div class="section-label">Strength Reduction Factors, φ (Condition B default — editable)</div>
         <div class="field">
@@ -1854,6 +1958,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261015l"></script>
+<script type="module" src="js/app.js?v=20261015q"></script>
 </body>
 </html>
