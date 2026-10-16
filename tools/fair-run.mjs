@@ -5,11 +5,15 @@
 //
 //   node tools/fair-run.mjs <input.fnd> [--out report.md] [--check]
 //     --check   parse only: list syntax errors, print nothing else
+//     --pdf     also write the PDF (needs Chrome / Chromium / Edge; FAIR_BROWSER or --browser <exe> to name it)
+//     --no-html skip the HTML report (Markdown only)
+// Files: <input> - Stability.md | - Pile.md, the same as .html (A4, css/report.css; the REPORT command of the .fnd fills the header), and .pdf with --pdf.
 import fs from 'node:fs';
 import path from 'node:path';
 import { parseFndCommands } from '../lib/foundation/index.js';
 import { runConfig } from './staad-stability.mjs';
 import { runPileConfig } from './staad-pile.mjs';
+import { buildHtmlReport, htmlToPdf } from './report-output.mjs';
 
 const args = process.argv.slice(2);
 if (!args[0]) { console.error('Usage: node tools/fair-run.mjs <input.fnd> [--out <report.md>] [--check]'); process.exit(2); }
@@ -26,6 +30,17 @@ const isPile = config.foundations.some(f => f.support === 'pile');   // SUPPORT 
 const outP = oi >= 0 ? path.resolve(args[oi + 1]) : base + (isPile ? ' - Pile.md' : ' - Stability.md');
 const { results, md } = isPile ? runPileConfig(cfgP) : runConfig(cfgP, outP);
 fs.writeFileSync(outP, md, 'utf8');
+if (!args.includes('--no-html')) {
+  const htmlP = outP.replace(/\.md$/i, '') + '.html';
+  const drawings = results.filter(r => r.drawing).map(r => ({ svg: r.drawing.svg, name: r.f.name }));
+  fs.writeFileSync(htmlP, buildHtmlReport({ md, cfg: config, drawingDir: path.dirname(outP), drawings }), 'utf8');
+  console.log(`HTML report: ${htmlP}`);
+  if (args.includes('--pdf')) {
+    const bi = args.indexOf('--browser');
+    const pdf = htmlToPdf(htmlP, htmlP.replace(/\.html$/i, '.pdf'), bi >= 0 ? args[bi + 1] : null);
+    console.log(pdf.ok ? `PDF report: ${pdf.pdf}` : `PDF not written: ${pdf.note}`);
+  }
+}
 for (const r of results) {
   const g = r.gov;
   console.log(`${r.f.name}: ${r.pass ? 'PASS' : 'FAIL'}` + (g ? ` — L/C ${g.lc}, UC ${Number(g.governingUC).toFixed(3)}` : ' — no reactions'));

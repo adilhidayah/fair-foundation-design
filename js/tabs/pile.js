@@ -2,15 +2,15 @@
 // spacing / edge-distance check). All formulas live in lib/foundation/shared/pileGroup.js — this module reads the
 // inputs, calls the library and renders the preview.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector, normalisePoints, splitCombinationLoad } from '../../lib/foundation/index.js?v=20261015i';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015i';
-import { fmt as fmtRaw } from '../core/format.js?v=20261015i';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015i';
-import { comboLabel } from '../core/worksheet.js?v=20261015i';
-import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20261015i';
-import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261015i';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015i';
-import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015i';
+import { DEFAULT_P_MULTIPLIERS, evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, stdComboVector, normalisePoints, splitCombinationLoad } from '../../lib/foundation/index.js?v=20261015j';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015j';
+import { fmt as fmtRaw } from '../core/format.js?v=20261015j';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015j';
+import { comboLabel } from '../core/worksheet.js?v=20261015j';
+import { pileDiagramSVG } from '../diagrams/pileDiagram.js?v=20261015j';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261015j';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015j';
+import { pileFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015j';
 
 // A value that rounds to zero prints as 0, never "-0.0" (torsion / eccentricity terms are often exactly zero).
 const fmt = (n, dec = 2) => fmtRaw(Math.abs(n) < 0.5 * Math.pow(10, -dec) ? 0 : n, dec);

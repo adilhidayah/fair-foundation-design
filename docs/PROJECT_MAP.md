@@ -26,6 +26,7 @@ MASTER CALCULATOR/
 │   └── validation/            ← test hand-calc (node ...mjs)
 ├── patch.js                   ← fixer marker SVG (idempotent)
 ├── tools/
+│   ├── report-output.mjs      ← laporan CLI: Markdown → HTML A4 (css/report.css) → PDF lewat Chrome/Edge headless
 │   ├── staad-pile.mjs         ← CLI: reaksi STAAD → cek 4B pile group per kombinasi (laporan .md)
 │   ├── fair-run.mjs           ← CLI input gaya STAAD (.fnd → config → staad-stability); parser: lib/foundation/import/fndCommands.js
 │   ├── staad-stability.mjs    ← CLI: reaksi STAAD → stabilitas + desain footing/pedestal (laporan .md)
