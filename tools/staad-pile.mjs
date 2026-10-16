@@ -32,7 +32,7 @@ import { pathToFileURL } from 'node:url';
 import {
   evaluatePileGroupCombo, lateralPMultipliers, pileGroupEfficiency, pileLayoutCheck, parseStaadLoads, parseStaadReactions,
   reactionToFoundationLoad, primaryFactors, parseCaseList,
-  oneWayPileShear, punchingPileShear, pilePunchingCheck, pileCapMomentAxis, flexuralDesign, barLayout,
+  oneWayPileShear, punchingPileShear, pilePunchingCheck, pileCapMomentAxis, flexuralDesign, topLayerDesign, barLayout,
   oneWayShearCheck, twoWayShearCheck, eccentricPunchingStress
 } from '../lib/foundation/index.js';
 import { footingWeights, loadConfig, resolveFoundation } from './staad-stability.mjs';
@@ -109,7 +109,7 @@ export function pileCapDesignCheck(f, crit, loads, reac, lcList, deadCase) {
   const at = { x: hasPed ? f.OffX || 0 : 0, y: hasPed ? f.OffZ || 0 : 0 };
   const dead = deadCase ?? Math.min(...Object.entries(loads.primary).filter(([, p]) => /^dead$/i.test(p.type)).map(([k]) => +k));
   const d = t - cc - bar;                                       // mm, outer layer (x-bars); y (z) bars d − bar
-  const out = { f, B, L, t, cc, bar, fc, fy, d, dp, shape, c1, c2, at, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25,
+  const out = { f, B, L, t, cc, bar, fc, fy, d, dp, shape, c1, c2, at, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25, topLayer: { mode: D.topLayer?.mode === 'two' ? 'two' : 'bottom', rhoTop: D.topLayer?.rhoTop ?? 0.0009 },
     items: [], missing: [], checks: [], notes: [] };
   if (!(c1 > 0 && c2 > 0)) { out.notes.push('Pedestal / column size B_p × L_p must be > 0.'); out.pass = false; out.gov = { name: 'input', uc: Infinity }; return out; }
   if (!(d - bar > 0)) { out.notes.push('Invalid section: effective depth d − d_b ≤ 0.'); out.pass = false; out.gov = { name: 'input', uc: Infinity }; return out; }
@@ -137,11 +137,14 @@ export function pileCapDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     { key: 'z-top', get: it => it.my.top, b: B * 1000, dEff: d - bar, face: 'top' }
   ].map(c => {
     const gov = ok.reduce((a, b2) => (c.get(b2) > c.get(a) ? b2 : a));
-    const Mu = c.get(gov), required = c.face === 'bottom' || Mu > 1e-6;   // top steel only where a combination gives hogging
-    const des = required ? flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, out.asMinRule) : null;
+    // bottom layers always; top: where a combination gives hogging, or always with the two-layer option (design.topLayer, topLayerDesign)
+    const Mu = c.get(gov);
+    const top = c.face === 'top' ? topLayerDesign(Mu, c.b, c.dEff, t, fc, fy, { asMinRule: out.asMinRule, mode: D.topLayer?.mode, rhoTop: D.topLayer?.rhoTop }) : null;
+    const required = top ? top.required : true, minOnly = !!(top && top.minOnly);
+    const des = top ? top.design : flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, out.asMinRule);
     const lay = des && des.ok ? barLayout(des.As, c.b, bar, t, step, cc) : null;
     const n = lay && lay.valid ? lay.n : null, s = lay && lay.valid ? lay.s : null;
-    return { ...c, lc: gov.lc, Mu, required, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
+    return { ...c, lc: minOnly ? '-' : gov.lc, Mu: minOnly ? 0 : Mu, required, minOnly, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
       ok: !required || (!!des && des.ok && !!lay && lay.valid && s - bar >= minClear - 1e-9) };
   });
   out.flex = CASES;
@@ -207,7 +210,7 @@ function designReport(r) {
   for (const c of D.flex || []) {
     if (!c.required) { o.push(`| ${c.key} | - | 0 (no hogging) | ${n(c.b, 0)} | ${n(c.dEff, 0)} | - | - | not required (detailing) | - | - |`); continue; }
     if (!c.des || !c.des.ok) { o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | section too small | - | - | - | NOT OK |`); continue; }
-    o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
+    o.push(`| ${c.key} | ${c.lc} | ${c.minOnly ? `0 (minimum top mat, ρ_top ${D.topLayer.rhoTop ?? 0.0009})` : n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
       `${c.s ? `D${D.bar} @ ${n(c.s, 0)} (${c.n} bars)` : 'spacing < step'} | ${n(c.AsProv, 0)} | ${c.ok ? 'OK' : 'NOT OK'} |`);
   }
   if (r.thTrials) o.push('', `Auto-thickness (H ${n(r.thTrials[0].Hf)}–${n(r.thTrials[r.thTrials.length - 1].Hf)} m, each thickness re-runs 4B and the structure; the smallest passing H is kept): ` +

@@ -2,8 +2,8 @@
 // Focus Canvas mode (css/app.css); Report Preview and print keep #calc-general.
 // Builds markup only — every value is the one renderGeneralSummary() puts in the report, nothing is recomputed here.
 // Declarations only. Reuses the .fz-* layout of the 02 Focus view (js/tabs/foundSizeFocus.js).
-import { escapeHtml } from '../core/dom.js?v=20261015j';
-import { fmt } from '../core/format.js?v=20261015j';
+import { escapeHtml } from '../core/dom.js?v=20261015k';
+import { fmt } from '../core/format.js?v=20261015k';
 
 // d: { projName, isPile, status: { status, note }, fc, Ec, fy, gc, gl, gs, qa: { qa, given }, fs: { otPerm, otTemp, slPerm, slTemp, distinct },
 //      pile: { type, D, L, Qc, Qt, Ql }, standards: [{ docNo, title }] }

@@ -1,14 +1,14 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261015j';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015j';
-import { fmt } from '../core/format.js?v=20261015j';
-import { comboState, lastResults, state } from '../core/state.js?v=20261015j';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015j';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261015j';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015j';
-import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015j';
-import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261015j';
+import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261015k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015k';
+import { fmt } from '../core/format.js?v=20261015k';
+import { comboState, lastResults, state } from '../core/state.js?v=20261015k';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015k';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261015k';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015k';
+import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015k';
+import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261015k';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a

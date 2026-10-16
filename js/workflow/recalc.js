@@ -1,16 +1,16 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20261015j';
-import { calcBearing } from '../tabs/bearing.js?v=20261015j';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261015j';
-import { calcFoundation } from '../tabs/foundation.js?v=20261015j';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261015j';
-import { renderLoadSummary } from '../tabs/loading.js?v=20261015j';
-import { calcPile } from '../tabs/pile.js?v=20261015j';
-import { calcSettlement } from '../tabs/settlement.js?v=20261015j';
-import { calcRebar } from '../tabs/rebar.js?v=20261015j';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261015j';
-import { renderWorkflowLive } from '../workflow/status.js?v=20261015j';
+import { calcAnchor } from '../tabs/anchor.js?v=20261015k';
+import { calcBearing } from '../tabs/bearing.js?v=20261015k';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261015k';
+import { calcFoundation } from '../tabs/foundation.js?v=20261015k';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261015k';
+import { renderLoadSummary } from '../tabs/loading.js?v=20261015k';
+import { calcPile } from '../tabs/pile.js?v=20261015k';
+import { calcSettlement } from '../tabs/settlement.js?v=20261015k';
+import { calcRebar } from '../tabs/rebar.js?v=20261015k';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261015k';
+import { renderWorkflowLive } from '../workflow/status.js?v=20261015k';
 
 export function recalcAll() {
   // Tab 08 reads its footing size / depth from Tab 02 (mirrored in calcFoundSize()), so q_a, the Table 1.3.1 summary

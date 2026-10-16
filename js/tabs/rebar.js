@@ -1,21 +1,31 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015j';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015j';
-import { fmt } from '../core/format.js?v=20261015j';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015j';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015j';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015j';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015j';
-import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261015j';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015j';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015j';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015j';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015k';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015k';
+import { fmt } from '../core/format.js?v=20261015k';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015k';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015k';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015k';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015k';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261015k';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015k';
+import { pileComboLoads } from '../tabs/pile.js?v=20261015k';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015k';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
 // Minimum reinforcement rule of the pile cap / footing (select rb-asmin): 'slab' = ACI Table 8.6.1.1, 'beam' = project criterion.
 const asMinRule = () => (document.getElementById('rb-asmin')?.value === 'beam' ? 'beam' : 'slab');
+// Top layer (select rb-toplayer): 'bottom' = a top layer only where a combination gives hogging; 'two' = always a top mat, at least
+// rb-rhotop·b·t (topLayerDesign(), lib). Bottom layers are always designed.
+const topOpts = () => ({ asMinRule: asMinRule(), mode: document.getElementById('rb-toplayer')?.value === 'two' ? 'two' : 'bottom', rhoTop: parseFloat(document.getElementById('rb-rhotop')?.value) || 0.0009 });
+// One section: the bottom layer by flexuralDesign(), the top layer by topLayerDesign().
+function designCase(c, t, fc, fy) {
+  if (c.face === 'bottom') { c.required = true; c.minOnly = false; c.design = flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()); return; }
+  const r = topLayerDesign(c.Mu, c.b, c.dEff, t, fc, fy, topOpts());
+  c.required = r.required; c.minOnly = r.minOnly; c.design = r.design;
+}
+const govCell = (c) => (c.minOnly ? `— (minimum top mat, ρ<sub>top</sub> = ${topOpts().rhoTop})` : `${c.gov.name}${c.ptTxt || ''}`);
 const asMinText = (fy) => (asMinRule() === 'beam'
   ? 'A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>) (project criterion; 1.4·b·d/f<sub>y</sub> is the beam minimum of ACI 318M-19 §9.6.1.2)'
   : `A<sub>s,min</sub> = ρ<sub>min</sub>·b·t, ρ<sub>min</sub> = ${fmt(slabMinSteelRatio(fy), 4)} (ACI 318M-19 §13.3 → Table 8.6.1.1: 0.0020 for f<sub>y</sub> &lt; 420 MPa, max(0.0018·420/f<sub>y</sub>, 0.0014) for f<sub>y</sub> ≥ 420 MPa)`);
@@ -199,8 +209,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     c.gov = capResults.length ? capResults.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 }, pileForces: null };
     c.Mu = c.gov.m[c.key];
     c.ptTxt = c.gov.ptIdx && c.gov.ptIdx[c.key] ? ` (point ${c.gov.ptIdx[c.key]})` : '';
-    c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel is only designed where the combinations produce hogging
-    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()) : null;
+    designCase(c, t, fc, fy); // top steel: where the combinations produce hogging, or always (two-layer option)
     if (c.design && c.design.ok) layBars(c, capBar, t);
   });
   const tooSmall = CASES.filter(c => c.design && !c.design.ok);
@@ -226,7 +235,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     ${CASES.map(c => {
       if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment (no net uplift beyond the pedestal face). Provide the minimum / detailing top steel per the project.</td></tr>`;
       if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}${c.ptTxt || ''}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
-      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}${c.ptTxt || ''}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${govCell(c)}</td><td class="num">${fmt(c.minOnly ? 0 : c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
     }).join('')}
   </table></div>`;
   // Reinforcement drawings of what was designed above (only the layers that have a valid design), and the bar-spacing check:
@@ -308,8 +317,7 @@ function calcFootingFlexure({ fc, fy }) {
   CASES.forEach(c => {
     c.gov = okRes.length ? okRes.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 } };
     c.Mu = c.gov.m[c.key];
-    c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel only where a combination produces hogging
-    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()) : null;
+    designCase(c, t, fc, fy); // top steel: where a combination produces hogging, or always (two-layer option)
     if (c.design && c.design.ok) layBars(c, bar, t);
   });
   const tooSmall = CASES.filter(c => c.design && !c.design.ok);
@@ -333,7 +341,7 @@ function calcFootingFlexure({ fc, fy }) {
     ${CASES.map(c => {
       if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment beyond the pedestal faces. Provide the minimum / detailing top steel per the project.</td></tr>`;
       if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}${c.ptTxt || ''}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
-      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}${c.ptTxt || ''}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${govCell(c)}</td><td class="num">${fmt(c.minOnly ? 0 : c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
     }).join('')}
   </table></div>`;
   const drawLayers = {};
