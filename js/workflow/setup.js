@@ -1,17 +1,25 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261015q';
-import { getRadioVal } from '../core/dom.js?v=20261015q';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261015q';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261015q';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261016a';
+import { getRadioVal } from '../core/dom.js?v=20261016a';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261016a';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261016a';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
 export const SHOW_BOTH_FOUNDATION_TABS = false;
-// "Load points" (several equipment on one pile cap): offered for a pile cap, with or without pedestals (one pedestal per point).
+// "Load points" (several equipment / skid runners on one footing or pile cap): offered for a pile cap and a shallow footing, with or
+// without pedestals (one pedestal per point).
 export function syncLoadPointBox() {
   const el = document.getElementById('fs-lp-fields');
-  if (el) el.style.display = (getRadioVal('fs-support') === 'pile' && ['block', 'pedestal'].includes(getRadioVal('fs-type'))) ? '' : 'none';
+  if (el) el.style.display = ['block', 'pedestal'].includes(getRadioVal('fs-type')) ? '' : 'none';
+  const isPile = getRadioVal('fs-support') === 'pile';
+  const sum = document.getElementById('fs-lp-summary');
+  if (sum) sum.textContent = isPile ? 'Load Points (several equipment on the cap)' : 'Load Points (several equipment / skid runners on the footing)';
+  const note = document.getElementById('fs-lp-note');
+  if (note) note.innerHTML = isPile
+    ? 'Each point is a base plate / skid on the cap (x, z = centre from the cap centre, m; c<sub>1</sub> × c<sub>2</sub> = size along x × along z, m). The superstructure loads of Section 03 are shared out by "Share"; the cap weight acts at the cap centre. 4B uses the statically equivalent group load; 5B checks flexure, one-way and punching shear at every point and governs on the worst (the other points\' loads beyond a section are netted against the pile reactions).'
+    : 'Each point is a base plate / skid runner on the footing (x, z = centre from the footing centre, m; c<sub>1</sub> × c<sub>2</sub> = size along x × along z, m — a runner is a long narrow strip). The superstructure loads of Section 03 are shared out by "Share"; the footing (and backfill) weight is uniform. 4A uses the group resultant about the footing centre; 5B takes the soil pressure of that resultant and checks flexure at the faces of every point and across the spans between them (hogging between runners), one-way shear at d and punching at d/2 from every point, the other points\' loads beyond a section netted.';
 }
 export function updateFoundationTabVisibility() {
   sync5BSources();
@@ -28,7 +36,7 @@ export function updateFoundationTabVisibility() {
   const show = (id, on) => { const el = document.getElementById(id); if (el) el.style.display = on ? '' : 'none'; };
   setTxt('capcheck-tab-label', isPile ? 'PILE CAP CHECK' : 'FOOTING CHECK');
   // 08B follows the support: pile group settlement (Vesic) for piles, the elastic / consolidation settlement of a footing otherwise.
-  // Load points: several equipment on one pile cap — pile support, cap without pedestal only.
+  // Load points: several equipment on one footing / pile cap.
   syncLoadPointBox();
   show('st-shallow-box', !isPile); show('st-diff-box', !isPile); show('st-pile-box', isPile);
   setTxt('settlement-tab-label', isPile ? 'PILE SETTLEMENT' : 'SETTLEMENT (SOIL)');

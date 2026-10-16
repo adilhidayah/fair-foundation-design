@@ -1,14 +1,14 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261015q';
-import { getRadioVal, num } from '../core/dom.js?v=20261015q';
-import { fmt } from '../core/format.js?v=20261015q';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261015q';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015q';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015q';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015q';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261015q';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015q';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261016a';
+import { getRadioVal, num } from '../core/dom.js?v=20261016a';
+import { fmt } from '../core/format.js?v=20261016a';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261016a';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261016a';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261016a';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261016a';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261016a';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261016a';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `

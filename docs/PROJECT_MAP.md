@@ -128,11 +128,11 @@ MASTER CALCULATOR/
 | [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js) | 5 KB | V_u geser satu arah / punching pile cap dari reaksi tiang (interpolasi d_p/2) |
 | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) | 7 KB | P-M pedestal, anchor bolt (ACI Ch.17) |
 | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js) | 6 KB | One-way / punching shear, lentur |
-| [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 6 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak) |
+| [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 10 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak); multi-titik beban: `footingFlexurePoints()` (muka titik + scan bentang), `footingOneWayShearPoints()`, `footingPunchingPoint()` |
 | [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) | 2 KB | Korelasi SPT (Peck/Stroud/Bowles) |
 | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js) | 3 KB | Penurunan elastis + konsolidasi |
 | [shared/pilePunching.js](../lib/foundation/shared/pilePunching.js) | 2 KB | Punching tiang menembus pile cap: `pilePunchingCheck()` (penampang d/2 dipotong tepi cap, αs 40/30/20) |
-| [shared/loadPoints.js](../lib/foundation/shared/loadPoints.js) | 3 KB | Beberapa titik beban pada satu pile cap: `splitCombinationLoad()` (beban grup ekuivalen), `pointLoadsBeyond()` (netting di penampang) |
+| [shared/loadPoints.js](../lib/foundation/shared/loadPoints.js) | 5 KB | Beberapa titik beban pada satu pile cap: `splitCombinationLoad()` (beban grup ekuivalen), `pointLoadsBeyond()` (netting di penampang); footing dangkal: `footingPointLoads()` (beban titik + berat sendiri merata, resultan grup) |
 | [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js) | 2 KB | Penurunan tiang tunggal + kelompok (Vesic 1977, Das §11.18): `pileSettlementVesic()` |
 | [shared/windLoad.js](../lib/foundation/shared/windLoad.js) | 2 KB | Beban angin |
 | [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) | 4 KB | Fa/Fv, S_DS, Cs |

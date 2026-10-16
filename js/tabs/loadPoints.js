@@ -1,14 +1,16 @@
-// Load points on the pile cap (Tab 02, pile support + "Footing Only"): several equipment / base plates on one cap.
+// Load points on the pile cap or the shallow footing (Tab 02, "Footing Only" or with a pedestal per point): several equipment / base
+// plates / skid runners on one footing or cap.
 // The list lives in state.loadPointList; this module renders its table and says whether multi-point mode is active.
 // Mode off (or one point and Single selected) = the single load point of the pedestal model, unchanged.
-import { getRadioVal } from '../core/dom.js?v=20261015q';
-import { loadPointList } from '../core/state.js?v=20261015q';
+import { getRadioVal } from '../core/dom.js?v=20261016a';
+import { loadPointList } from '../core/state.js?v=20261016a';
 
-// Multi-point statics apply to a pile cap: without a pedestal each point is a base plate / skid on the cap; with pedestals (Pile Cap +
-// Pedestal) each point is a pedestal of size c1 × c2 (same height as Tab 02) designed on its own in 5A and 09.
+// Multi-point statics apply to a pile cap (4B group load, 5B pile reactions) and to a shallow footing (4A group resultant, 5B soil
+// pressure with the points netted): without a pedestal each point is a base plate / skid runner on the footing or cap; with pedestals
+// (Footing / Pile Cap + Pedestal) each point is a pedestal of size c1 × c2 (same height as Tab 02) designed on its own in 5A and 09.
 export function loadPointsActive() {
   const g = document.getElementById('fs-lp-mode');
-  return !!g && getRadioVal('fs-support') === 'pile' && ['block', 'pedestal'].includes(getRadioVal('fs-type')) && getRadioVal('fs-lp-mode') === 'multi' && loadPointList.length > 0;
+  return !!g && ['block', 'pedestal'].includes(getRadioVal('fs-type')) && getRadioVal('fs-lp-mode') === 'multi' && loadPointList.length > 0;
 }
 // Several load points AND a pedestal under each of them.
 export function loadPointsPedestals() {

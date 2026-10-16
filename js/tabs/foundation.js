@@ -1,14 +1,15 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261015q';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015q';
-import { fmt } from '../core/format.js?v=20261015q';
-import { comboState, lastResults, state } from '../core/state.js?v=20261015q';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015q';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261015q';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015q';
-import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015q';
-import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261015q';
+import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, footingPointLoads, normalisePoints, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261016a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016a';
+import { fmt } from '../core/format.js?v=20261016a';
+import { comboState, lastResults, state } from '../core/state.js?v=20261016a';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261016a';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261016a';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261016a';
+import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261016a';
+import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261016a';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261016a';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -91,15 +92,25 @@ export function calcFoundation() {
   // Pedestal offset from the footing centre (Tab 02): the loads at the top of the pedestal, the pedestal + grout weight and the
   // backfill centroid are eccentric to the footing — their moments about the footing centroid are added to Mx / Mz
   // (pedestalOffsetMoments(), lib). The self-weight parts take the combination's dead-load factor kD = dP / ΔW.
-  const OffX = hasPed ? num('fs-OffX') : 0, OffZ = hasPed ? num('fs-OffZ') : 0;
+  // Several load points (Tab 02 "Load points", activeLoadPoints()): the superstructure load is shared out to the points and the moments
+  // of the point loads (and of the pedestal under each, with "Footing + Pedestal") about the footing centroid replace the single
+  // pedestal offset (footingPointLoads(), lib — one point with share 1 gives the offset moments exactly, validation part40).
+  const pts = activeLoadPoints();
+  const OffX = hasPed && !pts ? num('fs-OffX') : 0, OffZ = hasPed && !pts ? num('fs-OffZ') : 0;
   const hasOffset = Math.abs(OffX) > 1e-9 || Math.abs(OffZ) > 1e-9;
   const dWfoot = num('lc-dW');
+  const ptPedW = pts && hasPed && state.pedPointW.length === pts.length ? state.pedPointW : null;
+  const ptPedA = pts && hasPed ? pts.map(p => p.c1 * p.c2) : null;
   const results = comboState.lc.map(combo => {
     const v = stdComboVector(combo.f, base);
     const kD = dWfoot > 0 ? v.dP / dWfoot : 0;
-    const off = hasOffset
-      ? pedestalOffsetMoments({ Ptop: v.P, kD, Wped: state.pedW, Wsoil: state.footSoilW, OffX, OffZ, Af: B * L, Ap: Bp * Lp })
-      : { dMx: 0, dMz: 0 };
+    let off = { dMx: 0, dMz: 0 };
+    if (pts) {
+      const fp = footingPointLoads(pts, { P: v.P, Mx: v.Mx + v.dMx, Mz: v.Mz + v.dMz, kD, dW: dWfoot, Wped: ptPedW, pedAreas: ptPedA, Wsoil: hasPed ? state.footSoilW : 0, Af: B * L });
+      off = { dMx: fp.group.Mx - (v.Mx + v.dMx), dMz: fp.group.Mz - (v.Mz + v.dMz) };
+    } else if (hasOffset) {
+      off = pedestalOffsetMoments({ Ptop: v.P, kD, Wped: state.pedW, Wsoil: state.footSoilW, OffX, OffZ, Af: B * L, Ap: Bp * Lp });
+    }
     const Pbot = v.P + v.dP, Mx = v.Mx + v.dMx + off.dMx, Mz = v.Mz + v.dMz + off.dMz;
     const Hbot = Math.sqrt(v.Fx * v.Fx + v.Fz * v.Fz);
     const Mbot = Math.sqrt(Mx * Mx + Mz * Mz);
@@ -166,20 +177,20 @@ export function calcFoundation() {
   // Row for a combination that could not be evaluated: the reason spans the data columns, status NG.
   const invalidRow = (r, nData) => `<tr><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td colspan="${nData}" class="clause">${escapeHtml(r.note || 'Not evaluated.')}</td><td>NG</td></tr>`;
   let html = chapterHeader('04. Foundation Stability',
-    `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: ${eccLimit ? 'eccentricity (kern), ' : 'contact area (no eccentricity limit — partial uplift accepted for this project), '}bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (${qaRef}), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh${hasOffset ? `, and the moments from the pedestal offset (Off<sub>X</sub> = ${fmt(OffX,2)} m, Off<sub>Z</sub> = ${fmt(OffZ,2)} m — see the offset table in 4.1)` : ''}. The governing check covers the uniaxial (resultant) and the biaxial ${eccLimit ? 'kern, ' : ''}bearing and overturning checks.`);
+    `This chapter checks the shallow footing (B<sub>f</sub> × L<sub>f</sub> = ${fmt(B,2)} × ${fmt(L,2)} m, Section 02) under the ASD load combinations of Section 03: ${eccLimit ? 'eccentricity (kern), ' : 'contact area (no eccentricity limit — partial uplift accepted for this project), '}bearing pressure against q<sub>a</sub> = ${fmt(qa,1)} kPa (${qaRef}), sliding and overturning. Loads are taken at the bottom of the footing, including the footing / pedestal self-weight ΔW and H·Δh${hasOffset ? `, and the moments from the pedestal offset (Off<sub>X</sub> = ${fmt(OffX,2)} m, Off<sub>Z</sub> = ${fmt(OffZ,2)} m — see the offset table in 4.1)` : ''}${pts ? `, and the moments of the ${pts.length} load points of Tab 02 about the footing centroid (see the load-point table in 4.1)` : ''}. The governing check covers the uniaxial (resultant) and the biaxial ${eccLimit ? 'kern, ' : ''}bearing and overturning checks.`);
   html += untypedLoadTypesWarning();
   html += sectionHeader('4.1', 'Governing Load Combination', shown
     ? `Combination with the highest utilization${invalidResults.length ? ' among those that could be evaluated' : ''}: ${escapeHtml(comboLabel(shown.combo))}, governed by ${shown.governingAll.name.toLowerCase()}.${invalidResults.length ? ` ${invalidResults.length} combination(s) could not be evaluated (${invalidResults.map(r => escapeHtml(r.combo.lc || r.combo.name)).join(', ')}) and fail the check — see the tables below and the Design Status panel.` : ''}`
     : 'No combination could be evaluated — see the tables below and the Design Status panel.', true);
   let shownSvg = '';
   if (shown) {
-    shownSvg = foundationDiagramSVG(B, L, Bp, Lp, t, hp, shown.Habs, shown.Mabs, shown.e, shown.qmaxBi, shown.qminBi,
+    shownSvg = foundationDiagramSVG(B, L, pts ? 0 : Bp, pts ? 0 : Lp, t, pts ? 0 : hp, shown.Habs, shown.Mabs, shown.e, shown.qmaxBi, shown.qminBi,
       { OffX, OffZ, Mx: shown.Mx, Mz: shown.Mz, P: shown.P, eccRatio: eccRatioAllow }); // pedestal offset, biaxial resultant, kern diamond
     html += shownSvg;
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>${escapeHtml(comboLabel(shown.combo))} — eccentricity and bearing pressure</caption>
       <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>
-      <tr><td>P, H, M at bottom of footing</td><td class="clause">Σ factor·load, + ΔW, + H·Δh${hasOffset ? ', + pedestal offset' : ''}</td><td class="num">${fmt(shown.P,1)} kN, ${fmt(shown.H,1)} kN, ${fmt(shown.M,1)} kN·m</td></tr>
+      <tr><td>P, H, M at bottom of footing</td><td class="clause">Σ factor·load, + ΔW, + H·Δh${hasOffset ? ', + pedestal offset' : ''}${pts ? ', + load points' : ''}</td><td class="num">${fmt(shown.P,1)} kN, ${fmt(shown.H,1)} kN, ${fmt(shown.M,1)} kN·m</td></tr>
       <tr><td>Eccentricity, e</td><td class="clause">|M| / P</td><td class="num">${fmt(shown.e,3)} m</td></tr>
       <tr><td>Kern limit, B/6</td><td class="clause">—</td><td class="num">${fmt(shown.kernLimit,3)} m</td></tr>
       <tr><td>Allowable eccentricity, e<sub>allow</sub></td><td class="clause">${eccLimit ? '(e/B)<sub>allow</sub> · B' : 'no limit (project criterion) — partial uplift accepted'}</td><td class="num">${eccLimit ? fmt(shown.eAllow,3) + ' m' : '—'}</td></tr>
@@ -195,6 +206,21 @@ export function calcFoundation() {
       <caption>${escapeHtml(comboLabel(shown.combo))} — utilization per check</caption>
       <tr><th>Check</th><th>UC</th><th>Status</th></tr>
       ${shown.allChecks.map(c => `<tr class="${c === shown.governingAll ? 'governing' : ''}"><td>${c.name}</td><td class="num">${fmt(c.uc,3)}</td><td>${okNg(c.uc)}</td></tr>`).join('')}
+    </table></div>`;
+  }
+  if (pts) {
+    // Several load points — statics of the point loads about the footing centroid (footingPointLoads(), lib).
+    const np = normalisePoints(pts);
+    html += `<div class="lc-formula">
+      <div class="lc-formula-title">Load points — moments about the footing centroid</div>
+      The superstructure load of each combination (P<sub>top</sub>, and its moments at the underside incl. H·Δh) is shared out to the ${np.length} load points of Tab 02 by their shares: ${np.map((p, j) => `point ${j + 1} at (x, z) = (${fmt(p.x,2)}, ${fmt(p.y,2)}) m, ${fmt(p.c1,2)} × ${fmt(p.c2,2)} m, ${fmt(100 * p.f,1)} %`).join('; ')}. ${hasPed ? `A pedestal under each point (weights ${state.pedPointW.map(w => fmt(w,2)).join(' / ')} kN) acts at its point, less the backfill that is not over it; the` : 'The'} footing ${hasPed ? 'and the rest of the backfill act' : 'weight acts'} uniformly about the footing centre. The self-weight terms take the dead-load factor k<sub>D</sub> of the combination.<br>
+      P<sub>j</sub> = f<sub>j</sub>·P<sub>top</sub>${hasPed ? ' + k<sub>D</sub>·(W<sub>ped,j</sub> − w<sub>s</sub>·A<sub>p,j</sub>)' : ''};&nbsp; ΔM<sub>z,pts</sub> = Σ P<sub>j</sub>·x<sub>j</sub>;&nbsp; ΔM<sub>x,pts</sub> = −Σ P<sub>j</sub>·z<sub>j</sub>
+      <div class="lc-formula-where">Sign: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −z side (same as the load vectors of Section 03). These moments are added to the bottom-of-footing moments of Section 03 (Table 3.3.2) for every check of this chapter.</div>
+    </div>`;
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Moments from the load points per load combination</caption>
+      <tr><th class="lc-no">No.</th><th>Combination</th><th>P<sub>top</sub> (kN)</th><th>k<sub>D</sub></th><th>ΔM<sub>x,pts</sub> (kN·m)</th><th>ΔM<sub>z,pts</sub> (kN·m)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th></tr>
+      ${results.map(r => `<tr><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.Ptop,2)}</td><td class="num">${fmt(r.kD,3)}</td><td class="num">${fmt(r.offMx,3)}</td><td class="num">${fmt(r.offMz,3)}</td><td class="num">${fmt(r.Mx,3)}</td><td class="num">${fmt(r.Mz,3)}</td></tr>`).join('')}
     </table></div>`;
   }
   if (hasOffset) {
