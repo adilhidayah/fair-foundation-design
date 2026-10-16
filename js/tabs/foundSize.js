@@ -1,14 +1,14 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015m';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015m';
-import { fmt } from '../core/format.js?v=20261015m';
-import { lastResults, pileList, state } from '../core/state.js?v=20261015m';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015m';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015m';
-import { recalcAll } from '../workflow/recalc.js?v=20261015m';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015m';
-import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015m';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015n';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015n';
+import { fmt } from '../core/format.js?v=20261015n';
+import { lastResults, pileList, state } from '../core/state.js?v=20261015n';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015n';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015n';
+import { recalcAll } from '../workflow/recalc.js?v=20261015n';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015n';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015n';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -231,7 +231,7 @@ export function calcFoundSize() {
     });
   }
   document.getElementById('calc-foundsize').innerHTML = numberTables(html, '2');
-  document.getElementById('lc-dW').value = totalWeightKN.toFixed(1);
+  document.getElementById('lc-dW').value = totalWeightKN.toFixed(3); // 3 decimals: read back by every check (num('lc-dW')) — 0.1 kN was up to 0.4 % of P on small footings
   document.getElementById('lc-dh').value = deltaH.toFixed(3);
   recalcAll(); // also re-runs calcPile() — pile coordinates stay fixed when Bf/Lf change; 4B re-checks spacing/edge against the new cap size
 }

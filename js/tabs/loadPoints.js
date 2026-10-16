@@ -1,8 +1,8 @@
 // Load points on the pile cap (Tab 02, pile support + "Footing Only"): several equipment / base plates on one cap.
 // The list lives in state.loadPointList; this module renders its table and says whether multi-point mode is active.
 // Mode off (or one point and Single selected) = the single load point of the pedestal model, unchanged.
-import { getRadioVal } from '../core/dom.js?v=20261015m';
-import { loadPointList } from '../core/state.js?v=20261015m';
+import { getRadioVal } from '../core/dom.js?v=20261015n';
+import { loadPointList } from '../core/state.js?v=20261015n';
 
 // Multi-point statics apply to a pile cap: without a pedestal each point is a base plate / skid on the cap; with pedestals (Pile Cap +
 // Pedestal) each point is a pedestal of size c1 × c2 (same height as Tab 02) designed on its own in 5A and 09.
