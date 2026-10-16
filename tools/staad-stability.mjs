@@ -136,14 +136,8 @@ export function evaluateStaadFoundation(f, crit, loads, reac, lcList, deadCase) 
       else qBear = Infinity;
     }
     const ucBearingBiaxial = Number.isFinite(qBear) && qaBear > 0 ? qBear / qaBear : Infinity;
-    let comb = combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial });
-    // minimum contact area (project criterion): share of the base still pressed, rigid footing without tension (4A §4.2)
-    if (crit.minContact > 0 && comb && comb.checks) {
-      const ratio = bp.valid ? bp.contactRatio : 0;
-      const checks = [...comb.checks, { name: `Contact area (min ${n(crit.minContact * 100, 0)} %)`, uc: ratio > 0 ? crit.minContact / ratio : Infinity }];
-      const governingCheck = checks.reduce((a, b) => (b.uc > a.uc ? b : a));
-      comb = { checks, governingCheck, governingUC: governingCheck.uc, overallPass: checks.every(c => c.uc <= 1.0) };
-    }
+    // minimum contact area (project criterion): share of the base still pressed, rigid footing without tension (4A §4.2) — combineFootingChecks (lib)
+    const comb = combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial, minContact: crit.minContact, contactRatio: bp.valid ? bp.contactRatio : 0 });
     // statics of a rigid footing on soil that cannot pull (biaxialSoilPressure): none = full contact (inside the kern),
     // partial = part of the base lifts off (outside the kern), net = P ≤ 0 (whole footing pulled up),
     // separation = P > 0 but the resultant at / outside the base edge (no equilibrium -> overturns)

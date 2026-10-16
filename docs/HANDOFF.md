@@ -3,7 +3,7 @@
 ## Status repo
 - `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
 - Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
-- Cache-buster `?v=` saat ini `20261015l` (harus seragam di semua import `js/` + `index.html`).
+- Cache-buster `?v=` saat ini `20261015m` (harus seragam di semua import `js/` + `index.html`).
 - Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
 
 ## Fitur yang ditambahkan

@@ -1,14 +1,14 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015l';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015l';
-import { fmt } from '../core/format.js?v=20261015l';
-import { lastResults, pileList, state } from '../core/state.js?v=20261015l';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015l';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015l';
-import { recalcAll } from '../workflow/recalc.js?v=20261015l';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015l';
-import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015l';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015m';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015m';
+import { fmt } from '../core/format.js?v=20261015m';
+import { lastResults, pileList, state } from '../core/state.js?v=20261015m';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015m';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015m';
+import { recalcAll } from '../workflow/recalc.js?v=20261015m';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015m';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015m';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {

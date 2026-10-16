@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 1095 checks, 1095 pass, 0 fail** (35 files, run 15 Oct 2026).
+**Total: 1103 checks, 1103 pass, 0 fail** (36 files, run 15 Oct 2026).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -31,6 +31,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part25.mjs | pile group of the Filter Coalescer 101-F-2201 A/B/C foundation (12 piles): reactions with the correct moment lever arms (93.44 kN service / 119.5 kN factored vs 158.10 / 232.0 kN of the swapped pairing in the source document), lateral per pile, Converse–Labarre and manual Eg | 20 |
 | validation_shared_part26.mjs | pile settlement, Vesic (1977) / Das §11.18: S1, S2, S3, group factor, hand-worked values, negative control for the source document's tip-load error, scaling and invalid inputs | 17 |
 | validation_shared_part27.mjs | several load points on one pile cap: equivalent group load, global and section equilibrium on 400 random layouts (couples, cap weight), hand-worked sections of the 12-pile / 3-vessel cap, one point = single-pedestal model | 16 |
+| validation_shared_part36.mjs | minimum contact area (combineFootingChecks minContact): e/B 0.20 → contact 0.90, UC 0.7778; e/B 0.30 → 0.60, UC 1.1667 governs; full contact UC 0.70; biaxial; no contact UC ∞; criterion off = unchanged | 8 |
 | validation_shared_part35.mjs | top reinforcement option (topLayerDesign): bottom only (top for hogging, previous behaviour) / two layers (top mat ≥ ρ_top·b·t, default 0.0009): 1080 mm², D16 @ 425 (7 bars) by hand, hogging design governs when larger, TOP MAT command, CLI tables shallow + pile cap with bottom layers unchanged | 15 |
 | validation_import_part34.mjs | report generator: Markdown → HTML (headings, tables with right-aligned numbers and the governing row, lists, bold / italic / code, subscripts, HTML escaping, images), document header (plain and document-table form), REPORT command, fair-run HTML with every number of the Markdown tables unchanged, PDF via an installed Chrome / Chromium / Edge (skipped when none; `FAIR_REQUIRE_PDF=1` makes a missing PDF a failure) | 22 |
 | validation_shared_part33.mjs | several load points on a pile cap WITH a pedestal under each point: foundationSizing(pedAreas) (ΔW 695.322 kN), splitCombinationLoad(pedFrac) (point loads 297.203 / 576.934 / 297.203 kN, group M_x −93.199 kN·m), equilibrium of 400 random layouts, pedestalBaseActions (hand values), pedestal geometry (outside, overlap) | 20 |
@@ -39,7 +40,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_import_part30.mjs | FAIR command input for a pile cap (SUPPORT PILE) + tools/staad-pile.mjs: parser, 3 × 3 pile group hand calculation (ΔW 251.424 kN, Eg 0.7269, F_max 83.49 / 89.05 kN, lateral 3.514 kN), CLI = tool, NOT SET limits fail | 21 |
 | validation_import_part29.mjs | FAIR command input (.fnd, STAAD style): every command → its config field, line-numbered errors, CLI report identical to the JSON route | 24 |
 | validation_shared_part28.mjs | punching of a pile through the pile cap (ACI 318M-19 §22.6, Table 22.6.5.2): interior / edge / corner sections, λs, φV_c = 797.2 kN for the Filter Coalescer pile (source document 797.22), tension pile, circular pile | 14 |
-| **Total** | | **1095** |
+| **Total** | | **1103** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -238,3 +239,4 @@ node lib/foundation/validation/validation_shared_part16.mjs
 - App report export (15 Oct 2026, headless browser, not part of the CI): Summary tab → "Export report (HTML)" after visiting every tab: one standalone HTML file (315 KB, 12 report blocks, 43 tables, 8 diagrams, no "Show all N rows" buttons, all rows present, title / header / date from the Summary inputs), opened without the app and printed to a 30-page A4 PDF — text, tables and SVG diagrams (styles written inline) as in Report Preview, light palette, page numbers; no console errors. The CLI HTML / PDF (pile cap and shallow footing with drawings) were read page by page as PDF images.
 - Top reinforcement option, UI wiring (16 Oct 2026, headless browser): 5B "Top reinforcement" = Two layers on the default pile cap (2.4 × 2.4 × 0.4 m, no hogging) adds x / z top mats of 0.0009·2400·400 = 864 mm² (the minimum-mat rows say so), bottom layers unchanged; on the shallow default (hogging present) the hogging design (1728 mm²) governs in both modes. The CLI drawing shows the top bars in the section and a separate top-mat plan.
 - Kern with no eccentricity limit, UI (16 Oct 2026, headless browser): 4A "No limit — bearing governs" keeps the kern out of the governing UC (combineFootingChecks, unchanged); the Design Status list now shows it as "Contact area (kern, information) — min 72 % in contact — INFO" instead of "Eccentricity (kern) 1.953 NG"; with 1/6 the row stays a UC (1.953 NG). Auto-Size summaries print the same information text.
+- Minimum contact area, app vs CLI (16 Oct 2026, headless browser): footing 0.60 × 0.60 × 0.30, Df 0.95, pedestal 0.30 (Gp 0.275), STAAD-sign loads, 3 ASD combinations, no e limit, min contact 70 %: app UC per L/C 0.700 / 0.729 / 1.044 = tools/staad-stability.mjs 0.700 / 0.7292 / 1.0433 (app ΔW from the 0.1 kN display value 7.0 vs 7.014 kN); status FAIL governed by "Contact area (min 70 %)" at L/C 103, the same in the Design Status list and the Focus Canvas; without the criterion PASS, UC 0.848 (overturning). Also fixed: with "No limit" the app had still put the biaxial kern into the governing UC (r.allChecks) — now the kern is left out, as in combineFootingChecks().

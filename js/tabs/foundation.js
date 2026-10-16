@@ -1,14 +1,14 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261015l';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015l';
-import { fmt } from '../core/format.js?v=20261015l';
-import { comboState, lastResults, state } from '../core/state.js?v=20261015l';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015l';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261015l';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015l';
-import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015l';
-import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261015l';
+import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261015m';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015m';
+import { fmt } from '../core/format.js?v=20261015m';
+import { comboState, lastResults, state } from '../core/state.js?v=20261015m';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015m';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261015m';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261015m';
+import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261015m';
+import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261015m';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a
@@ -50,6 +50,10 @@ export function calcFoundation() {
   const eccSel = parseFloat(getRadioVal('fd-ecc'));
   const eccLimit = eccSel > 0;
   const eccRatioAllow = eccLimit ? eccSel : 1 / 6;
+  // Minimum contact area (project criterion, % of the base; empty = not checked): UC = min / contact ratio, part of the governing UC
+  // (combineFootingChecks(), lib). Net uplift / resultant outside the base = no contact = UC ∞.
+  const minC = num('fd-mincontact') > 0 ? num('fd-mincontact') / 100 : 0;
+  const contactName = minC > 0 ? `Contact area (min ${fmt(minC * 100, 0)} %)` : null;
   // Bearing pressure beyond the kern (partial uplift): 'rigid' = rigid footing, linear pressure, no tension (biaxialSoilPressure());
   // 'meyerhof' = effective area B′ × L′ with a uniform pressure, q_a recomputed for B′ × L′ (meyerhofEffectiveArea() +
   // allowableBearingAt()). In full contact both use q = (P/BL)(1 ± 6ex/B ± 6ez/L) against q_a.
@@ -125,7 +129,7 @@ export function calcFoundation() {
     return {
       combo, P: Pbot, H: Hbot, M: Mbot, Mx, Mz, temporary, fsSlideMin, fsOTMin, Ptop: v.P, kD, offMx: off.dMx, offMz: off.dMz,
       qmaxBi: bp.qmax, qminBi: bp.qmin, contactRatio: bp.contactRatio, bpNote: bp.note, bpValid: bp.valid, qBear, qaBear, bearNote, meyUsed,
-      ...uni, ...bi, ...combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial })
+      ...uni, ...bi, ...combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial, minContact: minC, contactRatio: bp.valid ? bp.contactRatio : 0 })
     };
   });
   // The status / UC of this chapter covers every check printed in 4.2-4.5: the four uniaxial checks of the lib
@@ -133,7 +137,8 @@ export function calcFoundation() {
   // could not be evaluated keeps governingUC = Infinity.
   results.forEach(r => {
     if (!r.valid) { r.ucAll = r.governingUC; return; }
-    r.allChecks = [...r.checks, { name: 'Eccentricity (biaxial kern)', uc: r.ucKernBiaxial }, { name: 'Overturning (biaxial)', uc: r.ucOTBiaxial }];
+    // the kern only with an eccentricity limit — with "No limit" it is information, never part of the governing UC
+    r.allChecks = [...r.checks, ...(eccLimit ? [{ name: 'Eccentricity (biaxial kern)', uc: r.ucKernBiaxial }] : []), { name: 'Overturning (biaxial)', uc: r.ucOTBiaxial }];
     r.governingAll = r.allChecks.reduce((a, b) => b.uc > a.uc ? b : a);
     r.ucAll = r.governingAll.uc;
   });
@@ -221,20 +226,27 @@ export function calcFoundation() {
   const otGov = validResults.length ? validResults.reduce((a, b) => b.ucOTBiaxial > a.ucOTBiaxial ? b : a) : null;
   // Every check of this chapter with its governing combination (same UC / LC as the 4.2-4.5 tables) — the Design Status
   // panel lists them under the Foundation Stability card (renderLiveBar()). Empty when no combination could be evaluated.
+  // smallest share of the base in contact (rigid footing, no tension) — the governing row of the minimum-contact criterion
+  const lowContact = validResults.length ? validResults.reduce((a, b) => (b.contactRatio < a.contactRatio ? b : a)) : null;
+  const contactUC = (r) => (minC > 0 ? ucOf(r, contactName) : 0);
   lastResults.foundation.checks = validResults.length ? [
     // No eccentricity limit (project criterion): the kern is information only — not a UC, never NG (it is not part of the governing UC).
     eccLimit ? { name: 'Eccentricity (kern)', uc: kernGov.ucKernBiaxial, lc: kernGov.combo.lc || kernGov.combo.name }
-      : { name: 'Contact area (kern, information)', uc: kernGov.ucKernBiaxial, lc: kernGov.combo.lc || kernGov.combo.name, info: true,
-        text: kernGov.ucKernBiaxial <= 1.0 ? 'full contact' : `min ${pct(kernGov)} in contact` },
+      : minC > 0 ? null
+      : { name: 'Contact area (kern, information)', uc: kernGov.ucKernBiaxial, lc: lowContact.combo.lc || lowContact.combo.name, info: true,
+        text: lowContact.contactRatio >= 1 - 1e-9 ? 'full contact' : `min ${pct(lowContact)} in contact` },
+    // minimum contact area (project criterion): a check with its UC
+    minC > 0 ? { name: contactName, uc: contactUC(lowContact), lc: lowContact.combo.lc || lowContact.combo.name } : null,
     { name: 'Bearing pressure', uc: ucOf(bearingGov, 'Bearing pressure'), lc: bearingGov.combo.lc || bearingGov.combo.name },
     { name: 'Sliding', uc: ucOf(slidingGov, 'Sliding'), lc: slidingGov.combo.lc || slidingGov.combo.name },
     { name: 'Overturning', uc: otGov.ucOTBiaxial, lc: otGov.combo.lc || otGov.combo.name }
-  ] : [];
+  ].filter(Boolean) : [];
   const ratioTxt = fmt(1 / eccRatioAllow, 2);
   html += sectionHeader('4.2', eccLimit ? 'Eccentricity (Kern) Check' : 'Eccentricity and Contact Area',
-    eccLimit
+    (minC > 0 ? `Minimum contact area (project criterion): at least ${fmt(minC * 100, 0)} % of the base in contact, UC = ${fmt(minC, 2)} / contact ratio (rigid footing, soil without tension); net uplift or a resultant outside the base = no contact (UC ∞). ` : '') +
+    (eccLimit
       ? `The resultant must stay inside the kern so the whole base remains in contact (q<sub>min</sub> ≥ 0). Both directions are checked together (biaxial): e<sub>x</sub> from the x-direction moments (WX, EQX), e<sub>z</sub> from the z-direction moments (WZ, EQZ).`
-      : `No eccentricity limit applies to this project (Section 04 input): the resultant may leave the kern and part of the base may lift off. The eccentricities are reported for information — the kern ratio 6e<sub>x</sub>/B + 6e<sub>z</sub>/L ≤ 1 tells whether the whole base is in contact. Bearing pressure with the reduced contact area (4.3) and overturning (4.5) govern.`);
+      : `No eccentricity limit applies to this project (Section 04 input): the resultant may leave the kern and part of the base may lift off. The eccentricities are reported for information — the kern ratio 6e<sub>x</sub>/B + 6e<sub>z</sub>/L ≤ 1 tells whether the whole base is in contact. Bearing pressure with the reduced contact area (4.3) and overturning (4.5) govern.`));
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Kern check — formula and criterion</caption>
     <tr><th>Parameter</th><th>Expression</th></tr>
@@ -246,11 +258,11 @@ export function calcFoundation() {
   </table></div>
   <div class="overflow-x"><table class="calc-table">
     <caption>Kern check per load combination</caption>
-    <tr><th class="lc-no">No.</th><th>Combination</th><th>P (kN)</th><th>e<sub>x</sub> (m)</th><th>e<sub>z</sub> (m)</th><th>Contact</th><th>${eccLimit ? 'UC' : 'Kern ratio'}</th><th>Status</th></tr>
+    <tr><th class="lc-no">No.</th><th>Combination</th><th>P (kN)</th><th>e<sub>x</sub> (m)</th><th>e<sub>z</sub> (m)</th><th>Contact</th><th>${eccLimit ? 'UC' : 'Kern ratio'}</th>${minC > 0 ? `<th>UC contact (min ${fmt(minC * 100, 0)} %)</th>` : ''}<th>Status</th></tr>
     ${results.map(r => {
       if (!r.valid) return invalidRow(r, 5);
       const contact = r.ucKernBiaxial <= 1.0 ? 'Full contact' : `Partial uplift (${pct(r)} in contact)`;
-      return `<tr class="${r === kernGov ? 'governing' : ''}"><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.P,1)}</td><td class="num">${fmt(r.ex,3)}</td><td class="num">${fmt(r.ez,3)}</td><td>${contact}</td><td class="num">${fmt(r.ucKernBiaxial,3)}</td><td>${eccLimit ? okNg(r.ucKernBiaxial) : 'Info'}</td></tr>`;
+      return `<tr class="${r === (minC > 0 && !eccLimit ? lowContact : kernGov) ? 'governing' : ''}"><td class="lc-no">${escapeHtml(r.combo.lc || '')}</td><td>${escapeHtml(r.combo.name)}</td><td class="num">${fmt(r.P,1)}</td><td class="num">${fmt(r.ex,3)}</td><td class="num">${fmt(r.ez,3)}</td><td>${contact}</td><td class="num">${fmt(r.ucKernBiaxial,3)}</td>${minC > 0 ? `<td class="num">${fmt(contactUC(r),3)}</td>` : ''}<td>${eccLimit ? (minC > 0 ? okNg(Math.max(r.ucKernBiaxial, contactUC(r))) : okNg(r.ucKernBiaxial)) : (minC > 0 ? okNg(contactUC(r)) : 'Info')}</td></tr>`;
     }).join('')}
   </table></div>`;
   html += sectionHeader('4.3', 'Bearing Pressure Check',
@@ -306,7 +318,10 @@ export function calcFoundation() {
       eccLimit
         ? { name: 'Eccentricity (kern)', uc: kernF ? kernUC(kernF) : null, lc: lcOf(kernF),
             sub: kernF ? `<span class="fz-nb">e<sub>x</sub> = ${fmt(kernF.ex, 3)} m</span> · <span class="fz-nb">e<sub>z</sub> = ${fmt(kernF.ez, 3)} m</span>` : '' }
-        : { name: 'Contact area (no e limit)', uc: minContact ? pct(minContact) : null, lc: lcOf(minContact),
+        : minC > 0
+          ? { name: contactName, uc: minContact ? contactUC(minContact) : null, lc: lcOf(minContact),
+              sub: minContact ? `<span class="fz-nb">min ${pct(minContact)} in contact</span> vs <span class="fz-nb">${fmt(minC * 100, 0)} %</span>` : '' }
+          : { name: 'Contact area (no e limit)', uc: minContact ? pct(minContact) : null, lc: lcOf(minContact),
             sub: minContact ? `<span class="fz-nb">e<sub>x</sub> = ${fmt(minContact.ex, 3)} m</span> · <span class="fz-nb">e<sub>z</sub> = ${fmt(minContact.ez, 3)} m</span>` : '' },
       { name: 'Bearing pressure', uc: bearingGov ? bearUC(bearingGov) : null, lc: lcOf(bearingGov),
         sub: bearingGov ? `<span class="fz-nb">q = ${fmt(bearingGov.qBear, 1)}</span> / <span class="fz-nb">q<sub>a</sub> = ${fmt(bearingGov.qaBear, 1)} kPa</span>${bearingGov.meyUsed ? ' <span class="fz-nb">(Meyerhof B′L′)</span>' : ''}` : '' },
@@ -316,7 +331,7 @@ export function calcFoundation() {
         sub: otF ? `<span class="fz-nb">SF = ${sfTxt(otF.fsOTMin / otUC(otF))}</span> vs <span class="fz-nb">min ${fmt(otF.fsOTMin, 2)}</span>` : '' }
     ],
     rows: results.map((r) => (r.valid
-      ? { lc: lcOf(r), name: r.combo.name, temporary: r.temporary, kern: eccLimit ? kernUC(r) : pct(r), bearing: bearUC(r), sliding: ucOf(r, 'Sliding'),
+      ? { lc: lcOf(r), name: r.combo.name, temporary: r.temporary, kern: eccLimit ? kernUC(r) : (minC > 0 ? contactUC(r) : pct(r)), bearing: bearUC(r), sliding: ucOf(r, 'Sliding'),
           ot: otUC(r), govKern: eccLimit ? r === kernF : r === minContact, govBearing: r === bearingGov, govSliding: r === slidingGov, govOt: r === otF }
       : { lc: lcOf(r), name: r.combo.name, invalid: r.note || 'Not evaluated.' })),
     // Own marker ids: the report copy of this diagram is hidden in this mode (a marker in a hidden SVG does not render elsewhere).
