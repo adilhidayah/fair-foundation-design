@@ -143,7 +143,7 @@ MASTER CALCULATOR/
 | [skidMounted/](../lib/foundation/skidMounted/) | 3 KB | Skid: reaksi bolt, footprint |
 | [import/textParsers.js](../lib/foundation/import/textParsers.js) | 6 KB | Parser teks OCR/paste (tanpa konversi satuan) |
 | [import/staadOutput.js](../lib/foundation/import/staadOutput.js) | 6 KB | Parser STAAD: load case / REPEAT LOAD (.std), SUPPORT REACTIONS (.ANL), reaksi → konvensi tanda FAIR |
-| [validation/](../lib/foundation/validation/) | — | 7 file test + [VALIDATION_REPORT.md](../lib/foundation/validation/VALIDATION_REPORT.md) |
+| [validation/](../lib/foundation/validation/) | — | 39 file test + [VALIDATION_REPORT.md](../lib/foundation/validation/VALIDATION_REPORT.md) |
 
 ### Lain-lain
 | File | Isi |
@@ -151,6 +151,7 @@ MASTER CALCULATOR/
 | [AGENTS.md](../AGENTS.md) | Aturan untuk AI assistant |
 | [PROJECT_INSTRUCTIONS.md](PROJECT_INSTRUCTIONS.md) | Instruksi proyek |
 | [AI_ASSISTANT_PLAN.md](AI_ASSISTANT_PLAN.md) | Rencana fitur AI assistant |
+| [HANDOFF.md](HANDOFF.md) | Status repo, keterbatasan, gotcha teknis |
 | [patch.js](../patch.js) | Fixer marker panah SVG — jalankan `node patch.js` |
 
 ## Alur saat halaman dibuka

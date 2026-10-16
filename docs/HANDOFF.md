@@ -1,10 +1,11 @@
-# HANDOFF — FAIR Foundation Design (per 15 Okt 2026)
+# HANDOFF — FAIR Foundation Design (per 16 Okt 2026)
 
 ## Status repo
-- `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
-- Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
+- `main` = `b9bdd4f` (merge PR #15, hairpin + Tab 09 ACI 17 group). Semua PR sebelumnya (#4 Focus Canvas, #5 font + lag, #6 pile settlement / load points / pile punching, … #14, #15) sudah merged.
+- Validasi: 39 file, 1175 checks, 1175 pass (`lib/foundation/validation/VALIDATION_REPORT.md`); CI `.github/workflows/validation.yml` menjalankan semuanya.
 - Cache-buster `?v=` saat ini `20261015q` (harus seragam di semua import `js/` + `index.html`).
-- Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
+- Untuk kerja baru: mulai dari `origin/main`, jangan memakai ulang branch yang sudah merged.
+- Bagian "Fitur yang ditambahkan" di bawah adalah catatan sesi 15 Okt (PR #4–#6); fitur sesudahnya (PT-TIP, `.fnd`, report generator, tulangan atas, hairpin) ada di bagian masing-masing.
 
 ## Fitur yang ditambahkan
 1. **Pile settlement Vesic / Das §11.18** — `lib/foundation/shared/pileSettlement.js` (`pileSettlementVesic`: S1+S2+S3, Fg=√(Bg/D)). UI: Tab 08B mode Pile (`js/tabs/settlement.js`, beban kerja otomatis dari kombinasi servis gravitasi). Asumsi Es, shaft share, ξ, Iwp wajib dari laporan geotek.
