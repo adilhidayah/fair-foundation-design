@@ -3,11 +3,12 @@
 // all PASS (and the footing flexure is not "section too small"). With "Keep B × L × H" ticked the footing size is the user's (site limit) and only the depth D_f is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
 // size into Tab 02, runs calcFoundSize() (-> recalcAll(), the very checks the user sees) and reads the statuses back.
 // Shallow foundations only. Pedestal, D_f, grout and the load data are never changed; nothing is changed when no size passes.
-import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261015q';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015q';
-import { fmt } from '../core/format.js?v=20261015q';
-import { lastResults } from '../core/state.js?v=20261015q';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261015q';
+import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261016a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016a';
+import { fmt } from '../core/format.js?v=20261016a';
+import { lastResults } from '../core/state.js?v=20261016a';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261016a';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261016a';
 
 const STEP = 0.05;          // m — grid of the result (B, L, H)
 const H_MIN = 0.3;          // m — thinnest footing the search starts from
@@ -32,7 +33,10 @@ export async function autoSizeFoundation() {
   const Df = num('fs-Df');
   const orig = { Bf: document.getElementById('fs-Bf').value, Lf: document.getElementById('fs-Lf').value, Hf: document.getElementById('fs-Hf').value, Df: document.getElementById('fs-Df').value };
   // Smallest plan that still holds the pedestal (with its offset) — foundationGeometryCheck() would reject anything smaller.
-  const Bmin = hasPed ? Math.max(num('fs-Bp') + 2 * Math.abs(num('fs-OffX')), num('fs-Lp') + 2 * Math.abs(num('fs-OffZ')), 0.5) : 0.5;
+  // Several load points (Tab 02): every point footprint must fit (foundationGeometryCheck pedList / pointList).
+  const pts = activeLoadPoints();
+  const Bmin = pts ? Math.max(0.5, ...pts.map(p => Math.max(2 * Math.abs(p.x) + p.c1, 2 * Math.abs(p.y) + p.c2)))
+    : hasPed ? Math.max(num('fs-Bp') + 2 * Math.abs(num('fs-OffX')), num('fs-Lp') + 2 * Math.abs(num('fs-OffZ')), 0.5) : 0.5;
   const Hmax = hasPed ? Df : H_MAX_BLOCK; // with a pedestal the footing must fit within the embedment depth (Df >= Hf)
   const btns = document.querySelectorAll('[data-autosize]');
   running = true;
@@ -57,7 +61,7 @@ export async function autoSizeFoundation() {
       stabilityPass: !!lastResults.foundation && lastResults.foundation.status === 'PASS' && !(lastResults.pileCapRebar && lastResults.pileCapRebar.invalidCombos > 0),
       // thickness checks: one-way + punching shear and the footing flexure ("section too small" is cured by a thicker footing; a combination
       // that loses contact is not — it is part of stabilityPass above, so it must not push H up)
-      shearPass: !!ow && !!tw && ow.status === 'PASS' && tw.status === 'PASS' && !!lastResults.pileCapRebar && (lastResults.pileCapRebar.status === 'PASS' || lastResults.pileCapRebar.invalidCombos > 0),
+      shearPass: !!ow && !!tw && ow.status === 'PASS' && (tw.status === 'PASS' || tw.status === 'NA') && /* NA: several load points, no two-way case */ !!lastResults.pileCapRebar && (lastResults.pileCapRebar.status === 'PASS' || lastResults.pileCapRebar.invalidCombos > 0),
       info: { stability: lastResults.foundation, oneway: ow, twoway: tw }
     };
   };

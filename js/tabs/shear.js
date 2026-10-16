@@ -1,14 +1,14 @@
 // Pile cap / shallow footing one-way and punching shear (tab 5B, report chapter 06, sections 6.1 and 6.2).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingPunchingCapacity, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck, pilePunchingCheck } from '../../lib/foundation/index.js?v=20261015q';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015q';
-import { fmt } from '../core/format.js?v=20261015q';
-import { lastResults, pileList } from '../core/state.js?v=20261015q';
-import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015q';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015q';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015q';
-import { renderShearFocus } from '../tabs/shearFocus.js?v=20261015q';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015q';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingOneWayShearPoints, footingPunchingCapacity, footingPunchingPoint, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck, pilePunchingCheck } from '../../lib/foundation/index.js?v=20261016a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016a';
+import { fmt } from '../core/format.js?v=20261016a';
+import { lastResults, pileList } from '../core/state.js?v=20261016a';
+import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261016a';
+import { pileComboLoads } from '../tabs/pile.js?v=20261016a';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261016a';
+import { renderShearFocus } from '../tabs/shearFocus.js?v=20261016a';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261016a';
 
 // Geometry shared by the 5B Focus Canvas pictures (js/tabs/shearFocus.js): footing (m), pedestal centre / size (m), section depth.
 // Values only — read from the same fields the checks use; nothing here feeds a calculation.
@@ -33,6 +33,15 @@ function oneWayVuFromSoil({ axis, h, cc, Dbar }) {
   const d = (h - cc - Dbar) / 1000;
   if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
   const ax = axis === 'x' ? 'x' : 'z';
+  if (fa.points) { // several load points: sections at d from the faces of every point, the other points netted; the largest V_u governs
+    const perP = fa.items.map(it => ({ combo: it.combo, it, invalid: it.invalid,
+      res: it.invalid ? null : footingOneWayShearPoints({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, axis: ax, pointLoads: it.pointLoads, d }) }));
+    const govP = governingOf(perP);
+    if (!govP) return { valid: false, note: 'No soil pressure for any combination (net uplift or resultant outside the footing).' };
+    const pt = fa.points[govP.res.point - 1];
+    return { valid: true, soil: true, kind: 'one-way', axis, d, half: (ax === 'x' ? pt.c1 : pt.c2) / 2, center: ax === 'x' ? pt.x : pt.y, per: perP, gov: govP,
+      Vu: govP.res.Vu, invalid: perP.filter(p => p.invalid), fa, point: { ...pt, index: govP.res.point }, nPoints: fa.points.length };
+  }
   const half = (ax === 'x' ? fa.ped.c1 : fa.ped.c2) / 2, center = ax === 'x' ? fa.ped.x : fa.ped.z;
   const per = fa.items.map(it => ({ combo: it.combo, it, invalid: it.invalid,
     res: it.invalid ? null : footingOneWayShear({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, axis: ax, ref: center, half, d }) }));
@@ -48,6 +57,31 @@ function punchingVuFromSoil({ c1, c2, h, cc, Dbar, loc }) {
   const d = (h - cc - Dbar) / 1000;
   if (!(d > 0)) return { valid: false, note: 'Effective depth d must be greater than zero.' };
   const pedBase = buildPedestalComboBase();
+  if (fa.points) { // several load points: punching at every point (the loads inside its section, the net pressure inside it), worst governs
+    let best = null, spanning = 0;
+    fa.points.forEach((pt, j) => {
+      const perJ = fa.items.map(it => {
+        const res = it.invalid ? null : footingPunchingPoint({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, pointLoads: it.pointLoads, j, d });
+        const v = stdComboVector(it.combo.f, pedBase);
+        const Mx = pt.f * (v.Mx + v.dMx), Mz = pt.f * (v.Mz + v.dMz); // this point's share of the moments at the base of the pedestal
+        const ecc = res && res.valid ? footingPunchingStress({ sec: res.sec, Vu: res.Vu, Mx, Mz }) : null;
+        return { combo: it.combo, it, invalid: it.invalid || (res && !res.valid ? res.note : null), res, Mx, Mz, ecc };
+      });
+      const ok = perJ.filter(p => p.res && p.res.valid);
+      if (!ok.length) { if (perJ.some(p => p.res && p.res.sec && p.res.sec.free)) spanning++; return; }
+      const key = (p) => (p.ecc && p.ecc.valid ? p.ecc.vu : p.res.Vu);
+      const gov = ok.reduce((a, b) => (key(b) > key(a) ? b : a));
+      if (!best || key(gov) > best.key) best = { key: key(gov), per: perJ, gov, pt: { ...pt, index: j + 1 } };
+    });
+    if (!best) {
+      return spanning === fa.points.length
+        ? { valid: false, spanning: true, note: 'At every load point the critical section at d/2 spans the footing between two opposite edges (e.g. a skid runner along the footing) — two-way action does not develop; one-way shear (6.1) governs.' }
+        : { valid: false, note: 'No soil pressure for any combination (net uplift or resultant outside the footing).' };
+    }
+    const { per: perB, gov: govB, pt } = best;
+    return { valid: true, soil: true, kind: 'punching', d, c1: pt.c1, c2: pt.c2, center: { x: pt.x, y: pt.y }, per: perB, gov: govB, Vu: govB.res.Vu,
+      Mx: govB.Mx, Mz: govB.Mz, invalid: perB.filter(p => p.invalid), fa, point: pt, nPoints: fa.points.length, skipped: spanning };
+  }
   const per = fa.items.map(it => {
     const res = it.invalid ? null : footingPunchingShear({ pl: it.pl, w: it.w, B: fa.B, L: fa.L, cx: fa.ped.x, cz: fa.ped.z, c1: c1 / 1000, c2: c2 / 1000, d });
     const v = stdComboVector(it.combo.f, pedBase);
@@ -67,8 +101,11 @@ function punchingVuFromSoil({ c1, c2, h, cc, Dbar, loc }) {
 // combination's V_u (report pattern: formulas in the sentence above the table, short caption).
 function soilShearHtml(pv) {
   const one = pv.kind === 'one-way', g = pv.gov, cn = one ? (pv.axis === 'x' ? 'x' : 'z') : '';
-  const lead = one
-    ? `Critical sections at d from the pedestal faces: ${cn}<sub>±</sub> = ${cn}<sub>p</sub> ± (${pv.axis === 'x' ? 'B' : 'L'}<sub>p</sub>/2 + d) = ${fmt(pv.center, 3)} ± (${fmt(pv.half, 3)} + ${fmt(pv.d, 3)}) = ${fmt(g.res.pos.plus, 3)} / ${fmt(g.res.pos.minus, 3)} m. V = ∫(q − w) dA over the part of the footing beyond the section (full width); V<sub>u</sub> = the larger |V| of the two sides. Governing: ${escapeHtml(comboLabel(g.combo))}, V<sub>u</sub> = ${fmt(pv.Vu, 1)} kN (${g.res.side} side).`
+  const ptTxt = pv.point ? ` ${pv.nPoints} load points (Tab 02) — governing: point ${pv.point.index} at (${fmt(pv.point.x, 2)}, ${fmt(pv.point.y, 2)}) m, ${fmt(pv.point.c1, 2)} × ${fmt(pv.point.c2, 2)} m; the loads of the other points beyond a section are netted against the soil pressure.` : '';
+  const lead = pv.point && !one
+    ? `V<sub>u</sub> = the loads inside the critical section − the net soil pressure inside it = ${fmt(g.res.Pin, 1)} − (${fmt(g.res.Finside, 1)} − w·${fmt(g.res.Ain, 3)} m²) for the governing combination ${escapeHtml(comboLabel(g.combo))}: V<sub>u</sub> = ${fmt(pv.Vu, 1)} kN${g.res.others ? ` (incl. the part of ${g.res.others} other point(s) inside the section)` : ''}; by equilibrium the same as the net pressure outside for a single point. The moments are this point's share of those at the base of the pedestal (Table 3.3.4); the governing combination is the one with the largest combined stress v<sub>u</sub>.${ptTxt}${pv.skipped ? ` ${pv.skipped} point(s) not checked: their section spans the footing between two opposite edges (one-way shear governs).` : ''}`
+    : one
+    ? `Critical sections at d from the ${pv.point ? 'faces of the governing load point' : 'pedestal faces'}: ${cn}<sub>±</sub> = ${cn}<sub>p</sub> ± (${pv.axis === 'x' ? 'B' : 'L'}<sub>p</sub>/2 + d) = ${fmt(pv.center, 3)} ± (${fmt(pv.half, 3)} + ${fmt(pv.d, 3)}) = ${fmt(g.res.pos.plus, 3)} / ${fmt(g.res.pos.minus, 3)} m. V = ∫(q − w) dA over the part of the footing beyond the section (full width); V<sub>u</sub> = the larger |V| of the two sides. Governing: ${escapeHtml(comboLabel(g.combo))}, V<sub>u</sub> = ${fmt(pv.Vu, 1)} kN (${g.res.side} side).${ptTxt}`
     : `V<sub>u</sub> = ∫(q − w) dA outside the critical section = (${fmt(g.res.Fall, 1)} − ${fmt(g.res.Finside, 1)}) − w·${fmt(g.res.Aout, 3)} m² for the governing combination ${escapeHtml(comboLabel(g.combo))}: V<sub>u</sub> = ${fmt(pv.Vu, 1)} kN. The governing combination is the one with the largest combined stress v<sub>u</sub>; the moments are those at the base of the pedestal (Table 3.3.4).`;
   const byIt = new Map(pv.per.map(p => [p.it, p]));
   const extra = one
@@ -367,6 +404,13 @@ function calcTwoWayCore() {
     lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'ERROR', metric: '—', detail: 'Invalid geometry (d ≤ 0).' };
     return;
   }
+  if (pv && !pv.valid && pv.spanning) { // several load points, none a two-way case (e.g. skid runners along the footing): not applicable
+    document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="note"><strong>Not applicable:</strong> ${escapeHtml(pv.note)}</div>`;
+    document.getElementById('opt-twoway').innerHTML = '';
+    lastResults.twoway = { label: 'Two-Way (Punching) Shear', status: 'NA', metric: 'N/A (one-way governs)', detail: pv.note, limit: 'Several load points whose critical sections all span the footing — one-way shear (6.1) governs.' };
+    renderCh6Limits();
+    return;
+  }
   if (pv && !pv.valid) {
     document.getElementById('calc-twoway').innerHTML = TW_HEAD() + `<div class="warn-box"><strong>⚠  V<sub>u</sub> from ${srcName} not available:</strong> ${escapeHtml(pv.note)} Switch V<sub>u</sub> to "Manual" or fix the cause.</div>`;
     document.getElementById('opt-twoway').innerHTML = '';
@@ -524,11 +568,11 @@ function renderTwoWaySoil(pv, { fc, lambda }) {
     <tr class="governing"><td>UC</td><td class="clause">v<sub>u</sub> / (φ·v<sub>c</sub>)</td><td class="num">${fmt(uc,3)}</td></tr>
   </table></div>`;
   html += soilShearHtml(pv);
-  lastResults.twoway.viz = { ...vizBase({ h: num('tw-h'), cc: num('tw-cc'), Dbar: num('tw-D'), d: dmm }), kind: 'twoway', src: 'soil',
+  lastResults.twoway.viz = { ...vizBase({ h: num('tw-h'), cc: num('tw-cc'), Dbar: num('tw-D'), d: dmm }, pv.point), kind: 'twoway', src: 'soil',
     loc: sec.loc, alphaS: sec.alphaS, bo: sec.bo, boFormula: null, rect: sec.rect, free: sec.free,
     Vu: g.res.Vu, phiVc: cap.phiVc, vu: ecc.vu, phiVcStress: cap.phiVc_stress, uc, pass, combo: comboLabel(g.combo),
     plane: vizPlane(g.it), w: g.it.w, piles: null, dp: 0 };
-  lastResults.twoway.limit = 'Critical section at d/2 from the pedestal faces; a side closer than d/2 to the footing edge is dropped (edge = 3 sides, corner = 2 sides, α<sub>s</sub> 30 / 20). The unbalanced moments are moved to the centroid of the critical section and the stress is checked at the ends of every side; γ<sub>f</sub> is not increased per §8.4.2.2.4. V<sub>u</sub> = net soil pressure outside the section. A section spanning two opposite edges is not a two-way case — one-way shear governs.';
+  lastResults.twoway.limit = 'Critical section at d/2 from the pedestal faces; a side closer than d/2 to the footing edge is dropped (edge = 3 sides, corner = 2 sides, α<sub>s</sub> 30 / 20). The unbalanced moments are moved to the centroid of the critical section and the stress is checked at the ends of every side; γ<sub>f</sub> is not increased per §8.4.2.2.4. V<sub>u</sub> = net soil pressure outside the section. A section spanning two opposite edges is not a two-way case — one-way shear governs.' + (pv.point ? ' Several load points: each point load is spread uniformly over its footprint; V<sub>u</sub> = the loads inside the section − the net pressure inside it, the moments shared out by the point shares.' : '');
   const effHtml = efficiencyBadge(uc, pass);
   document.getElementById('opt-twoway').innerHTML = effHtml ? `<div class="section-label">Optimization Notes</div>${effHtml}` : '';
   document.getElementById('calc-twoway').innerHTML = numberTables(html, '6');

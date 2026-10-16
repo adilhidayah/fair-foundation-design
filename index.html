@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261015q">
+<link rel="stylesheet" href="css/app.css?v=20261016a">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1599,7 +1599,7 @@
         </div>
         </details>
         <details class="gt-group" id="fs-lp-fields" style="display:none;" open>
-        <summary>Load Points (several equipment on the cap)</summary>
+        <summary id="fs-lp-summary">Load Points (several equipment on the cap)</summary>
         <div class="gt-body">
           <div class="field">
             <span id="fs-lp-mode-label" class="sr-only">Load points</span>
@@ -1612,7 +1612,7 @@
             <div id="lp-list"></div>
             <button type="button" id="lp-add" class="combo-add-btn">+ Add load point</button>
             <div class="note" id="lp-share-note"></div>
-            <div class="note">Each point is a base plate / skid on the cap (x, z = centre from the cap centre, m; c<sub>1</sub> × c<sub>2</sub> = size along x × along z, m). The superstructure loads of Section 03 are shared out by "Share"; the cap weight acts at the cap centre. 4B uses the statically equivalent group load; 5B checks flexure, one-way and punching shear at every point and governs on the worst (the other points' loads beyond a section are netted against the pile reactions).</div>
+            <div class="note" id="fs-lp-note">Each point is a base plate / skid on the cap (x, z = centre from the cap centre, m; c<sub>1</sub> × c<sub>2</sub> = size along x × along z, m). The superstructure loads of Section 03 are shared out by "Share"; the cap weight acts at the cap centre. 4B uses the statically equivalent group load; 5B checks flexure, one-way and punching shear at every point and governs on the worst (the other points' loads beyond a section are netted against the pile reactions).</div>
           </div>
         </div>
         </details>
@@ -1958,6 +1958,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261015q"></script>
+<script type="module" src="js/app.js?v=20261016a"></script>
 </body>
 </html>

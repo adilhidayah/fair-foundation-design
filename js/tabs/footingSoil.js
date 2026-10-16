@@ -1,11 +1,12 @@
 // 5B shallow footing — factored (LRFD) soil pressure per combination, shared by the one-way shear, punching and flexure panels.
 // Function/const declarations only; event wiring stays in app.js.
-import { pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261015q';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015q';
-import { fmt } from '../core/format.js?v=20261015q';
-import { comboState, lastResults, state } from '../core/state.js?v=20261015q';
-import { comboLabel, introPara } from '../core/worksheet.js?v=20261015q';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261015q';
+import { footingPointLoads, normalisePoints, pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261016a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016a';
+import { fmt } from '../core/format.js?v=20261016a';
+import { comboState, lastResults, state } from '../core/state.js?v=20261016a';
+import { comboLabel, introPara } from '../core/worksheet.js?v=20261016a';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261016a';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261016a';
 
 export const isShallow = () => getRadioVal('fs-support') !== 'pile';
 
@@ -21,6 +22,8 @@ export function footingLrfdActions() {
   const items0 = comboState.lrfd;
   if (items0.length === 0) return { valid: false, note: 'No factored (LRFD) combinations — load them with "Edit LRFD Combinations".' };
   const hasPed = getRadioVal('fs-type') === 'pedestal';
+  const pts = activeLoadPoints();
+  if (pts) return footingLrfdActionsPoints({ B, L, items0, hasPed, pts });
   const c1 = num('rb-Bp') / 1000, c2 = num('rb-Lp') / 1000;
   if (!(c1 > 0 && c2 > 0)) return { valid: false, note: 'Pedestal / column size B_p × L_p must be greater than zero.' };
   const ped = { x: hasPed ? num('fs-OffX') : 0, z: hasPed ? num('fs-OffZ') : 0, c1, c2 };
@@ -44,6 +47,30 @@ export function footingLrfdActions() {
   });
   return { valid: true, B, L, ped, hasPed, wUnit, items };
 }
+// Several load points on the footing (Tab 02 "Load points", activeLoadPoints()): the superstructure load of every combination is shared
+// out to the points (footingPointLoads(), lib) — each point carries its share P_j (+ its pedestal weight with "Footing + Pedestal", less
+// the backfill that is not over it), the rest of the self-weight is the uniform w — and the pressure plane is built on the group
+// resultant. Every item carries its pointLoads for the section checks (flexure / one-way / punching at every point, the other points
+// netted). fa.ped is the footing centre (no single pedestal); fa.points = the normalised points.
+function footingLrfdActionsPoints({ B, L, items0, hasPed, pts }) {
+  const Af = B * L, dW = num('lc-dW');
+  const pedW = hasPed && state.pedPointW.length === pts.length ? state.pedPointW : null;
+  const pedAreas = hasPed ? pts.map(p => p.c1 * p.c2) : null;
+  const base = buildStdComboBase();
+  let wUnit = 0;
+  const items = items0.map(combo => {
+    const v = stdComboVector(combo.f, base);
+    const kD = dW > 0 ? v.dP / dW : 0;
+    const fp = footingPointLoads(pts, { P: v.P, Mx: v.Mx + v.dMx, Mz: v.Mz + v.dMz, kD, dW, Wped: pedW, pedAreas, Wsoil: hasPed ? state.footSoilW : 0, Af });
+    wUnit = fp.wUnit;
+    const Pu = fp.group.P, Mx = fp.group.Mx, Mz = fp.group.Mz, w = fp.w;
+    if (!(Pu > 0)) return { combo, Pu, Mx, Mz, kD, w, pointLoads: fp.pointLoads, invalid: 'Net uplift (P_u ≤ 0) — no soil pressure.' };
+    const pl = signedSoilPressure(B, L, Pu, Mz / Pu, -Mx / Pu);
+    if (!pl.valid) return { combo, Pu, Mx, Mz, kD, w, pointLoads: fp.pointLoads, invalid: pl.note || 'Resultant outside the footing.' };
+    return { combo, Pu, Mx, Mz, kD, w, pl, pointLoads: fp.pointLoads, invalid: null };
+  });
+  return { valid: true, B, L, ped: { x: 0, z: 0, c1: 0, c2: 0 }, hasPed, wUnit, items, points: normalisePoints(pts) };
+}
 
 // Sentence + per-combination table of the design pressure, used by the chapter 06 sections in shallow mode (report pattern:
 // the model and formulas in the sentence above the table, a short caption).
@@ -52,7 +79,11 @@ export function soilPressureHtml(fa, extraCols = null, caption = 'Design soil pr
     ? `<tr><td>${escapeHtml(comboLabel(it.combo))}</td><td class="num">${fmt(it.Pu, 1)}</td><td class="num">${fmt(it.Mx, 1)}</td><td class="num">${fmt(it.Mz, 1)}</td><td colspan="${4 + (extraCols ? extraCols.head.length : 0)}">${escapeHtml(it.invalid)}</td></tr>`
     : `<tr class="${extraCols && extraCols.gov === it ? 'governing' : ''}"><td>${escapeHtml(comboLabel(it.combo))}</td><td class="num">${fmt(it.Pu, 1)}</td><td class="num">${fmt(it.Mx, 1)}</td><td class="num">${fmt(it.Mz, 1)}</td><td class="num">${fmt(it.pl.qmax, 1)}</td><td class="num">${fmt(it.pl.qmin, 1)}</td><td class="num">${fmt(100 * it.pl.contactRatio, 0)}%</td><td class="num">${fmt(it.w, 2)}</td>${extraCols ? extraCols.cells(it) : ''}</tr>`).join('');
   const offset = fa.hasPed && (Math.abs(fa.ped.x) > 1e-9 || Math.abs(fa.ped.z) > 1e-9);
-  return introPara(`Soil pressure under the factored LRFD combinations at the underside of the footing — rigid footing, linear pressure, no tension (same model as the 4A bearing check): q(x, z) = max(0, a + b·x + c·z) with the resultant at x<sub>R</sub> = M<sub>z</sub>/P<sub>u</sub>, z<sub>R</sub> = −M<sub>x</sub>/P<sub>u</sub>; in full contact q = (P<sub>u</sub>/BL)(1 ± 6e<sub>x</sub>/B ± 6e<sub>z</sub>/L). P<sub>u</sub>, M<sub>x</sub>, M<sub>z</sub> include the footing, pedestal and backfill weights × k<sub>D</sub>${offset ? ' and the moments of the pedestal offset' : ''}. Net design pressure q − w, with w = k<sub>D</sub>·(W<sub>f</sub>/A<sub>f</sub> + W<sub>s</sub>/(A<sub>f</sub> − A<sub>p</sub>)) = k<sub>D</sub> × ${fmt(fa.wUnit, 2)} kPa (k<sub>D</sub> = dead-load factor of the combination).`)
+  const n = fa.points ? fa.points.length : 0;
+  const lead = fa.points
+    ? `Soil pressure under the factored LRFD combinations at the underside of the footing — rigid footing, linear pressure, no tension (same model as the 4A bearing check): q(x, z) = max(0, a + b·x + c·z) with the resultant at x<sub>R</sub> = M<sub>z</sub>/P<sub>u</sub>, z<sub>R</sub> = −M<sub>x</sub>/P<sub>u</sub>. The superstructure load is shared out to the ${n} load points of Tab 02 by their shares (${fa.points.map((p, j) => `${j + 1}: ${fmt(100 * p.f, 1)} %`).join(', ')}); P<sub>u</sub>, M<sub>x</sub>, M<sub>z</sub> are the group resultant about the footing centre, M<sub>z</sub> = Σ(M<sub>z,j</sub> + P<sub>j</sub>·x<sub>j</sub>), M<sub>x</sub> = Σ(M<sub>x,j</sub> − P<sub>j</sub>·z<sub>j</sub>)${fa.hasPed ? ', with the weight of the pedestal under each point (less the backfill not over it) in P<sub>j</sub>' : ''}. Net design pressure q − w, with w = k<sub>D</sub> × ${fmt(fa.wUnit, 2)} kPa the uniform self-weight of the footing${fa.hasPed ? ' and backfill' : ''} (k<sub>D</sub> = dead-load factor of the combination).`
+    : `Soil pressure under the factored LRFD combinations at the underside of the footing — rigid footing, linear pressure, no tension (same model as the 4A bearing check): q(x, z) = max(0, a + b·x + c·z) with the resultant at x<sub>R</sub> = M<sub>z</sub>/P<sub>u</sub>, z<sub>R</sub> = −M<sub>x</sub>/P<sub>u</sub>; in full contact q = (P<sub>u</sub>/BL)(1 ± 6e<sub>x</sub>/B ± 6e<sub>z</sub>/L). P<sub>u</sub>, M<sub>x</sub>, M<sub>z</sub> include the footing, pedestal and backfill weights × k<sub>D</sub>${offset ? ' and the moments of the pedestal offset' : ''}. Net design pressure q − w, with w = k<sub>D</sub>·(W<sub>f</sub>/A<sub>f</sub> + W<sub>s</sub>/(A<sub>f</sub> − A<sub>p</sub>)) = k<sub>D</sub> × ${fmt(fa.wUnit, 2)} kPa (k<sub>D</sub> = dead-load factor of the combination).`;
+  return introPara(lead)
     + `<div class="overflow-x"><table class="calc-table">
     <caption>${caption}</caption>
     <tr><th>Combination</th><th>P<sub>u</sub> (kN)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th><th>q<sub>max</sub> (kPa)</th><th>q<sub>min</sub> (kPa)</th><th>Contact</th><th>w (kPa)</th>${extraCols ? extraCols.head.map(h => `<th>${h}</th>`).join('') : ''}</tr>

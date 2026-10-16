@@ -1,14 +1,14 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015q';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015q';
-import { fmt } from '../core/format.js?v=20261015q';
-import { lastResults, pileList, state } from '../core/state.js?v=20261015q';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015q';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015q';
-import { recalcAll } from '../workflow/recalc.js?v=20261015q';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015q';
-import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015q';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261016a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016a';
+import { fmt } from '../core/format.js?v=20261016a';
+import { lastResults, pileList, state } from '../core/state.js?v=20261016a';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261016a';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261016a';
+import { recalcAll } from '../workflow/recalc.js?v=20261016a';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261016a';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261016a';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -118,7 +118,7 @@ export function calcFoundSize() {
   let html = '';
   html += chapterHeader('02. Foundation Dimension', 'This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.');
   // Geometry consistency (lib) — shown here, and the result drives the status of step 02 in the Design Status panel.
-  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile, pedList: lpPeds });
+  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile, pedList: lpPeds, pointList: lpPeds ? null : activeLoadPoints() });
   // Non-blocking warnings (e.g. a cap-only top not above the ground) go to the Design Status panel as notices.
   lastResults.foundsize = { issues: geom.issues, notices: geom.warnings.map(w => ({ title: `${isPile ? 'Pile cap' : 'Footing'} top not above ground`, text: w.text })) };
   if (!geom.overallPass) {
