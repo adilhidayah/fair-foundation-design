@@ -1,9 +1,9 @@
 // 00 — Equipment setup + foundation-type tab visibility + load input mode.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261016a';
-import { getRadioVal } from '../core/dom.js?v=20261016a';
-import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261016a';
-import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261016a';
+import { getCategoryForEquipment, requiredChecksForCategory } from '../../lib/foundation/index.js?v=20261016b';
+import { getRadioVal } from '../core/dom.js?v=20261016b';
+import { renderLoadCaseInputs } from '../tabs/loading.js?v=20261016b';
+import { equipmentDiagramSVG } from '../diagrams/equipmentDiagram.js?v=20261016b';
 
 // "4A — Foundation Stability" (shallow) and "4B — Pile Foundation Stability" are mutually exclusive — only the
 // tab matching the selected Foundation Type (set in "01 — GENERAL INPUT DATA") is shown in the nav.
@@ -115,6 +115,8 @@ export function updateEquipmentSetup() {
   document.getElementById('in-piperack').style.display = 'none';
   document.getElementById('in-vessel').style.display = 'none';
   document.getElementById('in-tank').style.display = 'none';
+  const skidBox = document.getElementById('skid-sup-box');
+  if (skidBox) skidBox.style.display = eqType === 'skid' ? '' : 'none';
   const saddleField = document.getElementById('eq-saddle-field');
   if (saddleField) saddleField.style.display = (eqType === 'horizontal_vessel') ? 'block' : 'none';
   let title = 'GENERIC MODE';
@@ -166,7 +168,7 @@ export function updateEquipmentSetup() {
     desc = 'Skid-mounted package: bolt reactions summed to footing-top resultants.';
     clickFs('block');
     foundRec = 'Slab = skid footprint + 2x edge (ACI 318 Ch.17 ca1).';
-    helperNote = 'Sum per-bolt P/H + thermal thrust into Tab 03 — bolt-map helper pending.';
+    helperNote = 'Tab 03 Equipment Load: support reactions per base plate / runner → E(E) / E(O) / E(T) + Tab 02 load points ("Apply").';
   } else {
     // Generic mode leaves foundation choice as is.
   }

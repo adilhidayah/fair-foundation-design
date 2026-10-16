@@ -1,6 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 1196 checks, 1196 pass, 0 fail** (40 files, run 16 Oct 2026).
+**Total: 1207 checks, 1207 pass, 0 fail** (41 files, run 16 Oct 2026).
 
 > 16 Oct 2026 — several load points on a shallow footing (part40): the Tab 02 "Load points" now also apply to a shallow footing — 4A takes the group resultant of the points, 5B the soil pressure of that resultant with the point loads netted at every section (flexure also across the spans, e.g. hogging between skid runners). One point with share 1 reproduces the single-pedestal model exactly (part40 §2).
 
@@ -40,6 +40,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part38.mjs | hairpin anchor reinforcement (anchorGroupCheck reinf.type 'hairpin'): tension legs (count, r ≤ 0.5 hef, development above the 35° plane, φ·ΣAs·fy replaces N_cbg, no seismic 0.75), shear hairpins of the front row (leg length vs l_dh / l_d, φ·ΣAs·fy replaces V_cbg, axis), l_d §25.4.2.3, pedestal-bar option unchanged, CLI anchorReinf, .fnd HAIRPIN | 28 |
 | validation_shared_part39.mjs | anchor group vs ACI SP-17M(14) Anchorage Example 18: steel, h_ef', A_Nc, ψ_ed,N, N_b, N_cbg (700 and 800 pedestal), pullout, side-face blowout with corner factor (2φN_sbg = 494 kN), pedestal bars as anchor reinforcement (strength; l_dh difference documented), ties in the top 125 mm (Case 1 A_s,req 106 mm², Case 2, §10.7.6.1.6 minimum, diamond flag), CLI anchorShearReinf, .fnd ANCHOR SHEAR | 30 |
 | validation_shared_part40.mjs | several load points on a SHALLOW footing (skid runners / base plates / pedestal per point): footingPointLoads (self-weight split, group resultant = pedestal-offset moments for one point), flexure at the point faces + span scan (hogging 75 kN·m between two runners, hand calc), one-way shear with the other points netted, punching = loads inside − net pressure inside, equilibrium on 400 random layouts, load points inside the footing (geometry) | 21 |
+| validation_shared_part41.mjs | skid support reactions -> equipment loads + load points (skidSupportLoads): sums per condition, shares = operating reactions, reaction centroid and its shift per condition (hand calc 4 base plates, shift 0.10725 m, M_x = −63 kN·m through footingPointLoads), fallbacks, uplift support | 11 |
 | validation_shared_part35.mjs | top reinforcement option (topLayerDesign): bottom only (top for hogging, previous behaviour) / two layers (top mat ≥ ρ_top·b·t, default 0.0009): 1080 mm², D16 @ 425 (7 bars) by hand, hogging design governs when larger, TOP MAT command, CLI tables shallow + pile cap with bottom layers unchanged | 15 |
 | validation_import_part34.mjs | report generator: Markdown → HTML (headings, tables with right-aligned numbers and the governing row, lists, bold / italic / code, subscripts, HTML escaping, images), document header (plain and document-table form), REPORT command, fair-run HTML with every number of the Markdown tables unchanged, PDF via an installed Chrome / Chromium / Edge (skipped when none; `FAIR_REQUIRE_PDF=1` makes a missing PDF a failure) | 22 |
 | validation_shared_part33.mjs | several load points on a pile cap WITH a pedestal under each point: foundationSizing(pedAreas) (ΔW 695.322 kN), splitCombinationLoad(pedFrac) (point loads 297.203 / 576.934 / 297.203 kN, group M_x −93.199 kN·m), equilibrium of 400 random layouts, pedestalBaseActions (hand values), pedestal geometry (outside, overlap) | 20 |
@@ -48,7 +49,7 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_import_part30.mjs | FAIR command input for a pile cap (SUPPORT PILE) + tools/staad-pile.mjs: parser, 3 × 3 pile group hand calculation (ΔW 251.424 kN, Eg 0.7269, F_max 83.49 / 89.05 kN, lateral 3.514 kN), CLI = tool, NOT SET limits fail | 21 |
 | validation_import_part29.mjs | FAIR command input (.fnd, STAAD style): every command → its config field, line-numbered errors, CLI report identical to the JSON route | 24 |
 | validation_shared_part28.mjs | punching of a pile through the pile cap (ACI 318M-19 §22.6, Table 22.6.5.2): interior / edge / corner sections, λs, φV_c = 797.2 kN for the Filter Coalescer pile (source document 797.22), tension pile, circular pile | 14 |
-| **Total** | | **1196** |
+| **Total** | | **1207** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 

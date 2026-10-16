@@ -25,7 +25,7 @@
   - `js/` — ES modules: `app.js` (event wiring + startup), `core/`, `diagrams/`, `tabs/` (satu file per tab), `ocr/`, `report/`, `workflow/`
 - Refactor ini murni pemindahan kode — tidak ada rumus yang berubah. Diverifikasi: validasi lib PASS + uji interaksi headless browser identik dengan versi sebelum dipecah (949/949 langkah).
 - Tesseract.js (OCR) sekarang di-load hanya saat tombol OCR diklik, bukan saat halaman dibuka.
-- Modul kategori rotating/reciprocating/piperack/skidMounted sudah ada di `lib/`, tapi helper UI-nya (bolt-map, dll.) belum dibuat.
+- Modul kategori rotating/reciprocating/piperack/skidMounted sudah ada di `lib/`, tapi helper UI-nya belum dibuat (kecuali tabel reaksi tumpuan skid di Tab 03 → E(E)/E(O)/E(T) + load points).
 - **Tab 4B Pile (25 Sep 2026)** — dibangun ulang di atas `lib/foundation/shared/pileGroup.js` (validasi part8, 101 cek):
   - Origin koordinat tiang = pusat pile cap; cap = Bf × Lf dari Tab 02. `scalePilesToFooting` dihapus (spasi tidak lagi berubah diam-diam saat Bf/Lf diubah).
   - Cek spasi c/c dan jarak tepi: batas **per proyek** (input, satuan ×D atau mm, kolom sumber). Kosong = NOT SET → status "INCOMPLETE", bukan PASS. Spasi minimum = FAIL; spasi anjuran dan jarak tepi = WARNING; tiang di luar cap = FAIL.

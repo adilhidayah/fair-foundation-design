@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261016a';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261016b';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -25,6 +25,9 @@ export const pileList = [
 export const loadPointList = [
   { x: 0, y: 0, c1: 1.25, c2: 1.25, share: 1 }
 ];
+// ---------- Skid support reactions (Tab 03, vendor data): one row per base plate / runner, applied to E(E)/E(O)/E(T) + the load points ----------
+// x, z = centre from the footing / pile cap centre (m), c1 × c2 = footprint (m), PE / PO / PT = vertical reaction empty / operating / test (kN).
+export const skidSupportList = [];
 // ---------- Anchor bolt layout ----------
 export const boltList = [
   { x: -150, y: -150 }, { x: 150, y: -150 }, { x: -150, y: 150 }, { x: 150, y: 150 }

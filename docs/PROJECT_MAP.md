@@ -42,7 +42,7 @@ MASTER CALCULATOR/
 | 00 — Equipment setup | [js/workflow/setup.js](../js/workflow/setup.js) | [lib/foundation/index.js](../lib/foundation/index.js) (dispatcher) |
 | 01 — General Input Data | [js/tabs/general.js](../js/tabs/general.js) | — |
 | 02 — Foundation Dimension | [js/tabs/foundSize.js](../js/tabs/foundSize.js), diagram [foundSizeDiagram.js](../js/diagrams/foundSizeDiagram.js) | [static/foundationSizing.js](../lib/foundation/static/foundationSizing.js) |
-| 03 — Loading Data (load types, live, equipment, wind, seismic) | [js/tabs/loading.js](../js/tabs/loading.js) | [shared/windLoad.js](../lib/foundation/shared/windLoad.js), [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) |
+| 03 — Loading Data (load types, live, equipment, wind, seismic) | [js/tabs/loading.js](../js/tabs/loading.js), skid support reactions [js/tabs/skidSupports.js](../js/tabs/skidSupports.js) | [shared/windLoad.js](../lib/foundation/shared/windLoad.js), [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) |
 | Load combinations | [js/tabs/combos.js](../js/tabs/combos.js) | [shared/loadCombinations.js](../lib/foundation/shared/loadCombinations.js) |
 | 4A — Foundation Stability | [js/tabs/foundation.js](../js/tabs/foundation.js), diagram [foundationDiagram.js](../js/diagrams/foundationDiagram.js) | [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) |
 | 4B — Pile Stability | [js/tabs/pile.js](../js/tabs/pile.js), diagram [pileDiagram.js](../js/diagrams/pileDiagram.js) | [shared/pileGroup.js](../lib/foundation/shared/pileGroup.js) (spasi/tepi, efisiensi, p-multiplier, biaksial + torsi); `pileComboLoads()` (pile.js) juga dipakai 5B; `evaluatePileCombo` (uniaksial lama) di [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) tidak lagi dipakai UI |
@@ -140,7 +140,7 @@ MASTER CALCULATOR/
 | [rotating/](../lib/foundation/rotating/) | 6 KB | Pompa/kompresor/turbin: vibrasi, mass ratio ≥ 3 |
 | [reciprocating/](../lib/foundation/reciprocating/) | 6 KB | Kompresor torak: gaya dinamis 1x/2x, mass ratio ≥ 5 |
 | [piperack/](../lib/foundation/piperack/) | 6 KB | Pipe rack: arah L/T, sizing iteratif |
-| [skidMounted/](../lib/foundation/skidMounted/) | 3 KB | Skid: reaksi bolt, footprint |
+| [skidMounted/](../lib/foundation/skidMounted/) | 5 KB | Skid: reaksi bolt, footprint; `skidSupportLoads()` (reaksi vendor per tumpuan → E(E)/E(O)/E(T) + load points) |
 | [import/textParsers.js](../lib/foundation/import/textParsers.js) | 6 KB | Parser teks OCR/paste (tanpa konversi satuan) |
 | [import/staadOutput.js](../lib/foundation/import/staadOutput.js) | 6 KB | Parser STAAD: load case / REPEAT LOAD (.std), SUPPORT REACTIONS (.ANL), reaksi → konvensi tanda FAIR |
 | [validation/](../lib/foundation/validation/) | — | 39 file test + [VALIDATION_REPORT.md](../lib/foundation/validation/VALIDATION_REPORT.md) |
