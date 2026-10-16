@@ -3,11 +3,11 @@
 // all PASS (and the footing flexure is not "section too small"). With "Keep B × L × H" ticked the footing size is the user's (site limit) and only the depth D_f is sized. The search lives in lib/foundation/shared/autoSizeFooting.js; this file only supplies evaluate(): it writes the trial
 // size into Tab 02, runs calcFoundSize() (-> recalcAll(), the very checks the user sees) and reads the statuses back.
 // Shallow foundations only. Pedestal, D_f, grout and the load data are never changed; nothing is changed when no size passes.
-import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261015k';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015k';
-import { fmt } from '../core/format.js?v=20261015k';
-import { lastResults } from '../core/state.js?v=20261015k';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261015k';
+import { autoSizeDepth, autoSizeFooting } from '../../lib/foundation/index.js?v=20261015l';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015l';
+import { fmt } from '../core/format.js?v=20261015l';
+import { lastResults } from '../core/state.js?v=20261015l';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261015l';
 
 const STEP = 0.05;          // m — grid of the result (B, L, H)
 const H_MIN = 0.3;          // m — thinnest footing the search starts from
@@ -70,7 +70,7 @@ export async function autoSizeFoundation() {
       if (t.ok) {
         setField('fs-Df', t.Df.toFixed(2));
         calcFoundSize();
-        const rows = (lastResults.foundation && lastResults.foundation.checks ? lastResults.foundation.checks : []).map((c) => `<li>${escapeHtml(c.name)}: UC = ${fmt(c.uc, 3)} (LC ${escapeHtml(String(c.lc))})</li>`).join('');
+        const rows = (lastResults.foundation && lastResults.foundation.checks ? lastResults.foundation.checks : []).map((c) => `<li>${escapeHtml(c.name)}: ${c.info ? escapeHtml(c.text || '') : `UC = ${fmt(c.uc, 3)}`} (LC ${escapeHtml(String(c.lc))})</li>`).join('');
         const ow = lastResults.oneway, tw = lastResults.twoway;
         show('suggest-box', `<strong>✓ Auto-sized: D<sub>f</sub> = ${fmt(t.Df, 2)} m</strong> with the footing kept at B<sub>f</sub> × L<sub>f</sub> × H<sub>f</sub> = ${fmt(Bf, 2)} × ${fmt(Lf, 2)} × ${fmt(Hf, 2)} m — smallest depth (${fmt(STEP * 1000, 0)} mm steps) passing the checks below, found in ${t.evals} trials. B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub>, the pedestal size and the loads were not changed.`
           + `<ul style="margin:6px 0 0 18px;padding:0;">${rows}<li>One-way shear: ${escapeHtml(ow ? ow.metric : '—')}</li><li>Punching shear: ${escapeHtml(tw ? tw.metric : '—')}</li></ul>`
@@ -91,7 +91,7 @@ export async function autoSizeFoundation() {
       setField('fs-Bf', r.B.toFixed(2)); setField('fs-Lf', r.B.toFixed(2)); setField('fs-Hf', r.H.toFixed(2));
       calcFoundSize();
       const f = lastResults.foundation;
-      const rows = (f && f.checks ? f.checks : []).map((c) => `<li>${escapeHtml(c.name)}: UC = ${fmt(c.uc, 3)} (LC ${escapeHtml(String(c.lc))})</li>`).join('');
+      const rows = (f && f.checks ? f.checks : []).map((c) => `<li>${escapeHtml(c.name)}: ${c.info ? escapeHtml(c.text || '') : `UC = ${fmt(c.uc, 3)}`} (LC ${escapeHtml(String(c.lc))})</li>`).join('');
       const ow = lastResults.oneway, tw = lastResults.twoway;
       show('suggest-box', `<strong>✓ Auto-sized: B<sub>f</sub> = L<sub>f</sub> = ${fmt(r.B, 2)} m, H<sub>f</sub> = ${fmt(r.H, 2)} m</strong> — smallest square footing (${fmt(STEP * 1000, 0)} mm steps) passing the checks below, found in ${r.evals} trials. D<sub>f</sub>, the pedestal and the loads were not changed.`
         + `<ul style="margin:6px 0 0 18px;padding:0;">${rows}<li>One-way shear: ${escapeHtml(ow ? ow.metric : '—')}</li><li>Punching shear: ${escapeHtml(tw ? tw.metric : '—')}</li></ul>`
