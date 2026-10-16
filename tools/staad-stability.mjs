@@ -302,7 +302,8 @@ function pedestalReport(r) {
       `${R.ar && R.ar.type === 'hairpin' || (R.arV && R.arV.type === 'hairpin') ? `; anchor reinforcement = hairpins around the anchors, replacing the concrete breakout in ${[R.ar && R.ar.type === 'hairpin' ? 'tension (§17.5.2.1(a))' : '', R.arV && R.arV.type === 'hairpin' ? 'shear (§17.5.2.1(b))' : ''].filter(Boolean).join(' and ')}` : ''}` +
       `${R.arV && R.arV.type === 'ties' ? '; shear breakout replaced by the ties in the top 125 mm (§17.5.2.1(b))' : ''}; side-face blowout with the corner factor (1 + c_a2/c_a1)/4 = ${n(R.psiCornerSb, 2)} (§17.6.4.1.1)). ` +
       `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
-      `h_ef' = ${n(R.hefE, 1)} mm (edges).`, '',
+      `h_ef' = ${n(R.hefE, 1)} mm (edges). Open difference to SP-17M(14) Example 18: steel shear V_sa per anchor = V/4 without the 0.8 grout-pad factor (§17.7.1.2.1); ` +
+      `the handbook uses V/2 (Case 2) × 0.8 — verify V_sa where the base plate sits on grout.`, '',
       '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
       `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
     if (R.ar && R.ar.type === 'hairpin') o.push('', `Hairpins, tension: ${R.ar.hairpins} vertical hairpins D${A.hairpin?.db ?? P.bar} (${R.ar.n} legs, A_s ${n(R.ar.As, 0)} mm²) at the anchors in tension, legs at ${n(R.ar.r, 0)} mm ${R.ar.within ? '≤' : '>'} 0.5 h_ef; ` +

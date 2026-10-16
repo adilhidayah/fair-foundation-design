@@ -3,8 +3,8 @@
 //   report — Report Preview: the A4 paper layout (what prints).
 // Declarations only — injection at startup and event wiring live in app.js. Print always uses the report
 // layout (the canvas CSS is screen-only).
-import { escapeHtml } from '../core/dom.js?v=20261015p';
-import { getGoverningStatus } from '../workflow/status.js?v=20261015p';
+import { escapeHtml } from '../core/dom.js?v=20261015q';
+import { getGoverningStatus } from '../workflow/status.js?v=20261015q';
 
 export const VIEW_MODE_KEY = 'fair_fdn_view_mode';
 export const VIEW_MODES = ['canvas', 'report'];

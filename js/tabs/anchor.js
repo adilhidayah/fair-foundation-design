@@ -1,14 +1,14 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261015p';
-import { getRadioVal, num } from '../core/dom.js?v=20261015p';
-import { fmt } from '../core/format.js?v=20261015p';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261015p';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015p';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015p';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015p';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261015p';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015p';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261015q';
+import { getRadioVal, num } from '../core/dom.js?v=20261015q';
+import { fmt } from '../core/format.js?v=20261015q';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261015q';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015q';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015q';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015q';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261015q';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015q';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -268,6 +268,6 @@ function calcAnchorGroup(sites, multi, base) {
     <tr><th>Combination</th><th>P (kN)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th><th>F<sub>x</sub> (kN)</th><th>F<sub>z</sub> (kN)</th><th>T<sub>max</sub> (kN)</th><th>V (kN)</th><th>UC</th><th>Status</th></tr>
     ${worst.results.map(r => `<tr class="${r === g ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.P, 1)}</td><td class="num">${fmt(r.Mx, 2)}</td><td class="num">${fmt(r.Mz, 2)}</td><td class="num">${fmt(r.Fx, 2)}</td><td class="num">${fmt(r.Fz, 2)}</td><td class="num">${fmt(r.res.Tmax, 2)}</td><td class="num">${fmt(r.res.V, 2)}</td><td class="num">${Number.isFinite(r.res.uc) ? fmt(r.res.uc, 3) : '∞'}</td><td>${r.res.pass ? 'OK' : 'EXCEEDS'}</td></tr>`).join('')}
   </table></div>`;
-  html += `<div class="limits-box"><strong>Limitation:</strong> 4 cast-in headed anchors in a rectangle centred in the pedestal, rigid base plate (anchor forces F = P/4 + M<sub>z</sub>·x/Σx² − M<sub>x</sub>·z/Σz²), cracked concrete. Shear breakout and the shear hairpins use the front row in the dominant shear direction. Seismic actions are not amplified here (Ω<sub>0</sub>); base plate bearing / grout is not checked. Hairpin model: verify the detail (contact with the anchor, position near the top, closed end below the head) against the drawing.</div>`;
+  html += `<div class="limits-box"><strong>Limitation:</strong> 4 cast-in headed anchors in a rectangle centred in the pedestal, rigid base plate (anchor forces F = P/4 + M<sub>z</sub>·x/Σx² − M<sub>x</sub>·z/Σz²), cracked concrete. Shear breakout and the shear hairpins use the front row in the dominant shear direction. Seismic actions are not amplified here (Ω<sub>0</sub>); base plate bearing / grout is not checked. Open differences to SP-17M(14) Example 18: steel shear V<sub>sa</sub> uses V/4 per anchor without the 0.8 grout-pad factor (§17.7.1.2.1) — the handbook checks V/2 per anchor (Case 2) × 0.8 with grout, so V<sub>sa</sub> here is not conservative under a grout pad; ψ<sub>c,V</sub> = 1.2 (tied pedestal) and the l<sub>dh</sub> reduction A<sub>s,req</sub>/A<sub>s,prov</sub> are not used (conservative). Hairpin model: verify the detail (contact with the anchor, position near the top, closed end below the head) against the drawing.</div>`;
   el.innerHTML = numberTables(html, '9');
 }
