@@ -3,7 +3,7 @@
 ## Status repo
 - `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
 - Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
-- Cache-buster `?v=` saat ini `20261015n` (harus seragam di semua import `js/` + `index.html`).
+- Cache-buster `?v=` saat ini `20261015o` (harus seragam di semua import `js/` + `index.html`).
 - Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
 
 ## Fitur yang ditambahkan
@@ -54,3 +54,4 @@ Multi-titik di `.fnd`, pembanding model strip 5B.
 - Butir 1: luas kontak minimum 4A (`fd-mincontact`, kosong = off; `combineFootingChecks` `minContact`), sama dengan CLI. Perbaikan: dengan "No limit" kern tidak lagi ikut UC.
 - Butir 2: Tab 03 "Import STAAD (.std + .ANL)" (`js/tabs/staadImport.js`, lib `staadReactionCombos`): 5 load type satuan FY/FX/FZ/MX/MZ (faktor kombinasi = reaksi), D dengan kD, TMP = penanda temporary. 164 kombinasi: import ~0.2 s. `lc-dW` kini 3 desimal (beda 0.4 % P dengan CLI).
 - Belum diuji dengan file proyek asli (T-POST 1.1 / 1.11 ada di komputer user, branch lokal `tools/staad-scripts`, commit `5a1c693` hairpin).
+- Butir 3 (hairpin): `anchorGroupCheck` reinf `{ type: 'hairpin', db, n, r, tension, shear, legEnd, sideCover }` — tarik: kaki vertikal ≤ 0.5·hef, dikembangkan di atas bidang 35° (l_dh), ganti N_cbg; geser: hairpin horizontal di 2 angkur depan, kaki ke dalam pedestal (l_dh / l_d), ganti V_cbg; φ 0.75, tanpa faktor seismik 0.75. CLI `pedestal.anchor.reinforcement: "hairpin"` + `hairpin {}`; `.fnd` `REINFORCEMENT HAIRPIN` / `HAIRPIN ...`; gambar B-B. Tab 09: metode `ACI 17 group` (= CLI; φ dari input Tab 09 — set N_cb / N_pn 0.70 agar sama dengan CLI). Model ditulis ulang tanpa commit `5a1c693`: bandingkan dengan T-POST 1.11 (UC 0.949 pullout).

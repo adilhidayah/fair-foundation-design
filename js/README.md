@@ -32,7 +32,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/rebar.js` | 5A/5B — `calcRebar` |
 | `tabs/shear.js` | 5B — `calcOneWay`, `calcTwoWay` |
 | `tabs/bearing.js`, `tabs/settlement.js` | 08 / 08B |
-| `tabs/anchor.js` | 09 — bolt table, `calcAnchor` |
+| `tabs/anchor.js` | 09 — bolt table, `calcAnchor`; method (radio `ab-method`): single anchor (`computeAnchorCapacity`) or ACI 17 group of 4 anchors (`anchorGroupCheck`, = CLI) with anchor reinforcement `ab-reinf` none / pedestal bars (layout from `lastResults.pedestalRebar.layout`) / hairpins (`ab-hp-*`); `syncAnchorInputs` shows the fields |
 | `ocr/tesseract.js` | lazy Tesseract.js loader |
 | `ocr/review.js` | OCR / paste review tables (parsers are in `lib/foundation/import/textParsers.js`) |
 | `report/exportHtml.js` | "Export report (HTML)" on the Summary tab: the Summary panel + `css/report.css` as one standalone file (same document builder as the CLI, `lib/foundation/report/reportDocument.js`), SVG styles written inline, Print / Save as PDF button inside |

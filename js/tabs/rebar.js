@@ -1,16 +1,16 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015n';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015n';
-import { fmt } from '../core/format.js?v=20261015n';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015n';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015n';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015n';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015n';
-import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261015n';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015n';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015n';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015n';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015o';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015o';
+import { fmt } from '../core/format.js?v=20261015o';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015o';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015o';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015o';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015o';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261015o';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015o';
+import { pileComboLoads } from '../tabs/pile.js?v=20261015o';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015o';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -114,7 +114,9 @@ export function calcRebar() {
         label: 'Pedestal Reinforcement',
         status: 'PASS',
         metric: multiPeds ? multiPeds.map(m => m.search.found ? `P${m.idx} ${m.search.n*2}—D${fmt(barDia,0)}` : `P${m.idx} none`).join(', ') : `${search.n*2} — D${fmt(barDia,0)}`,
-        detail: `ρ=${fmt(search.rho*100,2)}%, governing UC=${fmt(search.maxUC,3)} (${comboLabel(search.worstCombo)})`
+        detail: `ρ=${fmt(search.rho*100,2)}%, governing UC=${fmt(search.maxUC,3)} (${comboLabel(search.worstCombo)})`,
+        // bar layout for Tab 09 (anchor reinforcement = pedestal bars): n bars on each x face at d′ from the faces, spread along z
+        layout: multiPeds ? null : { n: search.n, dPrime, barDia, Bp, Lp }
       };
       // Detailing check on the bars just designed: clear spacing along the face ≥ max(1.5·db, 40 mm) — ACI 318M-19 §25.2.3
       // (columns / pedestals). Reported in the table and the drawing; a failure is raised as a notice in the Design Status panel.

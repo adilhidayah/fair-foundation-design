@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261015n">
+<link rel="stylesheet" href="css/app.css?v=20261015o">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1252,6 +1252,72 @@
             <button data-val="uncracked">Uncracked</button>
           </div>
         </div>
+        <div class="section-label">Check Method &amp; Anchor Reinforcement</div>
+        <div class="field">
+          <label id="ab-method-label">Check method</label>
+          <div class="radio-row" id="ab-method" role="radiogroup" aria-labelledby="ab-method-label">
+            <button data-val="single" class="sel">Single anchor</button>
+            <button data-val="group">ACI 17 group (4 anchors)</button>
+          </div>
+        </div>
+        <div id="ab-group-box" style="display:none;">
+        <div class="note">Group of 4 cast-in headed anchors in a rectangle, centred in the pedestal (anchorGroupCheck, the same check as the CLI): projected areas A<sub>Nc</sub> / A<sub>Vc</sub>, h<sub>ef</sub>′ near 3+ edges, side-face blowout, P with M<sub>x</sub>, M<sub>z</sub>, F<sub>x</sub>, F<sub>z</sub> of each combination. Cracked concrete. The φ factors below are used.</div>
+        <div class="field check-field">
+          <label for="ab-seismic">
+            <input type="checkbox" id="ab-seismic" checked>
+            <span>Seismic design category C–F: concrete-governed strengths × 0.75 (§17.10.5.4, §17.10.6.4)</span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="ab-reinf">Anchor reinforcement (§17.5.2.1)</label>
+          <select id="ab-reinf">
+            <option value="none" selected>None (concrete breakout)</option>
+            <option value="bars">Pedestal bars (5A), tension</option>
+            <option value="hairpin">Hairpins around the anchors</option>
+          </select>
+        </div>
+        <div id="ab-hp-box" style="display:none;">
+        <div class="field">
+          <label for="ab-hp-db"><span>Hairpin bar, d<sub>b</sub></span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-hp-db" value="13" min="0">
+        </div>
+        <div class="field">
+          <label for="ab-hp-n"><span>Hairpins per anchor</span></label>
+          <input type="number" id="ab-hp-n" value="1" min="0" step="1">
+        </div>
+        <div class="field">
+          <label for="ab-hp-r"><span>Leg offset from the anchor axis, r (empty = in contact)</span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-hp-r" value="" min="0" placeholder="contact">
+        </div>
+        <div class="field check-field">
+          <label for="ab-hp-tension">
+            <input type="checkbox" id="ab-hp-tension" checked>
+            <span>Tension: vertical hairpins, hooked at the top (replace N<sub>cbg</sub>)</span>
+          </label>
+        </div>
+        <div class="field check-field">
+          <label for="ab-hp-shear">
+            <input type="checkbox" id="ab-hp-shear" checked>
+            <span>Shear: horizontal hairpins around the front anchors (replace V<sub>cbg</sub>)</span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="ab-hp-leg">Shear hairpin legs</label>
+          <select id="ab-hp-leg">
+            <option value="hook" selected>Hooked ends (l_dh)</option>
+            <option value="straight">Straight (l_d)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="ab-hp-cover"><span>Side cover at the end of the legs</span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-hp-cover" value="40" min="0">
+        </div>
+        </div>
+        <div class="field">
+          <label for="ab-topcover"><span>Top cover to the hooks of the anchor reinforcement</span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-topcover" value="50" min="0">
+        </div>
+        </div>
         <div class="section-label">Strength Reduction Factors, φ (Condition B default — editable)</div>
         <div class="field">
           <label for="ab-phi-Nsa"><span>φ, steel tension (N<sub>sa</sub>)</span></label>
@@ -1872,6 +1938,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261015n"></script>
+<script type="module" src="js/app.js?v=20261015o"></script>
 </body>
 </html>
