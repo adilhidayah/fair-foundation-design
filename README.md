@@ -2,7 +2,12 @@
 
 Web app kalkulator fondasi untuk civil structure engineer. Modul pertama: fondasi equipment oil & gas (vessel, tank, heat exchanger, pompa, kompresor, turbin, pipe rack, skid-mounted package unit). Acuan standar: ACI 318M-19 / ASCE 7-22.
 
-## Menjalankan
+## Pakai online
+Buka https://adilhidayah.github.io/fair-foundation-design/ — tanpa instalasi dan tanpa akun. Semua hitungan berjalan di browser; data tidak dikirim ke server.
+
+**Menyimpan dan membagikan pekerjaan:** toolbar punya **New / Open / Save / Save As** (Ctrl+O, Ctrl+S, Ctrl+Shift+S). Pekerjaan disimpan sebagai file `*.fair.json` di komputer Anda. Kirim file itu ke rekan; mereka memakai **Open** untuk melanjutkan. Hasil akhir: Summary → **Export report (HTML)** atau **Print / Save as PDF**. OCR (Smart Fill) butuh internet.
+
+## Menjalankan di komputer sendiri
 Buka lewat dev server, bukan `file://` (agar ES module jalan):
 
 ```
