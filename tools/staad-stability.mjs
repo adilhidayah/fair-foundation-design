@@ -58,7 +58,7 @@ import { pathToFileURL } from 'node:url';
 import { buildFoundationDrawing, toDXF, toSVG } from './foundation-drawing.mjs';
 import {
   foundationSizing, evaluateFoundationCombo, evaluateBiaxialFooting, biaxialSoilPressure, combineFootingChecks,
-  pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign,
+  pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign, topLayerDesign,
   footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, searchPedestalBars, pedestalShearCheck, anchorGroupCheck, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
 } from '../lib/foundation/index.js';
 
@@ -350,7 +350,7 @@ function designReport(r) {
   for (const c of D.flex || []) {
     if (!c.required) { o.push(`| ${c.key} | - | 0 (no hogging) | ${n(c.b, 0)} | ${n(c.dEff, 0)} | - | - | not required (detailing) | - | - |`); continue; }
     if (!c.des || !c.des.ok) { o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | section too small | - | - | - | NOT OK |`); continue; }
-    o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
+    o.push(`| ${c.key} | ${c.lc} | ${c.minOnly ? `0 (minimum top mat, ρ_top ${D.topLayer.rhoTop ?? 0.0009})` : n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
       `${c.s ? `D${D.bar} @ ${n(c.s, 0)} (${c.n} bars)` : 'spacing < step'} | ${n(c.AsProv, 0)} | ${c.ok ? 'OK' : 'NOT OK'} |`);
   }
   o.push('', `Footing design: **${D.pass ? 'OK' : 'NOT OK'}** — governing ${D.gov.name}, UC ${n(D.gov.uc, 3)}.`);
@@ -371,7 +371,7 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
   const wUnit = w0.Wfoot / Af + (Af - Ap > 1e-9 ? w0.Wsoil / (Af - Ap) : 0);
   const dead = deadCase ?? Math.min(...Object.entries(loads.primary).filter(([, p]) => /^dead$/i.test(p.type)).map(([n]) => +n));
   const d = t - cc - bar;                                       // mm, outer layer (x-bars); z-bars d − bar
-  const out = { f, B, L, t, cc, bar, fc, fy, d, wUnit, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25,
+  const out = { f, B, L, t, cc, bar, fc, fy, d, wUnit, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25, topLayer: { mode: D.topLayer?.mode === 'two' ? 'two' : 'bottom', rhoTop: D.topLayer?.rhoTop ?? 0.0009 },
     items: [], missing: [], checks: [], notes: [] };
   if (!(c1 > 0 && c2 > 0)) { out.notes.push('Pedestal / column size B_p × L_p must be > 0.'); out.pass = false; out.gov = { name: 'input', uc: Infinity }; return out; }
   for (const lc of lcList) {
@@ -404,12 +404,15 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     { key: 'z-top', get: it => it.mz.top, b: B * 1000, dEff: d - bar, face: 'top' }
   ].map(c => {
     const gov = ok.reduce((a, b2) => (c.get(b2) > c.get(a) ? b2 : a));
-    const Mu = c.get(gov), required = c.face === 'bottom' || Mu > 1e-6;   // top steel only where a combination gives hogging
-    const des = required ? flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, rule) : null;
+    // bottom layers always; top: where a combination gives hogging, or always with the two-layer option (design.topLayer, topLayerDesign)
+    const Mu = c.get(gov);
+    const top = c.face === 'top' ? topLayerDesign(Mu, c.b, c.dEff, t, fc, fy, { asMinRule: rule, mode: D.topLayer?.mode, rhoTop: D.topLayer?.rhoTop }) : null;
+    const required = top ? top.required : true, minOnly = !!(top && top.minOnly);
+    const des = top ? top.design : flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, rule);
     // spacing in `step` mm steps, rounded down, ≤ min(3t, 450) (barLayout(), as the app's 5B)
     const lay = des && des.ok ? barLayout(des.As, c.b, bar, t, step, cc) : null;   // count rounded up over b − 2·cover, nominal s
     const n = lay && lay.valid ? lay.n : null, s = lay && lay.valid ? lay.s : null;
-    return { ...c, lc: gov.lc, Mu, required, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
+    return { ...c, lc: minOnly ? '-' : gov.lc, Mu: minOnly ? 0 : Mu, required, minOnly, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
       ok: !required || (!!des && des.ok && !!lay && lay.valid && s - bar >= minClear - 1e-9) };
   });
   out.flex = CASES;

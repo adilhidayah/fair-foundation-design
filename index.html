@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261015j">
+<link rel="stylesheet" href="css/app.css?v=20261015k">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1322,6 +1322,17 @@
             <option value="beam">Project: max(0.0018·b·t, 1.4·b·d/fy)</option>
           </select>
         </div>
+        <div class="field">
+          <label for="rb-toplayer">Top reinforcement</label>
+          <select id="rb-toplayer">
+            <option value="bottom" selected>Bottom layer only (top only where a combination gives hogging)</option>
+            <option value="two">Two layers (top mat always, at least ρtop·b·t)</option>
+          </select>
+        </div>
+        <div class="field" id="rb-rhotop-field">
+          <label for="rb-rhotop">Minimum top mat ratio, ρ<sub>top</sub> (two layers; project value)</label>
+          <input type="number" id="rb-rhotop" value="0.0009" step="0.0001" min="0">
+        </div>
         <div class="note">Bar spacing is rounded down to a multiple of 25 mm and limited to min(3t, 450 mm).</div>
         <div class="note">Critical section for moment is taken at the pedestal face (x = ±B<sub>p</sub>/2 from the pedestal centre), summing the pile reactions beyond that section. The pile layout, load point and group model come from "4B — PILE FOUNDATION STABILITY"; the reactions are those of the separate <strong>factored (LRFD)</strong> combinations below. For a shallow footing the moments come from the net soil pressure (factored, minus the footing and backfill weight) of the same combinations.</div>
         <button type="button" class="combo-add-btn lrfd-open-btn">⧉ Edit LRFD Combinations</button>
@@ -1843,6 +1854,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261015j"></script>
+<script type="module" src="js/app.js?v=20261015k"></script>
 </body>
 </html>

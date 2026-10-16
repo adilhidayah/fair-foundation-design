@@ -92,6 +92,7 @@ export function buildFoundationDrawing(r, opts = {}) {
     const yt = -Df + t - cc - dbF / 2;
     S.line('REBAR', X(-B / 2 + cc), yt, X(B / 2 - cc), yt);
     [-1, 1].forEach(a => S.line('REBAR', X(a * (B / 2 - cc)), yt, X(a * (B / 2 - cc)), yt - Math.min(12 * dbF, t - 2 * cc)));
+    if (flex['z-top']?.required) even(flex['z-top'], B).forEach(x => S.circle('REBAR', X(x), yt - dbF, dbF / 2, true));   // inner top layer (z) under the x bars
   }
   // pedestal bars: vertical with 90° hook on the bottom mat; ties
   if (hasPed && P && P.pm && P.pm.found) {
@@ -156,7 +157,18 @@ export function buildFoundationDrawing(r, opts = {}) {
   if (barTxt(flex['z-bottom'])) S.text('TEXT', FX(B / 2 + 80), FY(-10), TXT, `${barTxt(flex['z-bottom'])} along z (B)`);
   if (topReq) S.text('TEXT', FX(B / 2 + 80), FY(-80), TXT, `Top: ${barTxt(flex['x-top']) || '-'} along x, ${barTxt(flex['z-top']) || '-'} along z`);
   S.text('TEXT', FX(B / 2 + 80), FY(-150), TXT, `Cover ${cc} mm, H = ${r0(t)} mm`);
-  S.text('TEXT', FX(0), FY(-L / 2 - 420), TXT_TITLE, 'FOOTING REINFORCEMENT (bottom mat shown)', 'center');
+  S.text('TEXT', FX(0), FY(-L / 2 - 420), TXT_TITLE, topReq ? 'FOOTING REINFORCEMENT (bottom mat)' : 'FOOTING REINFORCEMENT (bottom mat shown)', 'center');
+  // top mat (designed for hogging, or the minimum top mat of the two-layer option): own plan to the right of the bottom mat
+  if (topReq) {
+    const tx0 = fx0 + B + gap, TX = (x) => tx0 + x;
+    S.rect('CONCRETE', TX(-B / 2), FY(-L / 2), B, L);
+    if (hasPed) S.rect('HIDDEN', TX(ox - Bp / 2), FY(oz - Lp / 2), Bp, Lp);
+    if (flex['x-top']?.s) even(flex['x-top'], L).forEach(z => S.line('REBAR', TX(-B / 2 + cc), FY(z), TX(B / 2 - cc), FY(z)));
+    if (flex['z-top']?.s) even(flex['z-top'], B).forEach(x => S.line('REBAR', TX(x), FY(-L / 2 + cc), TX(x), FY(L / 2 - cc)));
+    if (barTxt(flex['x-top'])) S.text('TEXT', TX(B / 2 + 80), FY(60), TXT, `${barTxt(flex['x-top'])} along x (T)`);
+    if (barTxt(flex['z-top'])) S.text('TEXT', TX(B / 2 + 80), FY(-10), TXT, `${barTxt(flex['z-top'])} along z (T)`);
+    S.text('TEXT', TX(0), FY(-L / 2 - 420), TXT_TITLE, 'FOOTING REINFORCEMENT (top mat)', 'center');
+  }
   return S.E;
 }
 

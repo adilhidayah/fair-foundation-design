@@ -3,7 +3,7 @@
 ## Status repo
 - `main` = `fe32c60`. PR #4 (Focus Canvas), #5 (font + lag), #6 (pile settlement, load points, pile punching) sudah merged, CI hijau.
 - Validasi: 28 file, 965 checks, 965 pass (`lib/foundation/validation/VALIDATION_REPORT.md`).
-- Cache-buster `?v=` saat ini `20261015j` (harus seragam di semua import `js/` + `index.html`).
+- Cache-buster `?v=` saat ini `20261015k` (harus seragam di semua import `js/` + `index.html`).
 - Branch kerja `claude/matrix-164x166-performance-9ptb5f` sudah merged: untuk kerja baru reset ke `origin/main`.
 
 ## Fitur yang ditambahkan
@@ -43,6 +43,9 @@
 - CLI: `fair-run input.fnd [--pdf]` → `.md` + `.html` (A4, `css/report.css`) + `.pdf` (Chrome/Chromium/Edge terpasang; `FAIR_BROWSER`/`--browser`). `REPORT ...` di `.fnd` mengisi header (oleh, tanggal, rev, lokasi, nomor dokumen, halaman). Gambar DXF/SVG footing ikut tertanam bila `DRAWINGS ON`.
 - App: Summary → "Export report (HTML)" (satu file mandiri, tombol Print / Save as PDF di dalamnya). PDF di app = print browser; tidak ada library PDF.
 - Belum: logo di CLI, nomor halaman total di header dokumen, font IBM Plex di file mandiri (memakai font sistem).
+
+## Tulangan atas footing / pile cap
+- Default: atas hanya bila ada hogging (perilaku lama). Opsi "Two layers" (app 5B: select Top reinforcement + ρtop; `.fnd`: `TOP MAT ON [RHO ..]`) = mat atas selalu, ≥ ρtop·b·h (default 0.0009, nilai proyek), atau desain hogging bila lebih besar. Gambar CLI: titik batang z atas di potongan + plan mat atas.
 
 ## Ide lanjutan (belum diminta)
 Multi-titik di `.fnd`, pembanding model strip 5B.
