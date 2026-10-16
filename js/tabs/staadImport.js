@@ -2,12 +2,12 @@
 // Declarations only — wiring in app.js. The conversion is staadReactionCombos() (lib/foundation/import/staadImport.js): five unit load
 // types FY / FX / FZ / MX / MZ whose combination factors are the reactions of the chosen node, D with the dead-load factor kD (foundation
 // self-weight of Tab 02), TMP marking the combinations with a STAAD Wind / Seismic case (temporary). Nothing is computed here.
-import { staadReactionCombos } from '../../lib/foundation/index.js?v=20261015o';
-import { escapeHtml } from '../core/dom.js?v=20261015o';
-import { comboState, state } from '../core/state.js?v=20261015o';
-import { renderLoadTypesTable, renderLoadCaseInputs } from '../tabs/loading.js?v=20261015o';
-import { renderComboTable } from '../tabs/combos.js?v=20261015o';
-import { recalcAll } from '../workflow/recalc.js?v=20261015o';
+import { staadReactionCombos } from '../../lib/foundation/index.js?v=20261015p';
+import { escapeHtml } from '../core/dom.js?v=20261015p';
+import { comboState, state } from '../core/state.js?v=20261015p';
+import { renderLoadTypesTable, renderLoadCaseInputs } from '../tabs/loading.js?v=20261015p';
+import { renderComboTable } from '../tabs/combos.js?v=20261015p';
+import { recalcAll } from '../workflow/recalc.js?v=20261015p';
 
 const msg = (html, bad = false) => { const el = document.getElementById('sti-msg'); if (el) { el.className = bad ? 'warn-box' : 'note'; el.innerHTML = html; } };
 

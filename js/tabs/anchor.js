@@ -1,14 +1,14 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261015o';
-import { getRadioVal, num } from '../core/dom.js?v=20261015o';
-import { fmt } from '../core/format.js?v=20261015o';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261015o';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015o';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015o';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015o';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261015o';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015o';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261015p';
+import { getRadioVal, num } from '../core/dom.js?v=20261015p';
+import { fmt } from '../core/format.js?v=20261015p';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261015p';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261015p';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015p';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261015p';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261015p';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015p';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -149,7 +149,8 @@ export function syncAnchorInputs() {
   const grp = getRadioVal('ab-method') === 'group';
   const show = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; };
   show('ab-group-box', grp);
-  show('ab-hp-box', grp && document.getElementById('ab-reinf')?.value === 'hairpin');
+  show('ab-hp-box', grp && (document.getElementById('ab-reinf')?.value === 'hairpin' || document.getElementById('ab-vreinf')?.value === 'hairpin'));
+  show('ab-tie-box', grp && document.getElementById('ab-vreinf')?.value === 'ties');
 }
 
 // Four bolts in a rectangle about their centroid (the pattern anchorGroupCheck assumes): { sx, sz } in mm, or null.
@@ -166,25 +167,33 @@ function boltRectangle() {
 // Anchor reinforcement of the group check (select ab-reinf): the 5A pedestal bars (layout from lastResults.pedestalRebar, the same
 // positions as the CLI: n bars on each x face at d′, spread along z) or hairpins (lib anchorGroupCheck reinf.type 'hairpin').
 function groupReinf(Bp, Lp) {
-  const kind = document.getElementById('ab-reinf')?.value || 'none';
+  const kind = document.getElementById('ab-reinf')?.value || 'none', vkind = document.getElementById('ab-vreinf')?.value || 'none';
   const fy = num('gen-fy'), topCover = num('ab-topcover') || 50;
+  const val = (id) => document.getElementById(id)?.value;
+  const n = Math.max(1, Math.round(num('ab-hp-n') || 1)), r = val('ab-hp-r');
+  const hp = { db: num('ab-hp-db'), fy, n, legEnd: val('ab-hp-leg') === 'straight' ? 'straight' : 'hook', sideCover: num('ab-hp-cover'), topCover };
+  const out = { kind, vkind, reinf: null, shearReinf: { type: 'none' }, text: [] };
   if (kind === 'bars') {
     const L = lastResults.pedestalRebar && lastResults.pedestalRebar.layout;
-    if (!L || Math.abs(L.Bp - Bp) > 0.5 || Math.abs(L.Lp - Lp) > 0.5) return { error: 'The pedestal bars of 5A are not available for this pedestal (5A not designed, several pedestals, or a different size) — choose hairpins or no anchor reinforcement.' };
+    if (!L || Math.abs(L.Bp - Bp) > 0.5 || Math.abs(L.Lp - Lp) > 0.5) return { error: 'The pedestal bars of 5A are not available for this pedestal (5A not designed, several pedestals, or a different size) — choose hairpins or no tension anchor reinforcement.' };
     const bars = [];
     for (const xs of [-Bp / 2 + L.dPrime, Bp / 2 - L.dPrime]) for (let i = 0; i < L.n; i++) bars.push([xs, L.n > 1 ? -Lp / 2 + L.dPrime + i * (Lp - 2 * L.dPrime) / (L.n - 1) : 0]);
-    return { kind, reinf: { bars, db: L.barDia, fy, topCover }, text: `${L.n * 2} D${fmt(L.barDia, 0)} pedestal bars (5A), hooked at the top` };
+    out.reinf = { bars, db: L.barDia, fy, topCover };
+    out.text.push(`tension: ${L.n * 2} D${fmt(L.barDia, 0)} pedestal bars (5A)`);
+  } else if (kind === 'hairpin') {
+    out.reinf = { type: 'hairpin', ...hp, ...(r !== '' && r !== undefined ? { r: parseFloat(r) } : {}), tension: true, shear: false };
+    out.text.push(`tension: ${n} hairpin${n > 1 ? 's' : ''} D${fmt(hp.db, 0)} per anchor`);
   }
-  if (kind === 'hairpin') {
-    const r = document.getElementById('ab-hp-r')?.value;
-    const t = document.getElementById('ab-hp-tension')?.checked !== false, s = document.getElementById('ab-hp-shear')?.checked !== false;
-    if (!t && !s) return { kind: 'none', reinf: null, text: '' };
-    const n = Math.max(1, Math.round(num('ab-hp-n') || 1));
-    return { kind, reinf: { type: 'hairpin', db: num('ab-hp-db'), fy, n, ...(r !== '' && r !== undefined ? { r: parseFloat(r) } : {}), tension: t, shear: s,
-      legEnd: document.getElementById('ab-hp-leg')?.value === 'straight' ? 'straight' : 'hook', sideCover: num('ab-hp-cover'), topCover },
-      text: `${n} hairpin${n > 1 ? 's' : ''} D${fmt(num('ab-hp-db'), 0)} per anchor (${[t ? 'tension' : '', s ? 'shear' : ''].filter(Boolean).join(' + ')})` };
+  if (vkind === 'hairpin') {
+    out.shearReinf = { type: 'hairpin', db: hp.db, fy, n, legEnd: hp.legEnd, sideCover: hp.sideCover };
+    out.text.push(`shear: ${n} hairpin${n > 1 ? 's' : ''} D${fmt(hp.db, 0)} per front anchor`);
+  } else if (vkind === 'ties') {
+    const tn = Math.max(1, Math.round(num('ab-tie-n') || 2)), tdb = num('ab-tie-db') || 13, diamond = !!document.getElementById('ab-tie-diamond')?.checked;
+    out.shearReinf = { type: 'ties', n: tn, db: tdb, fy, case: val('ab-tie-case') === '1' ? 1 : 2, diamond };
+    out.text.push(`shear: ${tn} D${fmt(tdb, 0)} ties in the top 125 mm${diamond ? ' + diamond ties' : ''}`);
   }
-  return { kind: 'none', reinf: null, text: '' };
+  out.text = out.text.join('; ');
+  return out;
 }
 
 // Tab 09 method "ACI 17 group": anchorGroupCheck (lib) per LRFD combination at the top of each pedestal, with P, Mx, Mz, Fx, Fz
@@ -206,7 +215,7 @@ function calcAnchorGroup(sites, multi, base) {
     const results = comboState.lrfd.map(combo => {
       const v = stdComboVector(combo.f, base);
       const a = { P: st.f * v.P, Mx: st.f * v.Mx, Mz: st.f * v.Mz, Fx: st.f * v.Fx, Fz: st.f * v.Fz };
-      return { combo, ...a, res: anchorGroupCheck({ Bp: st.Bp, Lp: st.Lp, sx: rect.sx, sz: rect.sz, ...prop, fc, seismic, phi, ...a, reinf: R.reinf }) };
+      return { combo, ...a, res: anchorGroupCheck({ Bp: st.Bp, Lp: st.Lp, sx: rect.sx, sz: rect.sz, ...prop, fc, seismic, phi, ...a, reinf: R.reinf, shearReinf: R.shearReinf }) };
     });
     siteRes.push({ ...st, R, results, governing: results.reduce((g, r) => (r.res.uc > g.res.uc ? r : g)) });
   }
@@ -239,7 +248,7 @@ function calcAnchorGroup(sites, multi, base) {
     'Side-face blowout N_sbg': Number.isFinite(res.Nsbg) ? `${kN(res.Nsbg)} kN` : 'n/a (h<sub>ef</sub> ≤ 2.5 c<sub>a1</sub>)' };
   const capV = { 'Steel V_sa': `${kN(res.Vsa)} kN per anchor`, 'Concrete breakout V_cbg': `${kN(res.Vcbg)} kN (front row)`, 'Pryout V_cpg': `${kN(res.Vcpg)} kN (group)` };
   if (res.ar) capN[res.tension[1].name] = `φN = ${kN(res.ar.phiNn)} kN (${res.ar.n} legs / bars)`;
-  if (res.arV) capV[res.shear[1].name] = `φV = ${kN(res.arV.phiVn)} kN (${res.arV.n} legs)`;
+  if (res.arV) capV[res.shear[1].name] = res.arV.type === 'ties' ? `φV = ${kN(res.arV.phiVn)} kN (${res.arV.n} ties × V/${res.arV.case === 1 ? 4 : 2})` : `φV = ${kN(res.arV.phiVn)} kN (${res.arV.n} legs)`;
   const row = (kind, m, cap) => `<tr class="${m === res.govT || m === res.govV ? 'governing' : ''}"><td>${kind} — ${m.name}</td><td class="num">${cap || '—'}</td><td class="num">${Number.isFinite(m.uc) ? fmt(m.uc, 3) : '∞'}</td><td>${m.uc <= 1 ? 'OK' : 'EXCEEDS'}</td></tr>`;
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Anchor group checks — governing combination ${comboLabel(g.combo)}</caption>
@@ -248,9 +257,11 @@ function calcAnchorGroup(sites, multi, base) {
     ${res.shear.map(m => row('Shear', m, capV[m.name])).join('')}
     <tr class="${inter ? 'governing' : ''}"><td>Interaction (§17.8)</td><td class="clause">both &gt; 0.2: (N/φN + V/φV) / 1.2</td><td class="num">${fmt(res.interaction, 3)}</td><td>${res.interaction <= 1 ? 'OK' : 'EXCEEDS'}</td></tr>
   </table></div>`;
-  if (res.ar && res.ar.type === 'hairpin') html += `<div class="note"><strong>Hairpins, tension (§17.5.2.1(a)):</strong> ${res.ar.hairpins} vertical hairpins at the anchors in tension (${res.ar.n} legs, A<sub>s</sub> = ${fmt(res.ar.As, 0)} mm²), legs at r = ${fmt(res.ar.r, 0)} mm ${res.ar.within ? '≤' : '>'} 0.5·h<sub>ef</sub>; length above the 35° breakout plane ${fmt(res.ar.avail, 0)} mm ${res.ar.developed ? '≥' : '<'} l<sub>dh</sub> = ${fmt(res.ar.ldh, 0)} mm (hooked at the top). Closed end below the anchor head: length below the plane ≥ l<sub>d</sub> = ${fmt(res.ar.ldBelow, 0)} mm (detailing).</div>`;
+  if (res.ar && res.ar.type === 'hairpin') html += `<div class="note"><strong>Hairpins, tension (§17.5.2.1(a)):</strong> ${res.ar.hairpins} vertical hairpins at the anchors in tension (${res.ar.n} legs, A<sub>s</sub> = ${fmt(res.ar.As, 0)} mm²), legs at r = ${fmt(res.ar.r, 0)} mm ${res.ar.within ? '≤' : '>'} 0.5·h<sub>ef</sub>; length above the 35° breakout plane ${fmt(res.ar.avail, 0)} mm ${res.ar.developed ? '≥' : '<'} l<sub>dh</sub> = ${fmt(res.ar.ldh, 0)} mm (hooked at the top). U-bend at the top (the hook), straight legs below the plane ≥ l<sub>d</sub> = ${fmt(res.ar.ldBelow, 0)} mm (detailing, SP-17M Fig. E18.5).</div>`;
   else if (res.ar) html += `<div class="note"><strong>Anchor reinforcement (§17.5.2.1(a)):</strong> ${res.ar.n} pedestal bars within 0.5·h<sub>ef</sub> of the anchors in tension (A<sub>s</sub> = ${fmt(res.ar.As, 0)} mm²), nearest at ${fmt(res.ar.r, 0)} mm; length above the 35° plane ${fmt(res.ar.avail, 0)} mm ${res.ar.developed ? '≥' : '<'} l<sub>dh</sub> = ${fmt(res.ar.ldh, 0)} mm (hooked).</div>`;
-  if (res.arV) html += `<div class="note"><strong>Hairpins, shear (§17.5.2.1(b), along ${res.arV.axis}):</strong> ${res.arV.hairpins} horizontal hairpins around the ${res.arV.anchors} front anchors (${res.arV.n} legs, A<sub>s</sub> = ${fmt(res.arV.As, 0)} mm²), in contact with the anchors near the top; legs ${fmt(res.arV.legAvail, 0)} mm ${res.arV.developed ? '≥' : '<'} ${res.arV.legEnd === 'straight' ? 'l<sub>d</sub>' : 'l<sub>dh</sub>'} = ${fmt(res.arV.ldReq, 0)} mm. Provide the hairpins at every anchor (the shear direction reverses).</div>`;
+  if (res.arV && res.arV.type === 'hairpin') html += `<div class="note"><strong>Hairpins, shear (§17.5.2.1(b), along ${res.arV.axis}):</strong> ${res.arV.hairpins} horizontal hairpins around the ${res.arV.anchors} front anchors (${res.arV.n} legs, A<sub>s</sub> = ${fmt(res.arV.As, 0)} mm²), in contact with the anchors near the top; legs ${fmt(res.arV.legAvail, 0)} mm ${res.arV.developed ? '≥' : '<'} ${res.arV.legEnd === 'straight' ? 'l<sub>d</sub>' : 'l<sub>dh</sub>'} = ${fmt(res.arV.ldReq, 0)} mm. Provide the hairpins at every anchor (the shear direction reverses).</div>`;
+  if (res.arV && res.arV.type === 'ties') html += `<div class="note"><strong>Ties in the top 125 mm, shear (SP-17M(14) Anchorage Example 18, Steps 17b / 17c, Case ${res.arV.case}):</strong> V<sub>a</sub> = V/${res.arV.case === 1 ? 4 : 2} = ${fmt(res.arV.Va, 2)} kN per anchor; strut at 45° to the corner bar, tie tension T = V<sub>a</sub> ≤ φ·n·A<sub>b</sub>·f<sub>y</sub> = 0.75 × ${res.arV.n} × ${fmt(res.arV.As / res.arV.n, 0)} mm² × f<sub>y</sub>. ${res.arV.n} × D${fmt(res.arV.db, 0)} ${res.arV.minOk ? '≥' : '<'} minimum ${res.arV.nMin} ties in the top 125 mm (§10.7.6.1.6)${res.arV.minOk ? '' : ' — NOT OK'}.${res.arV.diamond ? ' Diamond ties provided for the alternate strut to the middle bars (Fig. E18.14 / E18.16).' : ''}</div>`;
+  if (Number.isFinite(res.Nsbg)) html += `<div class="note"><strong>Side-face blowout (§17.6.4):</strong> h<sub>ef</sub> &gt; 2.5·c<sub>a1</sub>; corner factor (1 + c<sub>a2</sub>/c<sub>a1</sub>)/4 = ${fmt(res.psiCornerSb, 2)} (§17.6.4.1.1), group factor (1 + s/6c<sub>a1</sub>) where s &lt; 6c<sub>a1</sub>.</div>`;
   html += sectionHeader('9.3', 'Combinations', 'Factored LRFD actions at the top of the pedestal (FAIR signs) and the governing UC of each combination.');
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Anchor group per combination — governing row highlighted</caption>

@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261015o">
+<link rel="stylesheet" href="css/app.css?v=20261015p">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1269,12 +1269,44 @@
           </label>
         </div>
         <div class="field">
-          <label for="ab-reinf">Anchor reinforcement (§17.5.2.1)</label>
+          <label for="ab-reinf">Tension anchor reinforcement (§17.5.2.1(a))</label>
           <select id="ab-reinf">
-            <option value="none" selected>None (concrete breakout)</option>
-            <option value="bars">Pedestal bars (5A), tension</option>
-            <option value="hairpin">Hairpins around the anchors</option>
+            <option value="none" selected>None (concrete breakout N_cbg)</option>
+            <option value="bars">Pedestal bars (5A), hooked at the top</option>
+            <option value="hairpin">Hairpins at each anchor (U-bend at the top)</option>
           </select>
+        </div>
+        <div class="field">
+          <label for="ab-vreinf">Shear anchor reinforcement (§17.5.2.1(b))</label>
+          <select id="ab-vreinf">
+            <option value="none" selected>None (concrete breakout V_cbg)</option>
+            <option value="ties">Ties in the top 125 mm (SP-17M Example 18)</option>
+            <option value="hairpin">Hairpins around the front anchors</option>
+          </select>
+        </div>
+        <div id="ab-tie-box" style="display:none;">
+        <div class="field">
+          <label for="ab-tie-n"><span>Ties in the top 125 mm, n (min 2 × D13 / 3 × D10, §10.7.6.1.6)</span></label>
+          <input type="number" id="ab-tie-n" value="2" min="1" step="1">
+        </div>
+        <div class="field">
+          <label for="ab-tie-db"><span>Tie bar, d<sub>b</sub></span> <span class="unit">mm</span></label>
+          <input type="number" id="ab-tie-db" value="13" min="0">
+        </div>
+        <div class="field">
+          <label for="ab-tie-case">Shear per anchor</label>
+          <select id="ab-tie-case">
+            <option value="2" selected>Case 2: V/2 (two anchors take all of V)</option>
+            <option value="1">Case 1: V/4 (oversized holes, V shared by 4)</option>
+          </select>
+        </div>
+        <div class="field check-field">
+          <label for="ab-tie-diamond">
+            <input type="checkbox" id="ab-tie-diamond">
+            <span>Diamond ties provided (alternate strut to the middle bars; detail only, no strength added)</span>
+          </label>
+        </div>
+        <div class="note">Strut-and-tie (SP-17M(14) Anchorage Example 18, Steps 17b / 17c): strut at 45° from the anchor to the corner bar, tie tension T = V<sub>a</sub>; φT<sub>n</sub> = 0.75·n·A<sub>b</sub>·f<sub>y</sub>.</div>
         </div>
         <div id="ab-hp-box" style="display:none;">
         <div class="field">
@@ -1289,20 +1321,8 @@
           <label for="ab-hp-r"><span>Leg offset from the anchor axis, r (empty = in contact)</span> <span class="unit">mm</span></label>
           <input type="number" id="ab-hp-r" value="" min="0" placeholder="contact">
         </div>
-        <div class="field check-field">
-          <label for="ab-hp-tension">
-            <input type="checkbox" id="ab-hp-tension" checked>
-            <span>Tension: vertical hairpins, hooked at the top (replace N<sub>cbg</sub>)</span>
-          </label>
-        </div>
-        <div class="field check-field">
-          <label for="ab-hp-shear">
-            <input type="checkbox" id="ab-hp-shear" checked>
-            <span>Shear: horizontal hairpins around the front anchors (replace V<sub>cbg</sub>)</span>
-          </label>
-        </div>
         <div class="field">
-          <label for="ab-hp-leg">Shear hairpin legs</label>
+          <label for="ab-hp-leg">Shear hairpin legs (shear hairpins)</label>
           <select id="ab-hp-leg">
             <option value="hook" selected>Hooked ends (l_dh)</option>
             <option value="straight">Straight (l_d)</option>
@@ -1938,6 +1958,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261015o"></script>
+<script type="module" src="js/app.js?v=20261015p"></script>
 </body>
 </html>

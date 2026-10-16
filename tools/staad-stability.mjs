@@ -30,6 +30,7 @@
 //                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
 //                                                                          //   "anchor": { "Ase", "futa", "hef", "Abrg", "omega0", "reinforcement": true | "bars" | "hairpin",
 //                                                                          //   "hairpin": { "db", "n", "r", "tension", "shear", "legEnd": "hook"|"straight", "sideCover" },
+//                                                                          //   "shearReinforcement": "ties"|"hairpin"|"none", "ties": { "n", "db", "case": 1|2, "diamond" },
 //                                                                          //   "spacings": [...] or "spacingStep": 10, "sMin": 100 (from the drawing
 //                                                                          //   spacing down) } -> ACI 318M-19 Ch. 17 check of the 4 anchors
 //                                                                          //   (anchorGroupCheck, lib); spacings tried from large to small per size
@@ -298,14 +299,18 @@ function pedestalReport(r) {
     o.push('', `**Anchor bolts — ACI 318M-19 Chapter 17** (${P.topTies.bolts}, cast-in headed, A_se ${A.Ase} mm², f_uta ${A.futa} MPa, h_ef ${A.hef} mm, ` +
       `A_brg ${A.Abrg} mm²; cracked concrete; seismic: concrete strengths × 0.75 and the seismic M, H × Ω0 = ${P.anchor.omega0}` +
       `${R.ar && R.ar.type === 'bars' ? '; tension breakout replaced by anchor reinforcement = the pedestal bars within 0.5 h_ef of the anchors in tension, 90° hooks at the top (§17.5.2.1, l_dh §25.4.3)' : ''}` +
-      `${R.ar && R.ar.type === 'hairpin' || R.arV ? `; anchor reinforcement = hairpins around the anchors, replacing the concrete breakout in ${[R.ar && R.ar.type === 'hairpin' ? 'tension (§17.5.2.1(a))' : '', R.arV ? 'shear (§17.5.2.1(b))' : ''].filter(Boolean).join(' and ')}` : ''}). ` +
+      `${R.ar && R.ar.type === 'hairpin' || (R.arV && R.arV.type === 'hairpin') ? `; anchor reinforcement = hairpins around the anchors, replacing the concrete breakout in ${[R.ar && R.ar.type === 'hairpin' ? 'tension (§17.5.2.1(a))' : '', R.arV && R.arV.type === 'hairpin' ? 'shear (§17.5.2.1(b))' : ''].filter(Boolean).join(' and ')}` : ''}` +
+      `${R.arV && R.arV.type === 'ties' ? '; shear breakout replaced by the ties in the top 125 mm (§17.5.2.1(b))' : ''}; side-face blowout with the corner factor (1 + c_a2/c_a1)/4 = ${n(R.psiCornerSb, 2)} (§17.6.4.1.1)). ` +
       `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
       `h_ef' = ${n(R.hefE, 1)} mm (edges).`, '',
       '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
       `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
     if (R.ar && R.ar.type === 'hairpin') o.push('', `Hairpins, tension: ${R.ar.hairpins} vertical hairpins D${A.hairpin?.db ?? P.bar} (${R.ar.n} legs, A_s ${n(R.ar.As, 0)} mm²) at the anchors in tension, legs at ${n(R.ar.r, 0)} mm ${R.ar.within ? '≤' : '>'} 0.5 h_ef; ` +
-      `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (hooked at the top); closed end below the anchor head, length below the plane ≥ l_d ${n(R.ar.ldBelow, 0)} mm (detailing).`);
-    if (R.arV) o.push('', `Hairpins, shear (${R.arV.axis}): ${R.arV.hairpins} horizontal hairpins D${A.hairpin?.db ?? P.bar} around the ${R.arV.anchors} front anchors (${R.arV.n} legs, A_s ${n(R.arV.As, 0)} mm²), legs ${n(R.arV.legAvail, 0)} mm ` +
+      `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (U-bend at the top = the hook); straight legs below the plane ≥ l_d ${n(R.ar.ldBelow, 0)} mm (detailing, SP-17M Fig. E18.5).`);
+    if (R.arV && R.arV.type === 'ties') o.push('', `Ties in the top 125 mm, shear (SP-17M(14) Example 18 Step 17b/17c, Case ${R.arV.case}): V_a = V/${R.arV.case === 1 ? 4 : 2} = ${n(R.arV.Va, 2)} kN per anchor, ` +
+      `strut α = 45° -> T = ${n(R.arV.T, 2)} kN; φT_n = 0.75·${R.arV.n}·${n(R.arV.As / R.arV.n, 0)} mm²·f_y; ${R.arV.n} × D${R.arV.db} ${R.arV.minOk ? '≥' : '<'} minimum ${R.arV.nMin} (§10.7.6.1.6)` +
+      `${R.arV.diamond ? '; diamond ties provided for the alternate strut to the middle bars (Fig. E18.14 / E18.16)' : ''}.`);
+    if (R.arV && R.arV.type === 'hairpin') o.push('', `Hairpins, shear (${R.arV.axis}): ${R.arV.hairpins} horizontal hairpins D${A.hairpin?.db ?? P.bar} around the ${R.arV.anchors} front anchors (${R.arV.n} legs, A_s ${n(R.arV.As, 0)} mm²), legs ${n(R.arV.legAvail, 0)} mm ` +
       `${R.arV.developed ? '≥' : '<'} ${R.arV.legEnd === 'straight' ? 'l_d' : 'l_dh'} ${n(R.arV.ldReq, 0)} mm; φV = ${n(R.arV.phiVn / 1000, 1)} kN.`);
     if (R.ar && R.ar.type === 'bars') o.push('', `Anchor reinforcement: ${R.ar.n} × D${P.bar} (A_s ${n(R.ar.As, 0)} mm²) within 0.5 h_ef of the anchors in tension, nearest at ${n(R.ar.r, 0)} mm; ` +
       `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (hooked).`);
@@ -510,7 +515,7 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
         const k = seis ? om : 1, t0 = row.top;
         const res = anchorGroupCheck({ Bp, Lp, sx: bo.sx, sz: bo.sz, da: bo.dia, Ase: A.Ase, futa: A.futa, hef: A.hef, Abrg: A.Abrg, fc, lambda,
           seismic: A.seismic !== false, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
-          reinf: anchorReinf(A, { bars, bar, fy, clearCover: P0.clearCover ?? 50 }) });
+          reinf: anchorReinf(A, { bars, bar, fy, clearCover: P0.clearCover ?? 50 }), shearReinf: anchorShearReinf(A, { bar, tie, nTop, fy, clearCover: P0.clearCover ?? 50 }) });
         if (!gov || res.uc > gov.res.uc) gov = { lc: row.lc, seis, res };
       }
       out.anchor = { ...gov, A, omega0: om };
@@ -543,6 +548,23 @@ export function anchorReinf(A, { bars, bar, fy, clearCover = 50 }) {
       shear: h.shear !== false, legEnd: h.legEnd || 'hook', sideCover: h.sideCover ?? clearCover, topCover: A.topCover ?? 50 };
   }
   return null;
+}
+
+// Shear anchor reinforcement (pedestal.anchor.shearReinforcement): "ties" = the ties in the top 125 mm (anchor.ties: { n, db, case,
+// diamond }, defaults: the top ties of the pedestal, n = 2 (D13+) / 3, Case 2 = V/2 per anchor, SP-17M Example 18), "hairpin" = the
+// hairpin model (anchor.hairpin), "none" = concrete breakout; not given = the shear flag of the tension hairpins (anchorReinf).
+export function anchorShearReinf(A, { bar, tie, nTop, fy, clearCover = 50 }) {
+  const t = A.shearReinforcement;
+  if (!t) return null;
+  if (t === 'ties') {
+    const s = A.ties || {};
+    return { type: 'ties', n: s.n ?? nTop, db: s.db ?? tie, fy: s.fy ?? fy, case: s.case === 1 ? 1 : 2, diamond: !!s.diamond };
+  }
+  if (t === 'hairpin') {
+    const h = A.hairpin || {};
+    return { type: 'hairpin', db: h.db ?? bar, fy: h.fy ?? fy, n: h.n ?? 1, legEnd: h.legEnd || 'hook', sideCover: h.sideCover ?? clearCover };
+  }
+  return { type: 'none' };
 }
 
 // Smallest square footing (Bf = Lf, from..to by step) that passes every check; the trials are kept for the report.

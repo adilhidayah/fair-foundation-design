@@ -145,14 +145,20 @@ export function buildFoundationDrawing(r, opts = {}) {
     S.text('TEXT', PX(Bp / 2 + 80), PY(-100), TXT, `Clear cover ${r0(P.dPrime - P.bar / 2 - P.tie)} mm, ρ = ${(P.pm.rho * 100).toFixed(2)} %`);
     // hairpins (anchor reinforcement, pedestal.anchor.reinforcement = "hairpin"): shear = horizontal U around every anchor, bend on
     // the outer side, legs back into the pedestal (shear can reverse); tension = the two vertical legs beside each anchor (dots)
-    const R = P.anchor && P.anchor.res, hpA = P.anchor && P.anchor.A.reinforcement === 'hairpin';
+    const R = P.anchor && P.anchor.res, hpV = R && R.arV && R.arV.type === 'hairpin', hpA = R && ((R.ar && R.ar.type === 'hairpin') || hpV);
+    // diamond ties (SP-17M Fig. E18.16): a square through the mid-points of the tie faces, in the top 125 mm
+    if (R && R.arV && R.arV.type === 'ties' && R.arV.diamond) {
+      const hx = Bp / 2 - c, hz = Lp / 2 - c, pts = [[0, -hz], [hx, 0], [0, hz], [-hx, 0], [0, -hz]];
+      for (let k = 0; k < 4; k++) S.line('REBAR', PX(pts[k][0]), PY(pts[k][1]), PX(pts[k + 1][0]), PY(pts[k + 1][1]));
+    }
+    if (R && R.arV && R.arV.type === 'ties') S.text('TEXT', PX(Bp / 2 + 80), PY(-240), TXT, `Anchor shear: ${R.arV.n} Ø${R.arV.db} ties in top 125${R.arV.diamond ? ' + diamond ties' : ''}`);
     if (hpA && bolts) {
       const db = P.anchor.A.hairpin?.db ?? P.bar, cov = P.anchor.A.hairpin?.sideCover ?? 40;
-      const rr = (R.arV || R.ar) ? (R.ar?.r ?? bolts.dia / 2 + db / 2) : bolts.dia / 2 + db / 2;
-      const alongX = R.arV ? R.arV.axis === 'x' : true;
+      const rr = R.ar?.type === 'hairpin' ? R.ar.r : bolts.dia / 2 + db / 2;
+      const alongX = hpV ? R.arV.axis === 'x' : true;
       [[-1, -1], [1, -1], [1, 1], [-1, 1]].slice(0, bolts.n || 4).forEach(([a, c]) => {
         const x = a * bolts.sx / 2, z = c * bolts.sz / 2;
-        if (R.arV) {
+        if (hpV) {
           // U in plan: bend of radius rr on the outer side (toward the near face), legs to the far face less the cover
           const seg = 8, u = alongX ? a : c;
           const pt = (k) => { const t = Math.PI / 2 - Math.PI * k / seg; const d = rr * Math.cos(t), w = rr * Math.sin(t);
@@ -163,7 +169,7 @@ export function buildFoundationDrawing(r, opts = {}) {
         }
         if (R.ar && R.ar.type === 'hairpin') for (const w of [rr, -rr]) S.circle('REBAR', alongX ? PX(x + w) : PX(x), alongX ? PY(z) : PY(z + w), db / 2, true);
       });
-      S.text('TEXT', PX(Bp / 2 + 80), PY(-170), TXT, `Hairpins D${db} at each anchor (${[R.ar && R.ar.type === 'hairpin' ? 'tension' : '', R.arV ? 'shear' : ''].filter(Boolean).join(' + ')})`);
+      S.text('TEXT', PX(Bp / 2 + 80), PY(-170), TXT, `Hairpins D${db} at each anchor (${[R.ar && R.ar.type === 'hairpin' ? 'tension' : '', hpV ? 'shear' : ''].filter(Boolean).join(' + ')})`);
     }
     S.text('TEXT', PX(0), PY(-Lp / 2 - 420), TXT_TITLE, 'PEDESTAL SECTION B-B', 'center');
   }
