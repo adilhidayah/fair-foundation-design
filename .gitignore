@@ -10,7 +10,8 @@ desktop.ini
 node_modules/
 
 # Local Claude Code session files
-.claude/
+.claude/*
+!.claude/settings.json
 
 # Client project files (*.fair.json) - project data, keep out of the repo
 projects/
