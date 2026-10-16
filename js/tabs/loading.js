@@ -1,12 +1,13 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261016a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016a';
-import { fmt } from '../core/format.js?v=20261016a';
-import { comboState, state } from '../core/state.js?v=20261016a';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261016a';
-import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261016a';
-import { recalcAll } from '../workflow/recalc.js?v=20261016a';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261016b';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016b';
+import { fmt } from '../core/format.js?v=20261016b';
+import { comboState, state } from '../core/state.js?v=20261016b';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261016b';
+import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261016b';
+import { recalcAll } from '../workflow/recalc.js?v=20261016b';
+import { skidSupportPreviewHtml } from '../tabs/skidSupports.js?v=20261016b';
 
 export const LC_LOADTYPE_DEFAULTS = {
   D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately
@@ -237,7 +238,7 @@ export function renderEquipmentLoad() {
   document.getElementById('eq-load-preview').innerHTML = `<div class="overflow-x"><table class="dl-worksheet dl-aligned"><colgroup><col style="width:34%"><col style="width:12%"><col style="width:3%"><col style="width:11%"><col style="width:40%"></colgroup>
     <caption>3.1.4. Equipment Load (E)</caption>
     ${trs}
-  </table></div>`;
+  </table></div>` + skidSupportPreviewHtml(); // 3.1.5 vendor reactions per support (skid), when entered
   // Keep the read-only P fields in Load Values (if that type still exists) in sync, without a full table re-render.
   Object.entries(EQUIPMENT_CODE_TO_FIELD).forEach(([code, eqId]) => {
     const el = document.getElementById(`lc-${code}-P`);

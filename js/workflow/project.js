@@ -9,21 +9,21 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, loadPointList, pileList, reportBlocks, state } from '../core/state.js?v=20261016a';
+import { boltList, comboState, designStandards, loadPointList, pileList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261016b';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
 export const PROJECT_EXT = '.fair.json';
 const STATE_KEYS = ['lcLoadTypes', 'windDirState', 'seismicDirState', 'rptLogo1', 'rptLogo2'];
-const LIST_KEYS = ['designStandards', 'pileList', 'loadPointList', 'boltList', 'reportBlocks'];
-const LISTS = { designStandards, pileList, loadPointList, boltList, reportBlocks };
+const LIST_KEYS = ['designStandards', 'pileList', 'loadPointList', 'skidSupportList', 'boltList', 'reportBlocks'];
+const LISTS = { designStandards, pileList, loadPointList, skidSupportList, boltList, reportBlocks };
 const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)));
 
 // Inputs that are NOT stored by id: file pickers, buttons, and rows rebuilt from `lists` / load types (their values are in the
 // lists), plus the lcx-* Load Case boxes that only mirror the lc-* Load Values inputs.
 function skipInput(el) {
   return !el.id || ['file', 'button', 'submit', 'reset'].includes(el.type) || el.id.startsWith('lcx-') ||
-    ['pile-input', 'bolt-input', 'combo-input', 'row-edit-input'].some((c) => el.classList.contains(c));
+    ['pile-input', 'bolt-input', 'combo-input', 'row-edit-input', 'skid-sup-input'].some((c) => el.classList.contains(c));
 }
 // Radio-style button groups (selectRadio / getRadioVal): the nearest ancestor with an id of each button[data-val].
 function radioGroups() {

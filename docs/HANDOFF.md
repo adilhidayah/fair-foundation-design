@@ -2,7 +2,7 @@
 
 ## Status repo
 - `main` = `b9bdd4f` (merge PR #15, hairpin + Tab 09 ACI 17 group). Semua PR sebelumnya (#4 Focus Canvas, #5 font + lag, #6 pile settlement / load points / pile punching, … #14, #15) sudah merged.
-- Validasi: 40 file, 1196 checks, 1196 pass (`lib/foundation/validation/VALIDATION_REPORT.md`); CI `.github/workflows/validation.yml` menjalankan semuanya.
+- Validasi: 41 file, 1207 checks, 1207 pass (`lib/foundation/validation/VALIDATION_REPORT.md`); CI `.github/workflows/validation.yml` menjalankan semuanya.
 - Cache-buster `?v=` saat ini `20261015q` (harus seragam di semua import `js/` + `index.html`).
 - Untuk kerja baru: mulai dari `origin/main`, jangan memakai ulang branch yang sudah merged.
 - Bagian "Fitur yang ditambahkan" di bawah adalah catatan sesi 15 Okt (PR #4–#6); fitur sesudahnya (PT-TIP, `.fnd`, report generator, tulangan atas, hairpin) ada di bagian masing-masing.

@@ -2,8 +2,8 @@
 // plates / skid runners on one footing or cap.
 // The list lives in state.loadPointList; this module renders its table and says whether multi-point mode is active.
 // Mode off (or one point and Single selected) = the single load point of the pedestal model, unchanged.
-import { getRadioVal } from '../core/dom.js?v=20261016a';
-import { loadPointList } from '../core/state.js?v=20261016a';
+import { getRadioVal } from '../core/dom.js?v=20261016b';
+import { loadPointList } from '../core/state.js?v=20261016b';
 
 // Multi-point statics apply to a pile cap (4B group load, 5B pile reactions) and to a shallow footing (4A group resultant, 5B soil
 // pressure with the points netted): without a pedestal each point is a base plate / skid runner on the footing or cap; with pedestals

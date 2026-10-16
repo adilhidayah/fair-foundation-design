@@ -1,10 +1,10 @@
 // 08B — Settlement (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261016a';
-import { getRadioVal, num } from '../core/dom.js?v=20261016a';
-import { fmt } from '../core/format.js?v=20261016a';
-import { lastResults, pileList } from '../core/state.js?v=20261016a';
-import { pileComboLoads } from '../tabs/pile.js?v=20261016a';
+import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261016b';
+import { getRadioVal, num } from '../core/dom.js?v=20261016b';
+import { fmt } from '../core/format.js?v=20261016b';
+import { lastResults, pileList } from '../core/state.js?v=20261016b';
+import { pileComboLoads } from '../tabs/pile.js?v=20261016b';
 
 // correctSPT/phiFromSPT/cuFromSPT/esFromSPT live in shared/soilProperties.js;
 // elasticSettlement/consolidationSettlement/settlementCheck live in shared/settlementCheck.js.
