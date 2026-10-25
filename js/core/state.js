@@ -25,6 +25,9 @@ export const pileList = [
 export const loadPointList = [
   { x: 0, y: 0, c1: 1.25, c2: 1.25, share: 1 }
 ];
+// ---------- Platform columns standing on the pile cap at their own positions (5B beam method, Tab 02 load points) ----------
+// x, y (= z in the UI) = centre of the base plate (m, cap-centre frame), c1 × c2 = its size (m), P = { loadTypeCode: vertical load, kN, down + }.
+export const platformColumnList = [];
 // ---------- Skid support reactions (Tab 03, vendor data): one row per base plate / runner, applied to E(E)/E(O)/E(T) + the load points ----------
 // x, z = centre from the footing / pile cap centre (m), c1 × c2 = footprint (m), PE / PO / PT = vertical reaction empty / operating / test (kN).
 export const skidSupportList = [];

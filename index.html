@@ -1630,6 +1630,13 @@
             <div id="lp-list"></div>
             <button type="button" id="lp-add" class="combo-add-btn">+ Add load point</button>
             <div class="note" id="lp-share-note"></div>
+            <div class="field">
+              <label for="pc-paste"><span>Platform columns on the cap (paste a table)</span></label>
+              <textarea id="pc-paste" rows="6" spellcheck="false" placeholder="x z c1 c2 D L E(O) EQX(O)&#10;-1.25 -5.25 0.3 0.3 4.39 5.79 1.48 -1.46"></textarea>
+            </div>
+            <button type="button" id="pc-apply" class="combo-add-btn">Load platform columns</button>
+            <button type="button" id="pc-clear" class="combo-add-btn">Clear</button>
+            <div class="note" id="pc-note">First row = x, z, c<sub>1</sub>, c<sub>2</sub> and the load type codes of Section 03; one row per column (m; kN, down +). The columns carry their own vertical loads on the cap, 5B then designs it as a beam between the pile lines (flexure, one-way shear, crack control, column punching). The load points above are the vessels; the Section 03 loads are the TOTAL on the cap, columns included.</div>
             <div class="note" id="fs-lp-note">Each point is a base plate / skid on the cap (x, z = centre from the cap centre, m; c<sub>1</sub> × c<sub>2</sub> = size along x × along z, m). The superstructure loads of Section 03 are shared out by "Share"; the cap weight acts at the cap centre. 4B uses the statically equivalent group load; 5B checks flexure, one-way and punching shear at every point and governs on the worst (the other points' loads beyond a section are netted against the pile reactions).</div>
           </div>
         </div>
@@ -1654,6 +1661,7 @@
       <div id="calc-anchor" class="calc-panel"></div>
       <div id="calc-rebar" class="calc-panel"></div>
       <div id="calc-rebarcap" class="calc-panel"></div>
+      <div id="calc-platformcap" class="calc-panel"></div>
       <div id="calc-summary" class="calc-panel"></div>
       <div id="calc-foundsize" class="calc-panel"></div>
       <!-- Focus Canvas view of 02 (js/tabs/foundSizeFocus.js) — replaces the report sheet above only in that mode. -->

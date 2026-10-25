@@ -10,6 +10,7 @@ import { calcPile } from '../tabs/pile.js?v=20261025a';
 import { calcSettlement } from '../tabs/settlement.js?v=20261025a';
 import { calcRebar } from '../tabs/rebar.js?v=20261025a';
 import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261025a';
+import { calcPlatformCap } from '../tabs/platformCap.js?v=20261025a';
 import { renderWorkflowLive } from '../workflow/status.js?v=20261025a';
 
 export function recalcAll() {
@@ -21,7 +22,7 @@ export function recalcAll() {
   // Pile cap flexure / shear (5B) read the pile reactions of the factored combinations, so they follow every change
   // in loads, pile layout or cap geometry — not only edits of their own inputs.
   // (each guarded: a failure in one of these must not stop the summaries and status below from refreshing)
-  [calcRebar, calcOneWay, calcTwoWay, calcAnchor, calcSettlement].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
+  [calcRebar, calcOneWay, calcTwoWay, calcPlatformCap, calcAnchor, calcSettlement].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
   renderLcSummary();
   renderGeneralSummary();
   if (typeof renderStdComboTables === 'function') renderStdComboTables();

@@ -5,7 +5,7 @@ import { fmt } from './core/format.js?v=20261025a';
 import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261025a';
 import { dlWorksheetItem } from './core/worksheet.js?v=20261025a';
 import { installLazyPanels, setActiveTab } from './core/lazyPanels.js?v=20261025a';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks, loadPointList, skidSupportList } from './core/state.js?v=20261025a';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks, loadPointList, platformColumnList, skidSupportList } from './core/state.js?v=20261025a';
 import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261025a';
 import { loadTesseract } from './ocr/tesseract.js?v=20261025a';
 import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261025a';
@@ -25,6 +25,7 @@ import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMulti
 import { calcRebar } from './tabs/rebar.js?v=20261025a';
 import { calcSettlement } from './tabs/settlement.js?v=20261025a';
 import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261025a';
+import { calcPlatformCap, parsePlatformColumns } from './tabs/platformCap.js?v=20261025a';
 import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261025a';
 import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261025a';
 import { resolveCheckTab, sync5BSources, syncLoadPointBox, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261025a';
@@ -414,6 +415,17 @@ document.getElementById('lp-add').addEventListener('click', () => {
   recalcAll();
 });
 renderLoadPointTable();
+// Platform columns on the pile cap (5B beam method): paste a table, or clear it.
+const pcNote = (msg, bad) => { const n = document.getElementById('pc-note'); if (n) { n.textContent = msg; n.style.color = bad ? 'var(--fail, #b42318)' : ''; } };
+document.getElementById('pc-apply').addEventListener('click', () => {
+  const r = parsePlatformColumns(document.getElementById('pc-paste').value);
+  if (r.errors.length) { pcNote(r.errors.join(' '), true); return; }
+  const known = new Set(state.lcLoadTypes.map(lt => lt.code)), unknown = r.codes.filter(c => !known.has(c));
+  platformColumnList.splice(0, platformColumnList.length, ...r.columns);
+  pcNote(`${r.columns.length} platform columns loaded${unknown.length ? '. Not a load type of Section 03 (ignored): ' + unknown.join(', ') : ''}.`, unknown.length > 0);
+  recalcAll();
+});
+document.getElementById('pc-clear').addEventListener('click', () => { platformColumnList.splice(0); document.getElementById('pc-paste').value = ''; pcNote('Platform columns cleared.'); recalcAll(); });
 // Skid support reactions (Tab 03 Equipment Load, Skid Package Unit): table edits only refresh the sums / 3.1.5 preview; "Apply" writes
 // E(E) / E(O) / E(T) and the Tab 02 load points (applySkidSupports()), switches the load points to Multiple and recalculates.
 document.getElementById('skid-sup-list').addEventListener('input', (e) => {
@@ -705,7 +717,7 @@ toggleLoadInputMode();
 // wire up the shared load combination table
 wireComboTable('lc', recalcAll);
 // Separate factored (LRFD) combination table — used only by the pile cap flexure / shear (5B), so a change re-runs those.
-const recalcPileCap = () => { calcRebar(); calcOneWay(); calcTwoWay(); calcAnchor(); renderLcSummary(); }; // LRFD users (5A, 5B, 09) + the LRFD tables in Section 03
+const recalcPileCap = () => { calcRebar(); calcOneWay(); calcTwoWay(); calcPlatformCap(); calcAnchor(); renderLcSummary(); }; // LRFD users (5A, 5B, 09) + the LRFD tables in Section 03
 wireComboTable('lrfd', recalcPileCap);
 document.getElementById('lrfd-reload-combos').addEventListener('click', () => { loadLrfdCombos(); recalcPileCap(); });
 document.querySelectorAll('.lrfd-open-btn').forEach(btn => btn.addEventListener('click', () => openModal('combos-lrfd-modal')));
@@ -749,11 +761,11 @@ document.querySelectorAll('#in-general input').forEach(el => el.addEventListener
 [['fs-Bf', 2], ['fs-Lf', 2], ['fs-Hf', 2], ['fs-Df', 2], ['fs-lean-proj', 2], ['fs-lean-t', 2],
  ['fs-Bp', 2], ['fs-Lp', 2], ['fs-Gp', 3], ['fs-OffX', 2], ['fs-OffZ', 2]].forEach(([id, dec]) => wireDecimalAutoFormat(id, dec));
 // tabs
-const TAB_IDS = ['setup', 'loadingdata', 'oneway', 'twoway', 'foundation', 'pile', 'bearing', 'settlement', 'anchor', 'rebar', 'rebarcap', 'summary', 'foundsize', 'general'];
+const TAB_IDS = ['setup', 'loadingdata', 'oneway', 'twoway', 'foundation', 'pile', 'bearing', 'settlement', 'anchor', 'rebar', 'rebarcap', 'platformcap', 'summary', 'foundsize', 'general'];
 // "05 Structural Design" tabs show several existing input/result panels together (ids unchanged, so every
 // calc*() and listener keeps working): 5A Pedestal Check = pedestal P-M rebar; 5B Pile Cap Check = one-way
 // shear + punching shear + pile cap flexure.
-const TAB_PANELS = { pedcheck: ['rebar'], capcheck: ['oneway', 'twoway', 'rebarcap'] };
+const TAB_PANELS = { pedcheck: ['rebar'], capcheck: ['oneway', 'twoway', 'rebarcap', 'platformcap'] };
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
     // don't select hidden tabs
