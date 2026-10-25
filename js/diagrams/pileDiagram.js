@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261016b';
+import { fmt } from '../core/format.js?v=20261025a';
 
 // Pile group plan: pile cap outline (Bf x Lf from "02", centred on the origin), piles at true diameter with their number
 // inside and the axial force beside them, optional coordinate rulers (x along the top, y along the left, with dotted
@@ -111,8 +111,14 @@ export function pileDiagramSVG(piles, capB, capL, D, pileForces, info = {}, opts
     else out += T(cx, cy - r - 3, `#${k + 1}`);
     // force beside the pile, on the side facing the cap centre so it never runs over the cap edge
     const fStyle = failed ? 'fill:var(--fail);font-weight:700;' : (tension ? 'fill:var(--caution);font-weight:600;' : '');
-    if (f) out += p.x > 0.001 ? T(cx - r - 4, cy + 4, `${fmt(f.F, 0)} kN`, 'end', fStyle)
-      : T(cx + r + 4, cy + 4, `${fmt(f.F, 0)} kN`, 'start', fStyle);
+    if (f) {
+      const fl = `${fmt(f.F, 0)} kN`;
+      // a label between two close piles of the same row would run over the neighbour: then put it below the pile instead
+      const mates = piles.filter((q, j) => j !== k && Math.abs(toY(q.y) - cy) < 2).map(q => Math.abs(toX(q.x) - cx));
+      const gap = mates.length ? Math.min(...mates) : Infinity;
+      if (gap - 2 * r < 2 * fl.length * 6.4 + 16) out += T(cx, cy + r + 12, fl, 'middle', fStyle);
+      else out += p.x > 0.001 ? T(cx - r - 4, cy + 4, fl, 'end', fStyle) : T(cx + r + 4, cy + 4, fl, 'start', fStyle);
+    }
   });
 
   // ---- centroid and load point ----

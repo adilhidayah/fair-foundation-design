@@ -1,15 +1,15 @@
 // 4A — Shallow foundation stability.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, footingPointLoads, normalisePoints, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261016b';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261016b';
-import { fmt } from '../core/format.js?v=20261016b';
-import { comboState, lastResults, state } from '../core/state.js?v=20261016b';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261016b';
-import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261016b';
-import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261016b';
-import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261016b';
-import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261016b';
-import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261016b';
+import { LOAD_KINDS, biaxialSoilPressure, combineFootingChecks, evaluateBiaxialFooting, evaluateFoundationCombo, meyerhofEffectiveArea, footingPointLoads, normalisePoints, pedestalOffsetMoments, stdComboVector } from '../../lib/foundation/index.js?v=20261025a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261025a';
+import { fmt } from '../core/format.js?v=20261025a';
+import { comboState, lastResults, state } from '../core/state.js?v=20261025a';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261025a';
+import { foundationDiagramSVG } from '../diagrams/foundationDiagram.js?v=20261025a';
+import { buildStdComboBase, untypedLoadTypesWarning } from '../tabs/combos.js?v=20261025a';
+import { foundationFocusHTML, stabilityAlertHTML } from '../tabs/stabilityFocus.js?v=20261025a';
+import { allowableBearing, allowableBearingAt } from '../tabs/bearing.js?v=20261025a';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261025a';
 
 // Classifies a load combination as "Temporary" (wind/seismic — a lower minimum FS is conventionally accepted)
 // or "Permanent" (static/gravity — the full minimum FS applies), by checking whether any load type with a

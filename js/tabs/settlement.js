@@ -1,10 +1,10 @@
 // 08B — Settlement (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261016b';
-import { getRadioVal, num } from '../core/dom.js?v=20261016b';
-import { fmt } from '../core/format.js?v=20261016b';
-import { lastResults, pileList } from '../core/state.js?v=20261016b';
-import { pileComboLoads } from '../tabs/pile.js?v=20261016b';
+import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261025a';
+import { getRadioVal, num } from '../core/dom.js?v=20261025a';
+import { fmt } from '../core/format.js?v=20261025a';
+import { lastResults, pileList } from '../core/state.js?v=20261025a';
+import { pileComboLoads } from '../tabs/pile.js?v=20261025a';
 
 // correctSPT/phiFromSPT/cuFromSPT/esFromSPT live in shared/soilProperties.js;
 // elasticSettlement/consolidationSettlement/settlementCheck live in shared/settlementCheck.js.
@@ -16,7 +16,10 @@ function pileWorkingLoad() {
   const n = pileList.length;
   if (!n || !items.length) return null;
   const gravity = items.filter(i => Math.abs(i.load.Hx) < 1e-6 && Math.abs(i.load.Hz) < 1e-6 && Math.abs(i.load.Mx) < 1e-6 && Math.abs(i.load.Mz) < 1e-6);
-  const pool = gravity.length ? gravity : items;
+  // Sustained = gravity only AND no live (L, Lr), no test E(T): settlement is driven by the long-term working load.
+  const TRANSIENT = ['L', 'Lr', 'E(T)'];
+  const sustained = gravity.filter(i => !Object.keys(i.combo.f || {}).some(k => TRANSIENT.includes(k) && Math.abs(i.combo.f[k]) > 1e-9));
+  const pool = sustained.length ? sustained : (gravity.length ? gravity : items);
   const best = pool.reduce((a, b) => (b.load.P > a.load.P ? b : a));
   return { Qw: best.load.P / n, lc: best.combo.lc, gravityOnly: gravity.length > 0 };
 }
@@ -44,7 +47,7 @@ function calcPileSettlement() {
   const row = (a, e, v, cls = '') => `<tr${cls}><td>${a}</td><td class="clause">${e}</td><td class="num">${v}</td></tr>`;
   html += '<div class="overflow-x"><table class="calc-table"><caption>Single pile — Vesic (1977), Das §11.18</caption><tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>' +
     row('Q<sub>w</sub>, working load', override > 0 ? 'input' : 'auto (P / n)', fmt(Qw, 2) + ' kN') +
-    row('Q<sub>ws</sub> / Q<sub>wp</sub>', 'shaft share ' + fmt(num('st-pile-shaft'), 0) + '% / tip', fmt(r.Qws, 2) + ' / ' + fmt(r.Qwp, 2) + ' kN') +
+    row('Q<sub>ws</sub> / Q<sub>wp</sub>', 'shaft share ' + fmt(num('st-pile-shaft'), 2) + '% / tip', fmt(r.Qws, 2) + ' / ' + fmt(r.Qwp, 2) + ' kN') +
     row('A<sub>p</sub> / p', 'pile section', fmt(r.Ap, 4) + ' m² / ' + fmt(r.p, 3) + ' m') +
     row('S<sub>1</sub>', '(Q<sub>wp</sub> + ξQ<sub>ws</sub>)L / (A<sub>p</sub>E<sub>p</sub>), ξ = ' + document.getElementById('st-pile-xi').value, fmt(r.S1, 3) + ' mm') +
     row('q<sub>wp</sub>', 'Q<sub>wp</sub> / A<sub>p</sub>', fmt(r.qwp, 1) + ' kPa') +
