@@ -1,41 +1,41 @@
 import {
   windForceASCE722, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261016b'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261016b';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261016b';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261016b';
-import { installLazyPanels, setActiveTab } from './core/lazyPanels.js?v=20261016b';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks, loadPointList, skidSupportList } from './core/state.js?v=20261016b';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261016b';
-import { loadTesseract } from './ocr/tesseract.js?v=20261016b';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261016b';
-import { renderSummaryReport } from './report/summary.js?v=20261016b';
-import { exportReportHtml } from './report/exportHtml.js?v=20261016b';
-import { applyStaadImport, readStaadImportFile } from './tabs/staadImport.js?v=20261016b';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261016b';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261016b';
-import { calcFoundation } from './tabs/foundation.js?v=20261016b';
-import { autoSizeFoundation } from './tabs/autoSize.js?v=20261016b';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261016b';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261016b';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderLoadValuesHeader, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261016b';
-import { renderLoadPointTable } from './tabs/loadPoints.js?v=20261016b';
-import { applySkidSupports, renderSkidSupportNote, renderSkidSupportTable } from './tabs/skidSupports.js?v=20261016b';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261016b';
-import { calcRebar } from './tabs/rebar.js?v=20261016b';
-import { calcSettlement } from './tabs/settlement.js?v=20261016b';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261016b';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261016b';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261016b';
-import { resolveCheckTab, sync5BSources, syncLoadPointBox, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261016b';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261016b';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261016b';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261016b';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261016b';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261016b';
-import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261016b';
-import { renderScopePanel } from './workflow/scope.js?v=20261016b';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261016b';
+} from '../lib/foundation/index.js?v=20261025a'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261025a';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261025a';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261025a';
+import { installLazyPanels, setActiveTab } from './core/lazyPanels.js?v=20261025a';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks, loadPointList, skidSupportList } from './core/state.js?v=20261025a';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261025a';
+import { loadTesseract } from './ocr/tesseract.js?v=20261025a';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261025a';
+import { renderSummaryReport } from './report/summary.js?v=20261025a';
+import { exportReportHtml } from './report/exportHtml.js?v=20261025a';
+import { applyStaadImport, readStaadImportFile } from './tabs/staadImport.js?v=20261025a';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261025a';
+import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261025a';
+import { calcFoundation } from './tabs/foundation.js?v=20261025a';
+import { autoSizeFoundation } from './tabs/autoSize.js?v=20261025a';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261025a';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261025a';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderLoadValuesHeader, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261025a';
+import { renderLoadPointTable } from './tabs/loadPoints.js?v=20261025a';
+import { applySkidSupports, renderSkidSupportNote, renderSkidSupportTable } from './tabs/skidSupports.js?v=20261025a';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261025a';
+import { calcRebar } from './tabs/rebar.js?v=20261025a';
+import { calcSettlement } from './tabs/settlement.js?v=20261025a';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261025a';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261025a';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261025a';
+import { resolveCheckTab, sync5BSources, syncLoadPointBox, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261025a';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261025a';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261025a';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261025a';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261025a';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261025a';
+import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261025a';
+import { renderScopePanel } from './workflow/scope.js?v=20261025a';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261025a';
 
 installLazyPanels();
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------

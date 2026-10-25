@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261016b">
+<link rel="stylesheet" href="css/app.css?v=20261025a">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -963,6 +963,10 @@
           <div class="pf-lim-row"><input type="number" id="pf-eff-thr" min="0" step="0.1" placeholder="blank = always"><select id="pf-eff-thr-u" aria-label="Unit"><option value="D" selected>× D</option><option value="mm">mm</option></select></div>
         </div>
         <div class="field">
+          <label for="pf-eff-method">Method</label>
+          <select id="pf-eff-method"><option value="feld" selected>Feld's rule (any layout)</option><option value="converse-labarre">Converse–Labarre (regular grid)</option></select>
+        </div>
+        <div class="field">
           <label for="pf-eff-manual"><span>Manual E<sub>g</sub> (0–1, optional)</span></label>
           <input type="number" id="pf-eff-manual" min="0" max="1" step="0.01" placeholder="blank = automatic">
         </div>
@@ -978,6 +982,10 @@
         <div class="field">
           <label for="pf-lat-method">Method</label>
           <select id="pf-lat-method"><option value="governing" selected>Governing row (min Pm)</option><option value="average">Average of rows</option></select>
+        </div>
+        <div class="field">
+          <label for="pf-lat-src">Row factors</label>
+          <select id="pf-lat-src"><option value="reese" selected>Reese et al. (2003), leading / trailing</option><option value="table">Table below (AASHTO / editable)</option></select>
         </div>
         <div class="overflow-x">
           <table class="calc-table pm-table" id="pf-pm-table">
@@ -1171,8 +1179,8 @@
         <div id="st-pile-box" style="display:none;">
         <div class="section-label">Pile Group Settlement (Vesic, Das §11.18)</div>
         <div class="field"><label for="st-pile-Q"><span>Working load per pile, Q<sub>w</sub> (blank = auto)</span> <span class="unit">kN</span></label><input type="number" id="st-pile-Q" value="" min="0" step="1" placeholder="auto"></div>
-        <div class="note" id="st-pile-Q-note">Auto: the largest P / n of the service combinations without lateral load or moment (sustained gravity load).</div>
-        <div class="field"><label for="st-pile-shaft"><span>Shaft share of Q<sub>w</sub>, Q<sub>ws</sub> / Q<sub>w</sub></span> <span class="unit">%</span></label><input type="number" id="st-pile-shaft" value="67" min="0" max="100" step="1"></div>
+        <div class="note" id="st-pile-Q-note">Auto: the largest P / n of the sustained service combinations — gravity only, without live (L, Lr), test E(T), wind or earthquake.</div>
+        <div class="field"><label for="st-pile-shaft"><span>Shaft share of Q<sub>w</sub>, Q<sub>ws</sub> / Q<sub>w</sub></span> <span class="unit">%</span></label><input type="number" id="st-pile-shaft" value="66.67" min="0" max="100" step="0.01"></div>
         <div class="field"><label for="st-pile-xi"><span>Shaft friction distribution, ξ</span></label><select id="st-pile-xi"><option value="0.67" selected>0.67 — triangular / parabolic (friction piles)</option><option value="0.5">0.5 — uniform</option></select></div>
         <div class="field"><label for="st-pile-shape">Pile section</label><select id="st-pile-shape"><option value="square" selected>Square (A<sub>p</sub> = D², p = 4D)</option><option value="circular">Circular (A<sub>p</sub> = πD²/4, p = πD)</option></select></div>
         <div class="field"><label for="st-pile-L"><span>Pile length, L</span> <span class="unit">m</span></label><input type="number" id="st-pile-L" value="14" min="0" step="0.1"></div>
@@ -1968,6 +1976,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261016b"></script>
+<script type="module" src="js/app.js?v=20261025a"></script>
 </body>
 </html>
