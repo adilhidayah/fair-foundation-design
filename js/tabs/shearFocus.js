@@ -6,6 +6,7 @@
 import { escapeHtml } from '../core/dom.js?v=20261025a';
 import { fmt } from '../core/format.js?v=20261025a';
 import { lastResults, state } from '../core/state.js?v=20261025a';
+import { platformCapFocusHtml } from './platformCapFocus.js?v=20261025a';
 import { oneWayElevSVG, oneWayIsoSVG, oneWayPlanSVG, twoWayElevSVG, twoWayIsoSVG, twoWayPlanSVG } from '../diagrams/shearFocusDiagram.js?v=20261025a';
 
 const VIEWS = [['plan', '📐', 'Plan View'], ['elev', '📏', 'Elevation View'], ['iso', '🧊', 'Isometric 2.5D']];
@@ -75,7 +76,7 @@ export function renderShearFocus() {
   const anyViz = (lastResults.oneway && lastResults.oneway.viz) || (lastResults.twoway && lastResults.twoway.viz);
   const shallow = anyViz ? anyViz.shallow : document.querySelector('#fs-support button.sel')?.dataset.val !== 'pile';
   const fWord = shallow ? 'Footing' : 'Pile cap';
-  host.innerHTML = blockHtml('oneway', fWord) + blockHtml('twoway', fWord)
+  host.innerHTML = blockHtml('oneway', fWord) + blockHtml('twoway', fWord) + platformCapFocusHtml()
     + `<div class="fz-note sh-foot">Hover the critical section, the tributary / punched area or the cone for details. Numbers are those of sections 6.1 / 6.2 (Report Preview).</div>`;
 }
 

@@ -9,6 +9,7 @@ import { fmt } from '../core/format.js?v=20261025a';
 import { lastResults, pileList, platformColumnList } from '../core/state.js?v=20261025a';
 import { loadPointsActive } from '../tabs/loadPoints.js?v=20261025a';
 import { pileComboLoads } from '../tabs/pile.js?v=20261025a';
+import { renderShearFocus } from '../tabs/shearFocus.js?v=20261025a';
 
 const NO_CAP = { Qc: 1e12, Qt: 1e12, Ql: 1e12 };
 
@@ -50,8 +51,8 @@ export function calcPlatformCap() {
   const out = document.getElementById('calc-platformcap');
   if (!out) return;
   const active = getRadioVal('fs-support') === 'pile' && loadPointsActive() && platformColumnList.length > 0;
-  if (!active) { out.innerHTML = ''; lastResults.platformCap = null; return; }
-  const fail = (m) => { out.innerHTML = `<div class="warn-box"><strong>Platform pile cap:</strong> ${m}</div>`; lastResults.platformCap = { label: 'Platform pile cap', status: 'ERROR', metric: '—', detail: m }; };
+  if (!active) { out.innerHTML = ''; lastResults.platformCap = null; lastResults.platformCapViz = null; renderShearFocus(); return; }
+  const fail = (m) => { lastResults.platformCapViz = null; renderShearFocus(); out.innerHTML = `<div class="warn-box"><strong>Platform pile cap:</strong> ${m}</div>`; lastResults.platformCap = { label: 'Platform pile cap', status: 'ERROR', metric: '—', detail: m }; };
   const Bf = num('fs-Bf'), Lf = num('fs-Lf'), t = num('rb-t'), cc = num('rb-cc'), bar = num('rb-capbar'), fc = num('gen-fc'), fy = num('gen-fy');
   const dp = num('pf-dia') / 1000;
   if (!(pileList.length >= 2 && dp > 0 && Bf > 0 && Lf > 0 && t > 0 && bar > 0 && fc > 0 && fy > 0)) return fail('piles, pile width, cap size, thickness, bar and material strengths must be set.');
@@ -104,5 +105,14 @@ export function calcPlatformCap() {
     <p><strong>Moment along z, L/C ${escapeHtml(String(gz.lc))}</strong> (whole width ${fmt(Bf, 2)} m):</p>${momentSvg(gz.beamZ, -Lf / 2, Lf / 2, 'Moment along z')}
     <div class="limits-box"><strong>Limitation:</strong> statics from the pile reactions of a rigid cap (no cap-pile stiffness model); the vessel base-ring pressure is linear over the ring diameter and its couple is whatever balances the load case; column base moments are not used; punching of the vessel and of the piles is in 5B.1. Cap weight is taken from Section 02.</div>`;
   out.innerHTML = html;
+  // Focus Canvas data (js/tabs/platformCapFocus.js): geometry, the checks and the moment curves of the governing combinations.
+  const sample = (beam, s0, s1) => Array.from({ length: 121 }, (_, k) => { const q = s0 + (s1 - s0) * k / 120; return [q, beam.momentAt(q)]; });
+  const gx = results.reduce((a, b) => (b.beamX.Mpos > a.beamX.Mpos ? b : a));
+  lastResults.platformCapViz = {
+    Bf, Lf, t, bars, pass, gov, dp, ringD, piles: pileList.map(p => ({ x: p.x, y: p.y })),
+    vessels: items[0].pointLoads.map(p => ({ x: p.x, y: p.y })), columns: platformColumnList.map(c => ({ x: c.x, y: c.y, c1: c.c1, c2: c.c2 })), punchK: cp.k,
+    footprint: results[0].footprint, checks, momentZ: { lc: gz.lc, pts: sample(gz.beamZ, -Lf / 2, Lf / 2) }, momentX: { lc: gx.lc, pts: sample(gx.beamX, -Bf / 2, Bf / 2) }
+  };
   lastResults.platformCap = { label: 'Platform pile cap', status: pass ? 'PASS' : 'FAIL', metric: `${fmt(gov.uc, 3)} (${gov.name})`, detail: `${gov.name}, UC = ${fmt(gov.uc, 3)}` };
+  renderShearFocus();
 }
