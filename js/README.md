@@ -33,6 +33,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/rebar.js` | 5A/5B — `calcRebar` |
 | `tabs/shear.js` | 5B — `calcOneWay`, `calcTwoWay` |
 | `tabs/bearing.js`, `tabs/settlement.js` | 08 / 08B |
+| `tabs/settlementFocus.js`, `diagrams/settlementDiagram.js` | 08B — display-only settlement Focus Canvas and static report SVGs: before / after / overlay, existing components and allowable checks; single-pile components remain separate from group settlement |
 | `tabs/anchor.js` | 09 — bolt table, `calcAnchor`; method (radio `ab-method`): single anchor (`computeAnchorCapacity`) or ACI 17 group of 4 anchors (`anchorGroupCheck`, = CLI) with anchor reinforcement `ab-reinf` none / pedestal bars (layout from `lastResults.pedestalRebar.layout`) / hairpins (`ab-hp-*`), shear reinforcement `ab-vreinf` none / ties in the top 125 mm (`ab-tie-*`, Case 1 / 2, diamond) / hairpins; `syncAnchorInputs` shows the fields |
 | `ocr/tesseract.js` | lazy Tesseract.js loader |
 | `ocr/review.js` | OCR / paste review tables (parsers are in `lib/foundation/import/textParsers.js`) |

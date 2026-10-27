@@ -1,13 +1,13 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261028a1';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028a1';
-import { fmt } from '../core/format.js?v=20261028a1';
-import { comboState, state } from '../core/state.js?v=20261028a1';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261028a1';
-import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261028a1';
-import { recalcAll } from '../workflow/recalc.js?v=20261028a1';
-import { skidSupportPreviewHtml } from '../tabs/skidSupports.js?v=20261028a1';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261028s1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028s1';
+import { fmt } from '../core/format.js?v=20261028s1';
+import { comboState, state } from '../core/state.js?v=20261028s1';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261028s1';
+import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261028s1';
+import { recalcAll } from '../workflow/recalc.js?v=20261028s1';
+import { skidSupportPreviewHtml } from '../tabs/skidSupports.js?v=20261028s1';
 
 export const LC_LOADTYPE_DEFAULTS = {
   D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately

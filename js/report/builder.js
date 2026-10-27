@@ -1,9 +1,9 @@
 // Printable report builder (sections, logos, document header).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { flushRecalc } from '../workflow/recalc.js?v=20261028a1';
-import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261028a1';
-import { reportBlocks, state } from '../core/state.js?v=20261028a1';
-import { buildQuickStatusHtml } from '../report/summary.js?v=20261028a1';
+import { flushRecalc } from '../workflow/recalc.js?v=20261028s1';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261028s1';
+import { reportBlocks, state } from '../core/state.js?v=20261028s1';
+import { buildQuickStatusHtml } from '../report/summary.js?v=20261028s1';
 
 export function renderBlockList() {
   document.getElementById('rpt-block-body').innerHTML = reportBlocks.map((b, i) => `

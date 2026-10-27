@@ -1,14 +1,14 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028a1';
-import { getRadioVal, num } from '../core/dom.js?v=20261028a1';
-import { fmt } from '../core/format.js?v=20261028a1';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261028a1';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028a1';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028a1';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028a1';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261028a1';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028a1';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028s1';
+import { getRadioVal, num } from '../core/dom.js?v=20261028s1';
+import { fmt } from '../core/format.js?v=20261028s1';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261028s1';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028s1';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028s1';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028s1';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261028s1';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028s1';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `

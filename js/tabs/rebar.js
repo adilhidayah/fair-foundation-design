@@ -1,16 +1,16 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261028a1';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028a1';
-import { fmt } from '../core/format.js?v=20261028a1';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261028a1';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028a1';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261028a1';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028a1';
-import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261028a1';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028a1';
-import { pileComboLoads } from '../tabs/pile.js?v=20261028a1';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028a1';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261028s1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028s1';
+import { fmt } from '../core/format.js?v=20261028s1';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261028s1';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028s1';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261028s1';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028s1';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261028s1';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028s1';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028s1';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028s1';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
