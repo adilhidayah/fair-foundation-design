@@ -2,8 +2,8 @@
 // preview is in Focus Canvas mode (css/app.css); Report Preview and print keep .ld-page.
 // Builds markup only — the vectors come from renderLcSummary() (buildStdComboBase() / stdComboVector(), the same numbers as the
 // 3.3 tables); the envelope only picks maxima / minima of those rows. Declarations only. Reuses the .fz-* layout.
-import { escapeHtml } from '../core/dom.js?v=20261028a4';
-import { fmt } from '../core/format.js?v=20261028a4';
+import { escapeHtml } from '../core/dom.js?v=20261028m2';
+import { fmt } from '../core/format.js?v=20261028m2';
 
 // d: { modeLabel, status: { status }, nTypes, nAsd, nLrfd, dW, dh, untyped: [code], cWord,
 //      types: [{ code, label, kindLabel, v: { Fx, Fz, P, Mx, Mz } | null }],

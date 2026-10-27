@@ -1,11 +1,11 @@
 // 08B — Settlement (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261028a4';
-import { getRadioVal, num } from '../core/dom.js?v=20261028a4';
-import { fmt } from '../core/format.js?v=20261028a4';
-import { lastResults, pileList } from '../core/state.js?v=20261028a4';
-import { pileComboLoads } from '../tabs/pile.js?v=20261028a4';
-import { settlementFocusHTML, settlementReportVisualHTML } from './settlementFocus.js?v=20261028a4';
+import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261028m2';
+import { getRadioVal, num } from '../core/dom.js?v=20261028m2';
+import { fmt } from '../core/format.js?v=20261028m2';
+import { lastResults, pileList } from '../core/state.js?v=20261028m2';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028m2';
+import { settlementFocusHTML, settlementReportVisualHTML } from './settlementFocus.js?v=20261028m2';
 
 // Both views receive the same calculation snapshot. An invalid calculation clears the previous visualization.
 function settlementVisuals(viz = null) {

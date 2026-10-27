@@ -1,4 +1,5 @@
 # VALIDATION REPORT — Foundation Calculation Library
+> 28 Oct 2026 — anchor mechanism cards: 47 validation scripts pass, including 21 operand-disclosure checks in part47 (single-anchor and group, grout, reinforcement, not-required and undefined states). Before/after comparison of 10 vectors confirms all pre-existing result fields, UC and PASS/FAIL unchanged. Only `modeDetails` is added; the open shear-sharing issue is unchanged.
 > 28 Oct 2026 — grout-pad steel shear correction, ACI 318M-19 §17.7.1.2.1: 46 validation scripts pass, including 21 new checks in part46. The two-versus-four-anchor sharing decision is still pending; see [audit details](../../../docs/ANCHOR_SHEAR_AUDIT.md). The totals below describe the earlier 16 Oct run.
 
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.

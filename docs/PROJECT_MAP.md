@@ -101,6 +101,7 @@ MASTER CALCULATOR/
 | [js/tabs/settlementFocus.js](../js/tabs/settlementFocus.js), [js/diagrams/settlementDiagram.js](../js/diagrams/settlementDiagram.js) | — | 08B — Focus Canvas + SVG laporan: sebelum/sesudah, komponen settlement, batas izin; memakai hasil hitungan existing |
 | [js/tabs/anchor.js](../js/tabs/anchor.js) | 8 KB | 09 — tabel bolt + `calcAnchor()` |
 | [js/tabs/anchorFocus.js](../js/tabs/anchorFocus.js), [js/diagrams/anchorFocusDiagram.js](../js/diagrams/anchorFocusDiagram.js) | — | 09 — Focus Canvas: denah gaya tarik angkur, pilihan kombinasi LRFD, rasio tiap cek, envelope pedestal penentu; hasil dari kalkulasi existing |
+| [js/tabs/anchorModes.js](../js/tabs/anchorModes.js), [js/diagrams/anchorFailureDiagram.js](../js/diagrams/anchorFailureDiagram.js) | — | 09 — kartu skematik tiap mekanisme keruntuhan, pasal ACI, demand / kapasitas desain / UC dari `modeDetails` di library; bukan gambar detail pelaksanaan |
 | [js/ocr/tesseract.js](../js/ocr/tesseract.js) | 1 KB | Loader Tesseract (diunduh saat OCR diklik) |
 | [js/ocr/review.js](../js/ocr/review.js) | 9 KB | Tabel review hasil OCR / paste |
 | [js/report/summary.js](../js/report/summary.js) | 2 KB | Tab Summary Report |

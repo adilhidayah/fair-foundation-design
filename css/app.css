@@ -2079,3 +2079,21 @@
   .ab-meter i { position: absolute; left: 66.6667%; top: -3px; bottom: -3px; border-left: 2px solid var(--ink); }
   .ab-strength { display: grid; gap: 10px; font-size: 12px; margin-top: 16px; }
   .ab-limit { font-size: 12px; line-height: 1.7; border-left: 3px solid var(--caution); }
+
+  /* Anchor mechanism cards: concept sketches, not calculated failure geometry. */
+  .af-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 275px), 1fr)); gap: 14px; margin-top: 16px; }
+  .af-mode { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
+  .af-mode header { display: flex; align-items: start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .af-mode h3 { margin: 0 0 5px; font-size: 13px; color: var(--ink); }
+  .af-clause, .af-basis { font: 10px var(--mono); color: var(--ink-soft); }
+  .af-diagram { width: 100%; max-width: 360px; display: block; margin: 12px auto 8px; }
+  .af-force { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .af-zone { fill: color-mix(in srgb, var(--caution) 18%, transparent); stroke: var(--caution); stroke-width: 2; stroke-dasharray: 5 3; }
+  .af-crack { fill: none; stroke: var(--caution); stroke-width: 3; stroke-linejoin: round; }
+  .af-rebar { fill: none; stroke: var(--caution); stroke-width: 4; stroke-linejoin: round; }
+  .af-description { font-size: 12px; color: var(--ink-soft); line-height: 1.6; margin: 6px 0 12px; }
+  .af-mode dl { margin: 10px 0 0; font-size: 12px; }
+  .af-mode dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); }
+  .af-mode dd { margin: 0; font-family: var(--mono); font-weight: 600; }
+  .af-mode dt { color: var(--ink-soft); }
+  .af-inactive { font-size: 12px; color: var(--ink-soft); padding: 12px 0; }
