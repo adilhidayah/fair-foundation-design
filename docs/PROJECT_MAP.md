@@ -6,7 +6,7 @@ Klik nama file untuk membukanya. Ukuran per 25 Sep 2026.
 
 ```
 MASTER CALCULATOR/
-├── FAIR Foundation Design.html      ← halaman utama (markup saja)
+├── index.html                         ← halaman utama (markup saja)
 ├── css/
 │   └── app.css                ← semua style
 ├── js/                        ← tampilan + wiring UI (menyentuh DOM)
@@ -26,6 +26,9 @@ MASTER CALCULATOR/
 │   └── validation/            ← test hand-calc (node ...mjs)
 ├── patch.js                   ← fixer marker SVG (idempotent)
 ├── tools/
+│   ├── report-output.mjs      ← laporan CLI: Markdown → HTML A4 (css/report.css) → PDF lewat Chrome/Edge headless
+│   ├── staad-pile.mjs         ← CLI: reaksi STAAD → cek 4B pile group per kombinasi (laporan .md)
+│   ├── fair-run.mjs           ← CLI input gaya STAAD (.fnd → config → staad-stability); parser: lib/foundation/import/fndCommands.js
 │   ├── staad-stability.mjs    ← CLI: reaksi STAAD → stabilitas + desain footing/pedestal (laporan .md)
 │   └── foundation-drawing.mjs ← gambar pondasi (DXF R12 + SVG) dari hasil staad-stability
 ├── AGENTS.md                  ← aturan kerja AI assistant (harus di root)
@@ -39,14 +42,14 @@ MASTER CALCULATOR/
 | 00 — Equipment setup | [js/workflow/setup.js](../js/workflow/setup.js) | [lib/foundation/index.js](../lib/foundation/index.js) (dispatcher) |
 | 01 — General Input Data | [js/tabs/general.js](../js/tabs/general.js) | — |
 | 02 — Foundation Dimension | [js/tabs/foundSize.js](../js/tabs/foundSize.js), diagram [foundSizeDiagram.js](../js/diagrams/foundSizeDiagram.js) | [static/foundationSizing.js](../lib/foundation/static/foundationSizing.js) |
-| 03 — Loading Data (load types, live, equipment, wind, seismic) | [js/tabs/loading.js](../js/tabs/loading.js) | [shared/windLoad.js](../lib/foundation/shared/windLoad.js), [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) |
+| 03 — Loading Data (load types, live, equipment, wind, seismic) | [js/tabs/loading.js](../js/tabs/loading.js), skid support reactions [js/tabs/skidSupports.js](../js/tabs/skidSupports.js) | [shared/windLoad.js](../lib/foundation/shared/windLoad.js), [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) |
 | Load combinations | [js/tabs/combos.js](../js/tabs/combos.js) | [shared/loadCombinations.js](../lib/foundation/shared/loadCombinations.js) |
 | 4A — Foundation Stability | [js/tabs/foundation.js](../js/tabs/foundation.js), diagram [foundationDiagram.js](../js/diagrams/foundationDiagram.js) | [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) |
 | 4B — Pile Stability | [js/tabs/pile.js](../js/tabs/pile.js), diagram [pileDiagram.js](../js/diagrams/pileDiagram.js) | [shared/pileGroup.js](../lib/foundation/shared/pileGroup.js) (spasi/tepi, efisiensi, p-multiplier, biaksial + torsi); `pileComboLoads()` (pile.js) juga dipakai 5B; `evaluatePileCombo` (uniaksial lama) di [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) tidak lagi dipakai UI |
 | 5A — Pedestal (P-M) | [js/tabs/rebar.js](../js/tabs/rebar.js), diagram [pmDiagram.js](../js/diagrams/pmDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
 | 5B — Pile cap / footing shear + flexure | [js/tabs/shear.js](../js/tabs/shear.js), [js/tabs/rebar.js](../js/tabs/rebar.js), [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js), [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js), [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) |
 | 08 — Bearing Capacity | [js/tabs/bearing.js](../js/tabs/bearing.js) | [shared/bearingCapacity.js](../lib/foundation/shared/bearingCapacity.js) |
-| 08B — Settlement | [js/tabs/settlement.js](../js/tabs/settlement.js) | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js), [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) |
+| 08B — Settlement (footing: elastis + konsolidasi; pile: Vesic) | [js/tabs/settlement.js](../js/tabs/settlement.js) | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js), [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js), [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) |
 | 09 — Anchor Bolt | [js/tabs/anchor.js](../js/tabs/anchor.js), diagram [anchorDiagram.js](../js/diagrams/anchorDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
 | Summary / laporan cetak | [js/report/summary.js](../js/report/summary.js), [js/report/builder.js](../js/report/builder.js) | — |
 | Status workflow / live bar | [js/workflow/status.js](../js/workflow/status.js) | — |
@@ -54,14 +57,14 @@ MASTER CALCULATOR/
 | Batch stabilitas dari STAAD (CLI, tanpa UI) | [tools/staad-stability.mjs](../tools/staad-stability.mjs) | [import/staadOutput.js](../lib/foundation/import/staadOutput.js) + [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) |
 | Tombol, event listener, urutan startup | [js/app.js](../js/app.js) | — |
 | Warna, layout, font | [css/app.css](../css/app.css) | — |
-| Teks / field di halaman | [FAIR Foundation Design.html](../FAIR%20Foundation%20Design.html) | — |
+| Teks / field di halaman | [index.html](../index.html) | — |
 
 ## Semua file
 
 ### Halaman & style
 | File | Ukuran | Isi |
 |---|---:|---|
-| [FAIR Foundation Design.html](../FAIR%20Foundation%20Design.html) | 92 KB | Markup semua tab (tanpa CSS/JS) |
+| [index.html](../index.html) | 92 KB | Markup semua tab (tanpa CSS/JS) |
 | [css/app.css](../css/app.css) | 52 KB | Semua style |
 
 ### js/ — tampilan & wiring
@@ -125,19 +128,22 @@ MASTER CALCULATOR/
 | [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js) | 5 KB | V_u geser satu arah / punching pile cap dari reaksi tiang (interpolasi d_p/2) |
 | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) | 7 KB | P-M pedestal, anchor bolt (ACI Ch.17) |
 | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js) | 6 KB | One-way / punching shear, lentur |
-| [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 6 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak) |
+| [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) | 10 KB | Footing dangkal: M<sub>u</sub> / V<sub>u</sub> dari tekanan tanah net (linear tanpa tarik, integrasi eksak); multi-titik beban: `footingFlexurePoints()` (muka titik + scan bentang), `footingOneWayShearPoints()`, `footingPunchingPoint()` |
 | [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) | 2 KB | Korelasi SPT (Peck/Stroud/Bowles) |
 | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js) | 3 KB | Penurunan elastis + konsolidasi |
+| [shared/pilePunching.js](../lib/foundation/shared/pilePunching.js) | 2 KB | Punching tiang menembus pile cap: `pilePunchingCheck()` (penampang d/2 dipotong tepi cap, αs 40/30/20) |
+| [shared/loadPoints.js](../lib/foundation/shared/loadPoints.js) | 5 KB | Beberapa titik beban pada satu pile cap: `splitCombinationLoad()` (beban grup ekuivalen), `pointLoadsBeyond()` (netting di penampang); footing dangkal: `footingPointLoads()` (beban titik + berat sendiri merata, resultan grup) |
+| [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js) | 2 KB | Penurunan tiang tunggal + kelompok (Vesic 1977, Das §11.18): `pileSettlementVesic()` |
 | [shared/windLoad.js](../lib/foundation/shared/windLoad.js) | 2 KB | Beban angin |
 | [shared/seismicLoad.js](../lib/foundation/shared/seismicLoad.js) | 4 KB | Fa/Fv, S_DS, Cs |
 | [static/](../lib/foundation/static/) | 6 KB | Vessel/tank/HE: `loadingData`, `foundationSizing` |
 | [rotating/](../lib/foundation/rotating/) | 6 KB | Pompa/kompresor/turbin: vibrasi, mass ratio ≥ 3 |
 | [reciprocating/](../lib/foundation/reciprocating/) | 6 KB | Kompresor torak: gaya dinamis 1x/2x, mass ratio ≥ 5 |
 | [piperack/](../lib/foundation/piperack/) | 6 KB | Pipe rack: arah L/T, sizing iteratif |
-| [skidMounted/](../lib/foundation/skidMounted/) | 3 KB | Skid: reaksi bolt, footprint |
+| [skidMounted/](../lib/foundation/skidMounted/) | 5 KB | Skid: reaksi bolt, footprint; `skidSupportLoads()` (reaksi vendor per tumpuan → E(E)/E(O)/E(T) + load points) |
 | [import/textParsers.js](../lib/foundation/import/textParsers.js) | 6 KB | Parser teks OCR/paste (tanpa konversi satuan) |
 | [import/staadOutput.js](../lib/foundation/import/staadOutput.js) | 6 KB | Parser STAAD: load case / REPEAT LOAD (.std), SUPPORT REACTIONS (.ANL), reaksi → konvensi tanda FAIR |
-| [validation/](../lib/foundation/validation/) | — | 7 file test + [VALIDATION_REPORT.md](../lib/foundation/validation/VALIDATION_REPORT.md) |
+| [validation/](../lib/foundation/validation/) | — | 39 file test + [VALIDATION_REPORT.md](../lib/foundation/validation/VALIDATION_REPORT.md) |
 
 ### Lain-lain
 | File | Isi |
@@ -145,12 +151,13 @@ MASTER CALCULATOR/
 | [AGENTS.md](../AGENTS.md) | Aturan untuk AI assistant |
 | [PROJECT_INSTRUCTIONS.md](PROJECT_INSTRUCTIONS.md) | Instruksi proyek |
 | [AI_ASSISTANT_PLAN.md](AI_ASSISTANT_PLAN.md) | Rencana fitur AI assistant |
+| [HANDOFF.md](HANDOFF.md) | Status repo, keterbatasan, gotcha teknis |
 | [patch.js](../patch.js) | Fixer marker panah SVG — jalankan `node patch.js` |
 
 ## Alur saat halaman dibuka
 
 ```
-FAIR Foundation Design.html
+index.html
   └─ css/app.css
   └─ js/app.js  ──import──►  js/core/*  js/diagrams/*  js/tabs/*  js/ocr/*  js/report/*  js/workflow/*
                                    │

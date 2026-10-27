@@ -1,6 +1,6 @@
 # js/ — UI modules
 
-`FAIR Foundation Design.html` loads one entry script, `js/app.js`, which imports everything else.
+`index.html` loads one entry script, `js/app.js`, which imports everything else.
 
 **Split rule:** `lib/` = calculate + extract (pure, Node-testable). `js/` = display + wiring (touches the DOM).
 Calculation formulas never live in `js/` — modules here read inputs, call `lib/`, and render.
@@ -11,6 +11,8 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 |---|---|
 | `app.js` | Entry point. **Only executable top-level code**: event wiring (`addEventListener`), startup renders, `window.*` exports for inline `onclick=`, the Wind/Seismic generator popup handlers. Kept in the original execution order. |
 | `core/format.js` | `fmt` (display number formatting) |
+| `tabs/loadPoints.js` | `loadPointsActive`, `loadPointsPedestals` (a pedestal under every point: 5A and 09 are done per pedestal), `activeLoadPoints`, `renderLoadPointTable` — Tab 02 list of load points (several equipment on one pile cap, `state.loadPointList`); consumed by `pileComboLoads()` (4B / 5B) and the 5B shear / flexure |
+| `core/lazyPanels.js` | `installLazyPanels`, `setActiveTab` — heavy result panels (`#calc-*`, `#focus-*`, Tab 03 summaries) keep a write as a string until their tab is open; `.innerHTML` reads still return the latest HTML (perf with 100+ combinations); long tables (> 40 rows) show their first rows + a "Show all N rows" button on screen (reports and print stay full) |
 | `core/dom.js` | `num`, `selectRadio`, `getRadioVal`, `escapeHtml`, `openModal`/`closeModal`, `wireDecimalAutoFormat` |
 | `core/worksheet.js` | `comboLabel`, `dlWorksheetItem`, `dlWorksheetTotal` (unused), `verdictHTML`, `efficiencyBadge` |
 | `core/state.js` | Shared state — see below |
@@ -19,8 +21,10 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/generalFocus.js` | 01 — Focus Canvas view (`#focus-general`): material / unit-weight / q_a tiles, standards list, geotechnical criteria; replaces the A4 sheet only in Focus Canvas mode |
 | `tabs/foundSize.js` | 02 — `calcFoundSize` |
 | `tabs/shearFocus.js` | 5B — Focus Canvas of the shear checks (`#focus-capcheck`): two stacked canvases, 6.1 one-way and 6.2 punching, each with its own Plan / Elevation / Isometric 2.5D switcher (`state.shViewOw` / `state.shViewTw`), D/C badge and tiles, hover popover on `[data-tip]`; draws `lastResults.oneway.viz` / `.twoway.viz` (set in shear.js) with `diagrams/shearFocusDiagram.js` |
+| `tabs/platformCapFocus.js` | 5B.2 — Focus Canvas section of the platform pile cap (appended below 6.1 / 6.2 in `#focus-capcheck` by shearFocus.js): D/C badge, tiles, cap plan (piles, vessel rings, platform columns), moment curves and a ratio bar per check; draws `lastResults.platformCapViz` (set in platformCap.js) |
 | `tabs/foundSizeFocus.js` | 02 — Focus Canvas view (`#focus-foundsize`): tiles, CAD viewport (Plan / Elevation = crops of the report diagram, Isometric 2.5D; view in `state.fzView`), self-weight, geometry checks; replaces the A4 sheet only in Focus Canvas mode |
 | `tabs/loading.js` | 03 — load types / values, live, equipment, wind & seismic direct entry, design load summary |
+| `tabs/staadImport.js` | 03 — "Import STAAD (.std + .ANL)" (`#sti-group`, Support Reaction mode): `readStaadImportFile`, `applyStaadImport` — calls `staadReactionCombos` (lib), writes the unit load types FY/FX/FZ/MX/MZ + D + TMP into `state.lcLoadTypes` and the ASD / LRFD lists into `comboState`, sets the STAAD sign mode |
 | `tabs/combos.js` | load combination tables, computed summary, standard LC101-126 set |
 | `tabs/loadingFocus.js` | 03 — Focus Canvas view (`#focus-loading`, filled by `renderLcSummary()`): ASD envelope tiles, load types, load-transfer diagram, combinations at the bottom of the footing; replaces `.ld-page` in Focus Canvas mode unless an OCR / paste review is open |
 | `tabs/foundation.js` | 4A — `calcFoundation` |
@@ -29,9 +33,10 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/rebar.js` | 5A/5B — `calcRebar` |
 | `tabs/shear.js` | 5B — `calcOneWay`, `calcTwoWay` |
 | `tabs/bearing.js`, `tabs/settlement.js` | 08 / 08B |
-| `tabs/anchor.js` | 09 — bolt table, `calcAnchor` |
+| `tabs/anchor.js` | 09 — bolt table, `calcAnchor`; method (radio `ab-method`): single anchor (`computeAnchorCapacity`) or ACI 17 group of 4 anchors (`anchorGroupCheck`, = CLI) with anchor reinforcement `ab-reinf` none / pedestal bars (layout from `lastResults.pedestalRebar.layout`) / hairpins (`ab-hp-*`), shear reinforcement `ab-vreinf` none / ties in the top 125 mm (`ab-tie-*`, Case 1 / 2, diamond) / hairpins; `syncAnchorInputs` shows the fields |
 | `ocr/tesseract.js` | lazy Tesseract.js loader |
 | `ocr/review.js` | OCR / paste review tables (parsers are in `lib/foundation/import/textParsers.js`) |
+| `report/exportHtml.js` | "Export report (HTML)" on the Summary tab: the Summary panel + `css/report.css` as one standalone file (same document builder as the CLI, `lib/foundation/report/reportDocument.js`), SVG styles written inline, Print / Save as PDF button inside |
 | `report/summary.js`, `report/builder.js` | Summary tab; printable report builder |
 | `workflow/recalc.js` | `recalcAll`, `calcFoundationAndGeneral`, `calcBearingAndFoundation` |
 | `workflow/setup.js` | 00 — equipment setup, foundation-tab visibility, load input mode |

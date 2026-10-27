@@ -1,13 +1,14 @@
 // 02 — Foundation dimension / sizing.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261015a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { lastResults, pileList, state } from '../core/state.js?v=20261015a';
-import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261015a';
-import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015a';
-import { recalcAll } from '../workflow/recalc.js?v=20261015a';
-import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261015a';
+import { foundationGeometryCheck, foundationSizing } from '../../lib/foundation/index.js?v=20261027merge1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
+import { fmt } from '../core/format.js?v=20261027merge1';
+import { lastResults, pileList, state } from '../core/state.js?v=20261027merge1';
+import { foundSizeDiagramSVG } from '../diagrams/foundSizeDiagram.js?v=20261027merge1';
+import { chapterHeader, numberTables, sectionHeader } from '../core/worksheet.js?v=20261027merge1';
+import { recalcAll } from '../workflow/recalc.js?v=20261027merge1';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261027merge1';
+import { foundSizeFocusHTML, foundSizeFocusInvalidHTML } from '../tabs/foundSizeFocus.js?v=20261027merge1';
 
 // foundationSizing() lives in lib/foundation/static/foundationSizing.js.
 export function calcFoundSize() {
@@ -48,6 +49,8 @@ export function calcFoundSize() {
   const Bp = hasPed ? num('fs-Bp') : 0, Lp = hasPed ? num('fs-Lp') : 0;
   const pedGp = hasPed ? num('fs-Gp') : 0;
   const OffX = hasPed ? num('fs-OffX') : 0, OffZ = hasPed ? num('fs-OffZ') : 0;
+  // Several load points on a pile cap with pedestals: one pedestal under each point (size c1 × c2 of the point, height Hp of this tab).
+  const lpPeds = loadPointsPedestals() ? activeLoadPoints() : null;
   // Tab 02 is the single source of the plan geometry used by 5A / 5B: the pedestal size (5A section, one-way shear
   // sections, punching column size) and the cap widths (5B flexure / one-way shear). They are mirrored into those
   // tabs' fields (read-only). With no pedestal in Tab 02 (cap-only) the pedestal-size fields stay editable, as the
@@ -88,9 +91,9 @@ export function calcFoundSize() {
   // Lean concrete is no longer part of the foundation dead load (replaced by the grouting row, Wg) — the hidden
   // fs-lean-* inputs are left in place but not passed, so foundationSizing() returns Wl = 0.
   const sizing = foundationSizing({ type, Bf, Lf, Hf: Hf0, Df, gc, gs, Bp, Lp, pedGp, OffX, OffZ, blockGp,
-    groutT: hasGrout ? groutT / 1000 : 0 }); // grout input in mm -> m
+    groutT: hasGrout ? groutT / 1000 : 0, pedAreas: lpPeds ? lpPeds.map(p => p.c1 * p.c2) : null }); // grout input in mm -> m
   if (!sizing.valid) {
-    state.pedHp = 0; state.pedW = 0; state.footSoilW = 0; state.footW = 0;
+    state.pedHp = 0; state.pedW = 0; state.pedPointW = []; state.footSoilW = 0; state.footW = 0;
     lastResults.foundsize = { issues: foundationGeometryCheck({ Bf, Lf, Hf: Hf0, Df }).issues };
     document.getElementById('calc-foundsize').innerHTML = `<div class="warn-box"><strong>⚠  Invalid input:</strong> B<sub>f</sub>, L<sub>f</sub>, H<sub>f</sub> must be greater than zero and D<sub>f</sub> ≥ 0 (bottom not above ground). With a pedestal, D<sub>f</sub> ≥ H<sub>f</sub> as well (the footing must fit within the embedment depth); without a pedestal the footing / pile cap may project above ground.</div>`;
     document.getElementById('focus-foundsize').innerHTML = foundSizeFocusInvalidHTML();
@@ -101,6 +104,8 @@ export function calcFoundSize() {
   // pedestal's own weight (concrete Wp + grout Wg, tons -> kN) adds to the axial load. Nothing for a cap-only foundation.
   state.pedHp = sizing.hasPed ? Hp : 0;
   state.pedW = sizing.hasPed ? (Wp + Wg) * 9.80665 : 0;
+  // one pedestal per load point: weight of each (concrete + grout; gc kN/m³ · c1 · c2 · Hp)
+  state.pedPointW = sizing.hasPed && lpPeds ? lpPeds.map(p => num('gen-gc') * p.c1 * p.c2 * Hp) : [];
   state.footSoilW = Ws * 9.80665; // tons -> kN (4A: centroid shifts with the pedestal offset)
   // tons -> kN (5B shallow footing: deducted with the backfill from the design pressure); without a pedestal the grout layer
   // covers the whole footing (Wg = gc·Af·groutT), so it is part of the footing load per unit area.
@@ -113,7 +118,7 @@ export function calcFoundSize() {
   let html = '';
   html += chapterHeader('02. Foundation Dimension', 'This section establishes the foundation geometry — footing/pile cap and pedestal dimensions — used by the subsequent calculations in this tool.');
   // Geometry consistency (lib) — shown here, and the result drives the status of step 02 in the Design Status panel.
-  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile });
+  const geom = foundationGeometryCheck({ Bf, Lf, Hf, Df, hasPed, Bp, Lp, OffX, OffZ, isPile, hEmbed: hpile, pedList: lpPeds, pointList: lpPeds ? null : activeLoadPoints() });
   // Non-blocking warnings (e.g. a cap-only top not above the ground) go to the Design Status panel as notices.
   lastResults.foundsize = { issues: geom.issues, notices: geom.warnings.map(w => ({ title: `${isPile ? 'Pile cap' : 'Footing'} top not above ground`, text: w.text })) };
   if (!geom.overallPass) {
@@ -123,7 +128,8 @@ export function calcFoundSize() {
     html += `<div class="warn-box"><strong>⚠  Pile Foundation selected but no piles defined:</strong> add piles in "4B — PILE FOUNDATION STABILITY", or switch Foundation Type to "Shallow Foundation" in "01 — GENERAL INPUT DATA".</div>`;
   }
   html += sectionHeader('2.1', 'Foundation Layout', `Plan (x, z) and elevation (x, y); origin at the ${isPile ? 'pile cap' : 'footing'} centre.${isPile && piles.length ? ' Piles are shown dashed (below the cap), numbered as in 4B.' : ''}`, true);
-  const diagramSvg = foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, Bp, Lp, Gp, Dp, OffX, OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0);
+  const dgm = lpPeds ? { Bp: lpPeds[0].c1, Lp: lpPeds[0].c2, OffX: lpPeds[0].x, OffZ: lpPeds[0].y } : { Bp, Lp, OffX, OffZ }; // multi-pedestal: the elevation shows the first pedestal
+  const diagramSvg = foundSizeDiagramSVG(type, Bf, Lf, Hf, Df, dgm.Bp, dgm.Lp, Gp, Dp, dgm.OffX, dgm.OffZ, hpile, piles, hasGrout, groutT, isPile ? num('pf-dia') / 1000 : 0, activeLoadPoints(), !!lpPeds);
   html += diagramSvg;
   const fWord = isPile ? 'pile cap' : 'footing';
   html += sectionHeader('2.2', isPile ? 'Pile Cap' : 'Footing');
@@ -144,15 +150,15 @@ export function calcFoundSize() {
     html += `<div class="overflow-x"><table class="calc-table" style="table-layout:fixed;">
       <caption>Pedestal Size</caption>
       <tr><th style="width:46%;">Parameter</th><th style="width:24%;">Expression</th><th style="width:30%;">Value</th></tr>
-      <tr><td>Width of pedestal, B<sub>p</sub></td><td class="clause">input</td><td class="num">${fmt(Bp,2)} m</td></tr>
-      <tr><td>Length of pedestal, L<sub>p</sub></td><td class="clause">input</td><td class="num">${fmt(Lp,2)} m</td></tr>
+      ${lpPeds ? lpPeds.map((p, k) => `<tr><td>Pedestal ${k + 1} (load point ${k + 1}): c<sub>1</sub> × c<sub>2</sub> at (x, z)</td><td class="clause">load point</td><td class="num">${fmt(p.c1,2)} × ${fmt(p.c2,2)} m at (${fmt(p.x,2)}, ${fmt(p.y,2)})</td></tr>`).join('') : `<tr><td>Width of pedestal, B<sub>p</sub></td><td class="clause">input</td><td class="num">${fmt(Bp,2)} m</td></tr>
+      <tr><td>Length of pedestal, L<sub>p</sub></td><td class="clause">input</td><td class="num">${fmt(Lp,2)} m</td></tr>`}
       <tr><td>Height of pedestal above ground, G<sub>p</sub></td><td class="clause">input</td><td class="num">${fmt(Gp,3)} m</td></tr>
-      <tr><td>Pedestal offset X from ${fWord} center, Off<sub>X</sub></td><td class="clause">input</td><td class="num">${fmt(OffX,2)} m</td></tr>
-      <tr><td>Pedestal offset Z from ${fWord} center, Off<sub>Z</sub></td><td class="clause">input</td><td class="num">${fmt(OffZ,2)} m</td></tr>
+      ${lpPeds ? '' : `<tr><td>Pedestal offset X from ${fWord} center, Off<sub>X</sub></td><td class="clause">input</td><td class="num">${fmt(OffX,2)} m</td></tr>
+      <tr><td>Pedestal offset Z from ${fWord} center, Off<sub>Z</sub></td><td class="clause">input</td><td class="num">${fmt(OffZ,2)} m</td></tr>`}
       <tr><td>Depth of pedestal below ground, D<sub>p</sub></td><td class="clause">D<sub>f</sub> - H<sub>f</sub></td><td class="num">${fmt(Dp,3)} m</td></tr>
       ${hasGroutT ? `<tr><td>Grout thickness above pedestal, t<sub>G</sub></td><td class="clause">input</td><td class="num">${fmt(sizing.groutT,3)} m</td></tr>` : ''}
       <tr><td>Total height of pedestal, H<sub>p</sub></td><td class="clause">G<sub>p</sub> + D<sub>p</sub>${hasGroutT ? ' + t<sub>G</sub>' : ''}</td><td class="num">${fmt(Hp,3)} m</td></tr>
-      <tr><td>Area of pedestal, A<sub>p</sub></td><td class="clause">B<sub>p</sub>·L<sub>p</sub></td><td class="num">${fmt(Ap,2)} m²</td></tr>
+      <tr><td>Area of pedestal, A<sub>p</sub></td><td class="clause">${lpPeds ? 'Σ c<sub>1</sub>·c<sub>2</sub> of the pedestals' : 'B<sub>p</sub>·L<sub>p</sub>'}</td><td class="num">${fmt(Ap,2)} m²</td></tr>
     </table></div>`;
   }
   {
@@ -225,7 +231,7 @@ export function calcFoundSize() {
     });
   }
   document.getElementById('calc-foundsize').innerHTML = numberTables(html, '2');
-  document.getElementById('lc-dW').value = totalWeightKN.toFixed(1);
+  document.getElementById('lc-dW').value = totalWeightKN.toFixed(3); // 3 decimals: read back by every check (num('lc-dW')) — 0.1 kN was up to 0.4 % of P on small footings
   document.getElementById('lc-dh').value = deltaH.toFixed(3);
   recalcAll(); // also re-runs calcPile() — pile coordinates stay fixed when Bf/Lf change; 4B re-checks spacing/edge against the new cap size
 }

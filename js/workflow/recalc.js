@@ -1,16 +1,18 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20261015a';
-import { calcBearing } from '../tabs/bearing.js?v=20261015a';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261015a';
-import { calcFoundation } from '../tabs/foundation.js?v=20261015a';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261015a';
-import { renderLoadSummary } from '../tabs/loading.js?v=20261015a';
-import { calcPile } from '../tabs/pile.js?v=20261015a';
-import { calcRebar } from '../tabs/rebar.js?v=20261015a';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261015a';
-import { renderWorkflowLive } from '../workflow/status.js?v=20261015a';
-import { state } from '../core/state.js?v=20261015a';
+import { calcAnchor } from '../tabs/anchor.js?v=20261027merge1';
+import { calcBearing } from '../tabs/bearing.js?v=20261027merge1';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261027merge1';
+import { calcFoundation } from '../tabs/foundation.js?v=20261027merge1';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261027merge1';
+import { renderLoadSummary } from '../tabs/loading.js?v=20261027merge1';
+import { calcPile } from '../tabs/pile.js?v=20261027merge1';
+import { calcSettlement } from '../tabs/settlement.js?v=20261027merge1';
+import { calcRebar } from '../tabs/rebar.js?v=20261027merge1';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261027merge1';
+import { calcPlatformCap } from '../tabs/platformCap.js?v=20261027merge1';
+import { renderWorkflowLive } from '../workflow/status.js?v=20261027merge1';
+import { state } from '../core/state.js?v=20261027merge1';
 
 // With a STAAD import (hundreds of load combinations) one full recalculation takes 0.5-1 s, so doing it on every keystroke
 // froze the page. Above LARGE_LC load types the call is debounced (one recalculation after the user pauses); code that
@@ -34,7 +36,7 @@ export function recalcAllNow() {
   // Pile cap flexure / shear (5B) read the pile reactions of the factored combinations, so they follow every change
   // in loads, pile layout or cap geometry — not only edits of their own inputs.
   // (each guarded: a failure in one of these must not stop the summaries and status below from refreshing)
-  [calcRebar, calcOneWay, calcTwoWay, calcAnchor].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
+  [calcRebar, calcOneWay, calcTwoWay, calcPlatformCap, calcAnchor, calcSettlement].forEach(fn => { try { fn(); } catch (e) { console.error('recalcAll:', fn.name, e); } });
   renderLcSummary();
   renderGeneralSummary();
   if (typeof renderStdComboTables === 'function') renderStdComboTables();

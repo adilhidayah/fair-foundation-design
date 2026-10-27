@@ -1,10 +1,10 @@
 // 08 — Bearing capacity (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261015a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { lastResults } from '../core/state.js?v=20261015a';
-import { inScope } from '../workflow/scope.js?v=20261015a';
+import { bearingCapacityCheck } from '../../lib/foundation/index.js?v=20261027merge1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
+import { fmt } from '../core/format.js?v=20261027merge1';
+import { lastResults } from '../core/state.js?v=20261027merge1';
+import { inScope } from '../workflow/scope.js?v=20261027merge1';
 
 // q_a used by 4A and Table 1.3.1 — one source. In scope: computed from the Tab 08 soil inputs (same bearingCapacityCheck()
 // call as calcBearing()). Out of scope (Section 00 → Scope of Work): the geotechnical-report value bc-qa-given, as entered.

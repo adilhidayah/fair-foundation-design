@@ -1,13 +1,70 @@
 // 08B — Settlement (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, settlementCheck } from '../../lib/foundation/index.js?v=20261015a';
-import { num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { lastResults } from '../core/state.js?v=20261015a';
+import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261027merge1';
+import { getRadioVal, num } from '../core/dom.js?v=20261027merge1';
+import { fmt } from '../core/format.js?v=20261027merge1';
+import { lastResults, pileList } from '../core/state.js?v=20261027merge1';
+import { pileComboLoads } from '../tabs/pile.js?v=20261027merge1';
 
 // correctSPT/phiFromSPT/cuFromSPT/esFromSPT live in shared/soilProperties.js;
 // elasticSettlement/consolidationSettlement/settlementCheck live in shared/settlementCheck.js.
+// Pile foundation (Tab 02 support = Pile): the settlement of the pile group by Vesic's method (lib: pileSettlementVesic) replaces the
+// shallow-footing elastic / consolidation settlement. Same lastResults.settlement slot, so the Design Status and the Summary read it.
+const isPile = () => getRadioVal('fs-support') === 'pile';
+function pileWorkingLoad() {
+  const { items } = pileComboLoads('lc');
+  const n = pileList.length;
+  if (!n || !items.length) return null;
+  const gravity = items.filter(i => Math.abs(i.load.Hx) < 1e-6 && Math.abs(i.load.Hz) < 1e-6 && Math.abs(i.load.Mx) < 1e-6 && Math.abs(i.load.Mz) < 1e-6);
+  // Sustained = gravity only AND no live (L, Lr), no test E(T): settlement is driven by the long-term working load.
+  const TRANSIENT = ['L', 'Lr', 'E(T)'];
+  const sustained = gravity.filter(i => !Object.keys(i.combo.f || {}).some(k => TRANSIENT.includes(k) && Math.abs(i.combo.f[k]) > 1e-9));
+  const pool = sustained.length ? sustained : (gravity.length ? gravity : items);
+  const best = pool.reduce((a, b) => (b.load.P > a.load.P ? b : a));
+  return { Qw: best.load.P / n, lc: best.combo.lc, gravityOnly: gravity.length > 0 };
+}
+function calcPileSettlement() {
+  lastResults.settlement = { label: 'Pile Group Settlement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
+  const out = document.getElementById('calc-settlement');
+  const fail = (msg) => { out.innerHTML = `<div class="warn-box"><strong>Invalid input:</strong> ${msg}</div>`; lastResults.settlement.detail = 'Invalid input: ' + msg; };
+  const D = num('pf-dia') / 1000;
+  if (!pileList.length) return fail('no piles defined in 4B.');
+  if (!(D > 0)) return fail('pile width D (4B) must be greater than zero.');
+  const xs = pileList.map(p => p.x), ys = pileList.map(p => p.y);
+  const Bg = Math.min(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) + D;
+  const override = num('st-pile-Q');
+  const auto = pileWorkingLoad();
+  const Qw = override > 0 ? override : (auto ? auto.Qw : 0);
+  const allow = num('st-allowTotal') || 25;
+  const r = pileSettlementVesic({ Qw, shaftFraction: num('st-pile-shaft') / 100, xi: parseFloat(document.getElementById('st-pile-xi').value), L: num('st-pile-L'), D,
+    shape: document.getElementById('st-pile-shape').value, Ep_kPa: num('st-pile-Ep') * 1000, Es_kPa: num('st-pile-Es'), mu: num('st-pile-mu'), Iwp: num('st-pile-Iwp'), Bg, allow_mm: allow });
+  const note = document.getElementById('st-pile-Q-note');
+  if (note) note.textContent = override > 0 ? 'Working load entered by the user.' : (auto ? `Auto: ${fmt(auto.Qw, 2)} kN = P / n of ${auto.gravityOnly ? 'the gravity-only service combination' : 'the service combination'} LC ${auto.lc} (largest).` : 'Auto: no service combinations available.');
+  if (!r.valid) return fail(r.note);
+  const pass = r.overallPass;
+  lastResults.settlement = { label: 'Pile Group Settlement', status: pass ? 'PASS' : 'FAIL', metric: 'T=' + fmt(r.Sg, 2) + 'mm', detail: `S_g=${fmt(r.Sg, 2)}mm (S_e=${fmt(r.Se, 2)}mm x F_g=${fmt(r.Fg, 2)}) vs ${fmt(allow, 0)}mm, Q_w=${fmt(Qw, 1)}kN` };
+  let html = '<div class="verdict' + (pass ? '' : ' fail') + '"><div class="stamp">' + (pass ? 'PILE SETTLEMENT PASS' : 'PILE SETTLEMENT FAIL') + '</div><div class="uc"><div class="val">' + fmt(r.Sg, 2) + '</div><div class="lbl">mm group settlement vs allow ' + fmt(allow, 1) + ' mm (UC=' + fmt(r.uc, 3) + ')</div></div></div>';
+  const row = (a, e, v, cls = '') => `<tr${cls}><td>${a}</td><td class="clause">${e}</td><td class="num">${v}</td></tr>`;
+  html += '<div class="overflow-x"><table class="calc-table"><caption>Single pile — Vesic (1977), Das §11.18</caption><tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>' +
+    row('Q<sub>w</sub>, working load', override > 0 ? 'input' : 'auto (P / n)', fmt(Qw, 2) + ' kN') +
+    row('Q<sub>ws</sub> / Q<sub>wp</sub>', 'shaft share ' + fmt(num('st-pile-shaft'), 2) + '% / tip', fmt(r.Qws, 2) + ' / ' + fmt(r.Qwp, 2) + ' kN') +
+    row('A<sub>p</sub> / p', 'pile section', fmt(r.Ap, 4) + ' m² / ' + fmt(r.p, 3) + ' m') +
+    row('S<sub>1</sub>', '(Q<sub>wp</sub> + ξQ<sub>ws</sub>)L / (A<sub>p</sub>E<sub>p</sub>), ξ = ' + document.getElementById('st-pile-xi').value, fmt(r.S1, 3) + ' mm') +
+    row('q<sub>wp</sub>', 'Q<sub>wp</sub> / A<sub>p</sub>', fmt(r.qwp, 1) + ' kPa') +
+    row('S<sub>2</sub>', 'q<sub>wp</sub>·D(1 − μ<sub>s</sub>²)I<sub>wp</sub> / E<sub>s</sub>', fmt(r.S2, 3) + ' mm') +
+    row('I<sub>ws</sub>', '2 + 0.35√(L/D)', fmt(r.Iws, 3)) +
+    row('S<sub>3</sub>', '(Q<sub>ws</sub>/(pL))·(D/E<sub>s</sub>)(1 − μ<sub>s</sub>²)I<sub>ws</sub>', fmt(r.S3, 3) + ' mm') +
+    row('S<sub>e</sub>', 'S<sub>1</sub> + S<sub>2</sub> + S<sub>3</sub>', fmt(r.Se, 3) + ' mm', ' class="governing"') + '</table></div>';
+  html += '<div class="overflow-x"><table class="calc-table"><caption>Pile group</caption><tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>' +
+    row('B<sub>g</sub>', 'shorter side of the group + D', fmt(Bg, 3) + ' m') +
+    row('F<sub>g</sub>', '√(B<sub>g</sub> / D)', fmt(r.Fg, 3)) +
+    row('S<sub>g</sub>', 'F<sub>g</sub>·S<sub>e</sub>', fmt(r.Sg, 2) + ' mm', ' class="governing"') +
+    row('UC', 'S<sub>g</sub> / allowable', fmt(r.uc, 3) + ' ' + (pass ? 'PASS' : 'FAIL')) + '</table></div>';
+  html += '<div class="limits-box"><strong>Limitation:</strong> Vesic\'s semi-empirical method (elastic settlement under the sustained working load, no consolidation of soft layers below the tip). E<sub>s</sub>, the shaft / tip split and ξ are assumptions to be taken from the geotechnical report; the group factor √(B<sub>g</sub>/D) is a rough rule.</div>';
+  out.innerHTML = html;
+}
 export function calcSettlement() {
+  if (isPile()) { calcPileSettlement(); return; }
   lastResults.settlement = { label: 'Settlement (Soil)', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   const N = num('st-N'), sigmaV = num('st-sigmaV'), ER = num('st-ER');
   const soilType = document.getElementById('st-soilType').value;

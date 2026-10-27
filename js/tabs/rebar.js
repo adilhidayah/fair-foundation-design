@@ -1,20 +1,31 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, footingFlexureAxis, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261015a';
-import { getRadioVal, num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261015a';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261015a';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261015a';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261015a';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261015a';
-import { pileComboLoads } from '../tabs/pile.js?v=20261015a';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261015a';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261027merge1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
+import { fmt } from '../core/format.js?v=20261027merge1';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261027merge1';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261027merge1';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261027merge1';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261027merge1';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261027merge1';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261027merge1';
+import { pileComboLoads } from '../tabs/pile.js?v=20261027merge1';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261027merge1';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
 // Minimum reinforcement rule of the pile cap / footing (select rb-asmin): 'slab' = ACI Table 8.6.1.1, 'beam' = project criterion.
 const asMinRule = () => (document.getElementById('rb-asmin')?.value === 'beam' ? 'beam' : 'slab');
+// Top layer (select rb-toplayer): 'bottom' = a top layer only where a combination gives hogging; 'two' = always a top mat, at least
+// rb-rhotop·b·t (topLayerDesign(), lib). Bottom layers are always designed.
+const topOpts = () => ({ asMinRule: asMinRule(), mode: document.getElementById('rb-toplayer')?.value === 'two' ? 'two' : 'bottom', rhoTop: parseFloat(document.getElementById('rb-rhotop')?.value) || 0.0009 });
+// One section: the bottom layer by flexuralDesign(), the top layer by topLayerDesign().
+function designCase(c, t, fc, fy) {
+  if (c.face === 'bottom') { c.required = true; c.minOnly = false; c.design = flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()); return; }
+  const r = topLayerDesign(c.Mu, c.b, c.dEff, t, fc, fy, topOpts());
+  c.required = r.required; c.minOnly = r.minOnly; c.design = r.design;
+}
+const govCell = (c) => (c.minOnly ? `— (minimum top mat, ρ<sub>top</sub> = ${topOpts().rhoTop})` : `${c.gov.name}${c.ptTxt || ''}`);
 const asMinText = (fy) => (asMinRule() === 'beam'
   ? 'A<sub>s,min</sub> = max(0.0018·b·t, 1.4·b·d/f<sub>y</sub>) (project criterion; 1.4·b·d/f<sub>y</sub> is the beam minimum of ACI 318M-19 §9.6.1.2)'
   : `A<sub>s,min</sub> = ρ<sub>min</sub>·b·t, ρ<sub>min</sub> = ${fmt(slabMinSteelRatio(fy), 4)} (ACI 318M-19 §13.3 → Table 8.6.1.1: 0.0020 for f<sub>y</sub> &lt; 420 MPa, max(0.0018·420/f<sub>y</sub>, 0.0014) for f<sub>y</sub> ≥ 420 MPa)`);
@@ -47,7 +58,7 @@ export function calcRebar() {
   // shared load vectors) and P includes the pedestal self-weight. Mu is the resultant of the two moment components,
   // as in 4A (uniaxial design in the resultant direction). Fields keep the names Ptop / Mtop that searchPedestalBars() reads.
   const pedBase = buildPedestalComboBase();
-  const combosTop = comboState.lrfd.map(combo => {
+  let combosTop = comboState.lrfd.map(combo => {
     const v = stdComboVector(combo.f, pedBase);
     const Mx = v.Mx + v.dMx, Mz = v.Mz + v.dMz;
     return { combo, Ptop: v.P + v.dP, Mtop: Math.hypot(Mx, Mz), Mx, Mz };
@@ -56,8 +67,37 @@ export function calcRebar() {
   if (combosTop.length === 0) {
     html += `<div class="warn-box"><strong>⚠  No factored (LRFD) combinations:</strong> load the standard set with "Edit LRFD Combinations" in the 5B input panel — the pedestal is designed for factored loads.</div>`;
   }
-  const Bp = num('rb-Bp'), Lp = num('rb-Lp'), dPrime = num('rb-cover');
+  let Bp = num('rb-Bp'), Lp = num('rb-Lp');
+  const dPrime = num('rb-cover');
   const fc = num('gen-fc'), fy = num('gen-fy'), barDia = num('rb-bar');
+  // Pile cap with SEVERAL load points and a pedestal under each: every pedestal (c1 × c2 of its point) is designed for its own share of the
+  // factored loads at its base (pedestalBaseActions, lib); the governing one (a failing one first, else the most bars, then the highest
+  // UC) is detailed below, all of them are listed in 5.0. Status = the worst pedestal.
+  let multiPeds = null;
+  if (loadPointsPedestals() && comboState.lrfd.length) {
+    const pts = activeLoadPoints(), base = buildStdComboBase(), dW = num('lc-dW');
+    const per = comboState.lrfd.map(combo => {
+      const v = stdComboVector(combo.f, base);
+      return { combo, acts: pedestalBaseActions(pts, { P: v.P, Fx: v.Fx, Fz: v.Fz, Mx: v.Mx, Mz: v.Mz }, dW > 0 ? v.dP / dW : 0, state.pedHp, state.pedPointW) };
+    });
+    multiPeds = pts.map((p, j) => {
+      const ct = per.map(it => { const a = it.acts[j]; return { combo: it.combo, Ptop: a.P, Mtop: Math.hypot(a.Mx, a.Mz), Mx: a.Mx, Mz: a.Mz }; });
+      const B = Math.round(p.c1 * 1000), L = Math.round(p.c2 * 1000);
+      return { idx: j + 1, p: { ...p, f: per[0].acts[j].f }, Bp: B, Lp: L, combosTop: ct, search: B > 0 && L > 0 && dPrime * 2 < Math.min(B, L) ? searchPedestalBars(B, L, dPrime, fc, fy, barDia, ct) : { found: false, reason: 'Invalid pedestal section (check c1, c2 and the cover d′).' } };
+    });
+    const bad = multiPeds.find(m => !m.search.found);
+    const gov = bad || multiPeds.reduce((a, b) => (b.search.n > a.search.n || (b.search.n === a.search.n && b.search.maxUC > a.search.maxUC) ? b : a));
+    multiPeds.gov = gov;
+    Bp = gov.Bp; Lp = gov.Lp; combosTop = gov.combosTop;
+    html += sectionHeader('5.0', 'Pedestals (one per load point)', `${multiPeds.length} pedestals, each designed for its share of the factored loads at its base (P = share·P + kD·W<sub>ped</sub>, M = share·(M + H·H<sub>p</sub>)). The governing pedestal (${gov.idx}) is detailed below.`, true);
+    html += `<div class="overflow-x"><table class="calc-table">
+      <caption>Pedestal design per load point</caption>
+      <tr><th>Pedestal</th><th>x, z (m)</th><th>c<sub>1</sub> × c<sub>2</sub> (mm)</th><th>Share</th><th>Reinforcement</th><th>ρ</th><th>Governing UC</th><th>Governing combination</th><th>Status</th></tr>
+      ${multiPeds.map(m => m.search.found
+        ? `<tr class="${m === gov ? 'governing' : ''}"><td>${m.idx}</td><td class="num">${fmt(m.p.x,2)}, ${fmt(m.p.y,2)}</td><td class="num">${fmt(m.Bp,0)} × ${fmt(m.Lp,0)}</td><td class="num">${fmt(m.p.f*100,1)}%</td><td class="num">${m.search.n*2} — D${fmt(barDia,0)}</td><td class="num">${fmt(m.search.rho*100,2)}%</td><td class="num">${fmt(m.search.maxUC,3)}</td><td>${m.search.worstCombo ? comboLabel(m.search.worstCombo) : '—'}</td><td>${m.search.maxUC <= 1 ? 'PASS' : 'FAIL'}</td></tr>`
+        : `<tr class="governing"><td>${m.idx}</td><td class="num">${fmt(m.p.x,2)}, ${fmt(m.p.y,2)}</td><td class="num">${fmt(m.Bp,0)} × ${fmt(m.Lp,0)}</td><td class="num">${fmt(m.p.f*100,1)}%</td><td colspan="5">${escapeHtml(m.search.reason || 'No adequate reinforcement')}</td></tr>`).join('')}
+    </table></div>`;
+  }
   if (Bp <= 0 || Lp <= 0 || dPrime * 2 >= Bp) {
     html += `<div class="warn-box"><strong>⚠  Invalid pedestal section:</strong> check B<sub>p</sub>, L<sub>p</sub> and cover d′ (2·d′ must be less than B<sub>p</sub>).</div>`;
     lastResults.pedestalRebar.detail = 'Invalid pedestal section.';
@@ -73,8 +113,10 @@ export function calcRebar() {
       lastResults.pedestalRebar = {
         label: 'Pedestal Reinforcement',
         status: 'PASS',
-        metric: `${search.n*2} — D${fmt(barDia,0)}`,
-        detail: `ρ=${fmt(search.rho*100,2)}%, governing UC=${fmt(search.maxUC,3)} (${comboLabel(search.worstCombo)})`
+        metric: multiPeds ? multiPeds.map(m => m.search.found ? `P${m.idx} ${m.search.n*2}—D${fmt(barDia,0)}` : `P${m.idx} none`).join(', ') : `${search.n*2} — D${fmt(barDia,0)}`,
+        detail: `ρ=${fmt(search.rho*100,2)}%, governing UC=${fmt(search.maxUC,3)} (${comboLabel(search.worstCombo)})`,
+        // bar layout for Tab 09 (anchor reinforcement = pedestal bars): n bars on each x face at d′ from the faces, spread along z
+        layout: multiPeds ? null : { n: search.n, dPrime, barDia, Bp, Lp }
       };
       // Detailing check on the bars just designed: clear spacing along the face ≥ max(1.5·db, 40 mm) — ACI 318M-19 §25.2.3
       // (columns / pedestals). Reported in the table and the drawing; a failure is raised as a notice in the Design Status panel.
@@ -137,11 +179,20 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   if (Bp <= 0 || Lp <= 0 || Lcap <= 0 || Bcap <= 0) return fail(`<div class="warn-box"><strong>⚠  Invalid input:</strong> the pedestal size B<sub>p</sub> × L<sub>p</sub> and the cap size B<sub>f</sub> × L<sub>f</sub> (both from "02 — FOUNDATION DIMENSION") must be greater than zero.</div>`, 'Invalid input (pedestal / cap size must be > 0).');
 
   const halfX = Bp / 2000, halfY = Lp / 2000;
-  const { at, items } = pileComboLoads('lrfd');
+  const { at, items, points } = pileComboLoads('lrfd'); // points = several load points on the cap (Tab 02), null for the single pedestal / plate
   if (items.length === 0) html += `<div class="warn-box"><strong>⚠  No factored (LRFD) combinations:</strong> load the standard set with "Edit LRFD Combinations" in the input panel.</div>`;
-  const capResults = items.map(({ combo, load }) => {
+  const capResults = items.map(({ combo, load, pointLoads, Pcap }) => {
     const ev = evaluatePileGroupCombo(pileList, load, { Qc: 1e12, Qt: 1e12, Ql: 1e12 }); // capacities irrelevant here, only need pileForces
     if (!ev.valid) return { name: comboLabel(combo), invalid: ev.note, pileForces: null, m: { xb: 0, xt: 0, yb: 0, yt: 0 } };
+    if (points) { // several load points: sections at the faces of every point, the other points' loads netted; the worst point governs each case
+      const m = { xb: 0, xt: 0, yb: 0, yt: 0 }, ptIdx = { xb: 0, xt: 0, yb: 0, yt: 0 };
+      points.forEach((pt, j) => {
+        const capW = { P: Pcap, Bx: Bcap / 1000, Ly: Lcap / 1000 }; // cap weight over the cap (rb-Bcap along x, rb-Lcap along z), mm -> m
+        const mx = pileCapMomentAxis(ev.pileForces, 'x', pt.x, pt.c1 / 2, pointLoads, capW), my = pileCapMomentAxis(ev.pileForces, 'y', pt.y, pt.c2 / 2, pointLoads, capW);
+        [['xb', mx.bottom], ['xt', mx.top], ['yb', my.bottom], ['yt', my.top]].forEach(([k, v]) => { if (ptIdx[k] === 0 || v > m[k]) { m[k] = v; ptIdx[k] = j + 1; } });
+      });
+      return { name: comboLabel(combo), invalid: null, pileForces: ev.pileForces, m, ptIdx };
+    }
     const mx = pileCapMomentAxis(ev.pileForces, 'x', at.x, halfX), my = pileCapMomentAxis(ev.pileForces, 'y', at.y, halfY);
     return { name: comboLabel(combo), invalid: null, pileForces: ev.pileForces, m: { xb: mx.bottom, xt: mx.top, yb: my.bottom, yt: my.top } };
   });
@@ -159,8 +210,8 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   CASES.forEach(c => {
     c.gov = capResults.length ? capResults.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 }, pileForces: null };
     c.Mu = c.gov.m[c.key];
-    c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel is only designed where the combinations produce hogging
-    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()) : null;
+    c.ptTxt = c.gov.ptIdx && c.gov.ptIdx[c.key] ? ` (point ${c.gov.ptIdx[c.key]})` : '';
+    designCase(c, t, fc, fy); // top steel: where the combinations produce hogging, or always (two-layer option)
     if (c.design && c.design.ok) layBars(c, capBar, t);
   });
   const tooSmall = CASES.filter(c => c.design && !c.design.ok);
@@ -175,7 +226,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     label: 'Pile Cap Reinforcement',
     status,
     metric: tooSmall.length ? 'SECTION TOO SMALL' : `x ${barTxt(CASES[0])}; z ${barTxt(CASES[1])}${topCases.length ? '; top ' + topCases.map(c => `${c.lbl} ${barTxt(c)}`).join(', ') : ''}`,
-    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
+    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}${c.ptTxt || ''}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
       + (invalidCap.length ? ` | ${invalidCap.length} combination(s) invalid` : '') + (tooSmall.length ? ' | section too small: ' + tooSmall.map(c => c.title).join(', ') : '')
   };
 
@@ -185,8 +236,8 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     <tr><th>Section</th><th>Governing combination</th><th>M<sub>u</sub> (kN·m)</th><th>b (mm)</th><th>d (mm)</th><th>A<sub>s</sub> req. (mm²)</th><th>A<sub>s,min</sub> (mm²)</th><th>A<sub>s</sub> gov. (mm²)</th><th>Bars</th></tr>
     ${CASES.map(c => {
       if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment (no net uplift beyond the pedestal face). Provide the minimum / detailing top steel per the project.</td></tr>`;
-      if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
-      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+      if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}${c.ptTxt || ''}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${govCell(c)}</td><td class="num">${fmt(c.minOnly ? 0 : c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
     }).join('')}
   </table></div>`;
   // Reinforcement drawings of what was designed above (only the layers that have a valid design), and the bar-spacing check:
@@ -212,7 +263,7 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
     const sum = (a) => a.reduce((s, p) => s + p.M, 0);
     const gov = c.face === 'bottom' ? (sum(sp) >= sum(sn) ? sp : sn) : (sum(sp) <= sum(sn) ? sp : sn);
     if (!gov.length) return;
-    html += introPara(`${c.title}: piles beyond the pedestal face (${c.lbl}<sub>p</sub> = ${fmt(c.ref,3)} m, h<sub>p</sub> = ${fmt(c.half,3)} m) in the governing combination ${c.gov.name}.`);
+    html += introPara(`${c.title}: piles beyond the pedestal face (${c.lbl}<sub>p</sub> = ${fmt(c.ref,3)} m, h<sub>p</sub> = ${fmt(c.half,3)} m) in the governing combination ${c.gov.name}${c.ptTxt || ''}.`);
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Piles beyond the pedestal face, ${c.title}</caption>
       <tr><th>Pile</th><th>${c.lbl} (m)</th><th>F<sub>i</sub> (kN)</th><th>Arm (m)</th><th>F<sub>i</sub>·arm (kN·m)</th></tr>
@@ -250,8 +301,16 @@ function calcFootingFlexure({ fc, fy }) {
   const fa = footingLrfdActions();
   if (!fa.valid) return fail(`<div class="warn-box"><strong>⚠  Soil pressure not available:</strong> ${fa.note}</div>`, fa.note);
   const { B, L, ped } = fa;
+  const multi = !!fa.points; // several load points (Tab 02): sections at every point face and across the spans, the other points netted
+  const where = (at, lbl) => (at ? ` (${at.kind === 'face' ? `face of point ${at.point}` : 'span'}, ${lbl} = ${fmt(at.s, 2)} m)` : '');
   const res = fa.items.map(it => {
     if (it.invalid) return { it, name: comboLabel(it.combo), invalid: it.invalid, m: { xb: 0, xt: 0, yb: 0, yt: 0 } };
+    if (multi) {
+      const mx = footingFlexurePoints({ pl: it.pl, w: it.w, B, L, axis: 'x', pointLoads: it.pointLoads });
+      const mz = footingFlexurePoints({ pl: it.pl, w: it.w, B, L, axis: 'z', pointLoads: it.pointLoads });
+      return { it, name: comboLabel(it.combo), invalid: null, mx, mz, m: { xb: mx.bottom, xt: mx.top, yb: mz.bottom, yt: mz.top },
+        at: { xb: where(mx.atBottom, 'x'), xt: where(mx.atTop, 'x'), yb: where(mz.atBottom, 'z'), yt: where(mz.atTop, 'z') } };
+    }
     const mx = footingFlexureAxis({ pl: it.pl, w: it.w, B, L, axis: 'x', ref: ped.x, half: ped.c1 / 2 });
     const mz = footingFlexureAxis({ pl: it.pl, w: it.w, B, L, axis: 'z', ref: ped.z, half: ped.c2 / 2 });
     return { it, name: comboLabel(it.combo), invalid: null, mx, mz, m: { xb: mx.bottom, xt: mx.top, yb: mz.bottom, yt: mz.top } };
@@ -268,8 +327,8 @@ function calcFootingFlexure({ fc, fy }) {
   CASES.forEach(c => {
     c.gov = okRes.length ? okRes.reduce((a, b2) => (b2.m[c.key] > a.m[c.key] ? b2 : a)) : { name: '—', m: { [c.key]: 0 } };
     c.Mu = c.gov.m[c.key];
-    c.required = c.face === 'bottom' || c.Mu > 1e-6; // top steel only where a combination produces hogging
-    c.design = c.required ? flexuralDesign(c.Mu, c.b, c.dEff, t, fc, fy, asMinRule()) : null;
+    c.ptTxt = c.gov.at ? c.gov.at[c.key] : '';
+    designCase(c, t, fc, fy); // top steel: where a combination produces hogging, or always (two-layer option)
     if (c.design && c.design.ok) layBars(c, bar, t);
   });
   const tooSmall = CASES.filter(c => c.design && !c.design.ok);
@@ -281,24 +340,27 @@ function calcFootingFlexure({ fc, fy }) {
   const topCases = CASES.filter(c => c.face === 'top' && c.required);
   Object.assign(lastResults.pileCapRebar, {
     status,
+    invalidCombos: invalid.length, // combinations that lose contact with the soil entirely: Auto-Size treats them as a stability matter (bigger footing)
     metric: tooSmall.length ? 'SECTION TOO SMALL' : `x ${barTxt(CASES[0])}; z ${barTxt(CASES[1])}${topCases.length ? '; top ' + topCases.map(c => `${c.lbl} ${barTxt(c)}`).join(', ') : ''}`,
-    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
+    detail: CASES.filter(c => c.design && c.design.ok).map(c => `${c.lbl}-${c.face}: M_u=${fmt(c.Mu,1)}kN·m (${c.gov.name}${c.ptTxt || ''}), A_s=${fmt(c.design.As,0)}mm²`).join(' | ')
       + (invalid.length ? ` | ${invalid.length} combination(s) without soil pressure` : '') + (tooSmall.length ? ' | section too small: ' + tooSmall.map(c => c.title).join(', ') : '')
   });
-  html += introPara(`M<sub>u</sub> = ∫(q − w)·(|c − c<sub>p</sub>| − h<sub>p</sub>) dA over the part of the footing beyond each pedestal face, full width (c = x: h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(ped.c1 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.x,3)} m; c = z: h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(ped.c2 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.z,3)} m); net &gt; 0 = sagging (bottom steel), net &lt; 0 = hogging on the uplift side (top steel). A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, with ${asMinText(fy)}; bars at a spacing rounded down to a multiple of 25 mm, s ≤ min(3t, 450 mm) (§7.7.2.3); b = footing width perpendicular to the bending, d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer) and ${fmt(d - bar,0)} mm (z-direction, inner layer).`);
+  html += introPara(`${multi
+    ? `${fa.points.length} load points (Tab 02): M<sub>u</sub> at a section s = ∫(q − w)·|c − s| dA over the part of the footing beyond s, full width, minus Σ P<sub>j</sub>·|c<sub>j</sub> − s| (+ the couples) of the point loads beyond s (a point straddling s by the share of its width beyond). Sections at both faces of every point (§13.2.7.1) and at 40 equally spaced sections across the footing outside the point footprints — between two points the largest moment is in the span (combined footing), usually hogging between skid runners / columns`
+    : `M<sub>u</sub> = ∫(q − w)·(|c − c<sub>p</sub>| − h<sub>p</sub>) dA over the part of the footing beyond each pedestal face, full width (c = x: h<sub>p</sub> = B<sub>p</sub>/2 = ${fmt(ped.c1 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.x,3)} m; c = z: h<sub>p</sub> = L<sub>p</sub>/2 = ${fmt(ped.c2 / 2,3)} m, c<sub>p</sub> = ${fmt(ped.z,3)} m)`}; net &gt; 0 = sagging (bottom steel), net &lt; 0 = hogging on the uplift side (top steel). A<sub>s</sub> from R<sub>u</sub> = M<sub>u</sub>/(φ·b·d²), φ = 0.9, with ${asMinText(fy)}; bars at a spacing rounded down to a multiple of 25 mm, s ≤ min(3t, 450 mm) (§7.7.2.3); b = footing width perpendicular to the bending, d = t − cc − d<sub>b</sub> = ${fmt(d,0)} mm (x-direction, outer layer) and ${fmt(d - bar,0)} mm (z-direction, inner layer).`);
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Recommended reinforcement</caption>
     <tr><th>Section</th><th>Governing combination</th><th>M<sub>u</sub> (kN·m)</th><th>b (mm)</th><th>d (mm)</th><th>A<sub>s</sub> req. (mm²)</th><th>A<sub>s,min</sub> (mm²)</th><th>A<sub>s</sub> gov. (mm²)</th><th>Bars</th></tr>
     ${CASES.map(c => {
       if (!c.required) return `<tr><td>${c.title}</td><td colspan="8">Not required by the LRFD combinations — no hogging moment beyond the pedestal faces. Provide the minimum / detailing top steel per the project.</td></tr>`;
-      if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
-      return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
+      if (!c.design.ok) return `<tr class="governing"><td>${c.title}</td><td>${c.gov.name}${c.ptTxt || ''}</td><td class="num">${fmt(c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td colspan="4">SECTION TOO SMALL</td></tr>`;
+      return `<tr class="governing"><td>${c.title}</td><td>${govCell(c)}</td><td class="num">${fmt(c.minOnly ? 0 : c.Mu,1)}</td><td class="num">${fmt(c.b,0)}</td><td class="num">${fmt(c.dEff,0)}</td><td class="num">${fmt(c.design.AsCalc,0)}</td><td class="num">${fmt(c.design.AsMin,0)}</td><td class="num">${fmt(c.design.As,0)}</td><td class="num">${barTxt(c)}</td></tr>`;
     }).join('')}
   </table></div>`;
   const drawLayers = {};
   CASES.forEach(c => { if (c.required && c.design && c.design.ok) drawLayers[c.key] = { n: c.n, label: barTxt(c) }; });
   if (Object.keys(drawLayers).length && !tooSmall.length) {
-    const pedDraw = { x: ped.x, y: ped.z, Bp: ped.c1 * 1000, Lp: ped.c2 * 1000 };
+    const pedDraw = multi ? fa.points.map(p => ({ x: p.x, y: p.y, Bp: p.c1 * 1000, Lp: p.c2 * 1000 })) : { x: ped.x, y: ped.z, Bp: ped.c1 * 1000, Lp: ped.c2 * 1000 };
     html += pileCapRebarPlanSVG({ Bf: B, Lf: L, cc, db: bar, piles: [], D: 0, ped: pedDraw, layers: drawLayers, name: 'Footing' });
     html += pileCapRebarSectionSVG({ Bf: B, t, cc, db: bar, piles: [], D: 0, ped: pedDraw, layers: drawLayers, name: 'Footing' });
   }
@@ -311,7 +373,7 @@ function calcFootingFlexure({ fc, fy }) {
   html += soilPressureHtml(fa, { head: CASES.map(c => `M<sub>u</sub> ${c.title.replace(' — ', ' ')} (kN·m)`), gov: null,
     cells: (it) => { const r = byIt.get(it); return CASES.map(c => `<td class="num">${r.m[c.key] > 1e-6 || c.face === 'bottom' ? strong(r, c) : '—'}</td>`).join(''); } },
     'Soil pressure and factored moment per load combination');
-  lastResults.pileCapRebar.limit = 'Critical sections at the pedestal faces over the full footing width (§13.2.7.1); the concentration of reinforcement in the central band of a rectangular footing (§13.3.3.3) is not applied — distribute the short-direction bars accordingly in the detailing. Soil pressure: rigid footing, linear, no tension, from the factored LRFD combinations (ASCE 7-22 §2.3, LC201+) — the same model as the 4A bearing check, at strength level; the factored footing and backfill weight is deducted where it sits. x-direction bars outer layer (d), z-direction inner (d − d<sub>b</sub>). Development length, edge spacing and top steel for crack control are left to the detailing.';
+  lastResults.pileCapRebar.limit = (multi ? 'Several load points: each point load (share of the superstructure load) is spread uniformly over its footprint c<sub>1</sub> × c<sub>2</sub>; the footing is rigid (linear pressure) — for a long, flexible footing under skid runners check the slab as a beam / plate on elastic soil if the rigid assumption is doubtful. ' : '') + 'Critical sections at the pedestal faces over the full footing width (§13.2.7.1); the concentration of reinforcement in the central band of a rectangular footing (§13.3.3.3) is not applied — distribute the short-direction bars accordingly in the detailing. Soil pressure: rigid footing, linear, no tension, from the factored LRFD combinations (ASCE 7-22 §2.3, LC201+) — the same model as the 4A bearing check, at strength level; the factored footing and backfill weight is deducted where it sits. x-direction bars outer layer (d), z-direction inner (d − d<sub>b</sub>). Development length, edge spacing and top steel for crack control are left to the detailing.';
   html += '<div class="ch6-limits"></div>';
   document.getElementById('calc-rebarcap').innerHTML = numberTables(html, '6');
   renderCh6Limits();

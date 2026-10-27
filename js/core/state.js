@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261015a';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261027merge1';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -19,6 +19,18 @@ export const comboState = { lc: defaultCombos(), lrfd: [] };
 export const pileList = [
   { x: -0.6, y: -0.6 }, { x: 0.6, y: -0.6 }, { x: -0.6, y: 0.6 }, { x: 0.6, y: 0.6 }
 ];
+// ---------- Load points on the pile cap (several equipment on one cap; used when Tab 02 "Load points" = Multiple) ----------
+// x, y (= z in the UI) = centre of the base plate / skid on the cap (m, cap-centre frame), c1 × c2 = its size (m), share = its part of
+// the superstructure loads of Section 03 (normalised in lib/foundation/shared/loadPoints.js).
+export const loadPointList = [
+  { x: 0, y: 0, c1: 1.25, c2: 1.25, share: 1 }
+];
+// ---------- Platform columns standing on the pile cap at their own positions (5B beam method, Tab 02 load points) ----------
+// x, y (= z in the UI) = centre of the base plate (m, cap-centre frame), c1 × c2 = its size (m), P = { loadTypeCode: vertical load, kN, down + }.
+export const platformColumnList = [];
+// ---------- Skid support reactions (Tab 03, vendor data): one row per base plate / runner, applied to E(E)/E(O)/E(T) + the load points ----------
+// x, z = centre from the footing / pile cap centre (m), c1 × c2 = footprint (m), PE / PO / PT = vertical reaction empty / operating / test (kN).
+export const skidSupportList = [];
 // ---------- Anchor bolt layout ----------
 export const boltList = [
   { x: -150, y: -150 }, { x: 150, y: -150 }, { x: -150, y: 150 }, { x: 150, y: 150 }
@@ -82,6 +94,11 @@ export const state = {
   // Pedestal of Tab 02 for the 5A pedestal design: height Hp (m, incl. grout — the lever arm of H down to the pedestal
   // base) and self-weight pedW (kN, concrete + grout). Both 0 when Tab 02 has no pedestal. Set by calcFoundSize().
   pedHp: 0, pedW: 0,
+  // Several load points on a pile cap WITH pedestals (one pedestal per point): the self-weight of each pedestal (kN, concrete + grout),
+  // in the order of loadPointList; pedW is then their sum. [] otherwise. Set by calcFoundSize().
+  pedPointW: [],
+  // Tab 03 STAAD import: the chosen .std / .ANL texts (js/tabs/staadImport.js), kept until another file is chosen.
+  staadImport: { std: '', anl: '', stdName: '', anlName: '' },
   // Backfill above the footing / pile cap (kN, footing area minus pedestal, over the pedestal depth below ground) — set by
   // calcFoundSize(); 4A places it at its own centroid when the pedestal is offset (pedestalOffsetMoments()).
   footSoilW: 0,

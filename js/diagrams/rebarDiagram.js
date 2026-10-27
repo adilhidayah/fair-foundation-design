@@ -1,4 +1,4 @@
-import { fmt } from '../core/format.js?v=20261015a';
+import { fmt } from '../core/format.js?v=20261027merge1';
 
 // Reinforcement drawings for Section 5 — pure SVG string builders (no DOM access): values in, markup out.
 //   pedestalSectionSVG      5A  pedestal cross-section with the bars of the P-M design
@@ -97,11 +97,13 @@ export function pileCapRebarPlanSVG({ Bf, Lf, cc, db, piles, D, ped, layers, nam
   // piles (dashed, under the bars) and pedestal
   const r = D > 0 ? Math.max(5, D / 2 * scale) : 9;
   piles.forEach((p, k) => { out += `<circle cx="${toX(p.x).toFixed(1)}" cy="${toY(p.y).toFixed(1)}" r="${r.toFixed(1)}" style="fill:none;stroke:var(--ink-soft);stroke-width:1.2;stroke-dasharray:4 3;"/>` + txt(toX(p.x), toY(p.y) + 3.5, String(k + 1), 'middle', 'opacity:0.8;'); });
-  if (ped && ped.Bp > 0 && ped.Lp > 0) {
-    const pw = ped.Bp / 1000 * scale, ph = ped.Lp / 1000 * scale;
-    out += `<rect class="outline-pedestal" x="${(toX(ped.x) - pw / 2).toFixed(1)}" y="${(toY(ped.y) - ph / 2).toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" style="fill-opacity:0.35;"/>`;
-    out += txt(toX(ped.x), toY(ped.y) + 3.5, 'pedestal', 'middle', 'font-weight:600;');
-  }
+  // ped: one pedestal / load point, or an array of them (several load points on the footing — labelled by number)
+  (Array.isArray(ped) ? ped : [ped]).forEach((pd, k, all) => {
+    if (!(pd && pd.Bp > 0 && pd.Lp > 0)) return;
+    const pw = pd.Bp / 1000 * scale, ph = pd.Lp / 1000 * scale;
+    out += `<rect class="outline-pedestal" x="${(toX(pd.x) - pw / 2).toFixed(1)}" y="${(toY(pd.y) - ph / 2).toFixed(1)}" width="${pw.toFixed(1)}" height="${ph.toFixed(1)}" style="fill-opacity:0.35;"/>`;
+    out += txt(toX(pd.x), toY(pd.y) + 3.5, Array.isArray(ped) ? `point ${k + 1}` : 'pedestal', 'middle', 'font-weight:600;');
+  });
   // bar mats — bars along x are spread across Lf, bars along z across Bf (positions b/(n+1), as reported in the schedule)
   // (the top mat is drawn 3 px off the bottom mat so the two stay distinguishable in plan)
   const bar = (k, kind, off = 0) => {
@@ -142,11 +144,12 @@ export function pileCapRebarSectionSVG({ Bf, t, cc, db, piles, D, ped, layers, n
   const pileX = [...new Set(piles.map(p => +p.x.toFixed(4)))];
   pileX.forEach(px => { const pw = D > 0 ? D * sx : 14; out += `<rect x="${(toX(px) - pw / 2).toFixed(1)}" y="${(y0 + h).toFixed(1)}" width="${pw.toFixed(1)}" height="${stubDown.toFixed(1)}" style="fill:none;stroke:var(--ink-soft);stroke-width:1.2;stroke-dasharray:4 3;"/>`; });
   if (pileX.length) out += txt(x0 + w + 8, y0 + h + stubDown / 2 + 3.5, 'piles', 'start');
-  if (ped && ped.Bp > 0) {
-    const pw = ped.Bp / 1000 * sx;
-    out += `<rect class="outline-pedestal" x="${(toX(ped.x) - pw / 2).toFixed(1)}" y="${(y0 - stubUp).toFixed(1)}" width="${pw.toFixed(1)}" height="${stubUp.toFixed(1)}"/>`;
-    out += txt(toX(ped.x), y0 - stubUp / 2 + 3.5, 'pedestal', 'middle', 'font-weight:600;');
-  }
+  (Array.isArray(ped) ? ped : [ped]).forEach((pd, k) => {
+    if (!(pd && pd.Bp > 0)) return;
+    const pw = pd.Bp / 1000 * sx;
+    out += `<rect class="outline-pedestal" x="${(toX(pd.x) - pw / 2).toFixed(1)}" y="${(y0 - stubUp).toFixed(1)}" width="${pw.toFixed(1)}" height="${stubUp.toFixed(1)}"/>`;
+    out += txt(toX(pd.x), y0 - stubUp / 2 + 3.5, Array.isArray(ped) ? String(k + 1) : 'pedestal', 'middle', 'font-weight:600;');
+  });
   out += `<rect class="outline-footing" x="${x0.toFixed(1)}" y="${y0.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"/>`;
   // layers: outer = x-direction (line), inner = z-direction (dots), for the bottom and for the top face
   const rDot = Math.max(2.6, db / 2 * pxmm), sw = Math.max(2.4, db * pxmm);

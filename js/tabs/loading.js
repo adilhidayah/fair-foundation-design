@@ -1,12 +1,13 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261015a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { comboState, state } from '../core/state.js?v=20261015a';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261015a';
-import { buildStdComboBase, renderComboTable } from '../tabs/combos.js?v=20261015a';
-import { recalcAll } from '../workflow/recalc.js?v=20261015a';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261027merge1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
+import { fmt } from '../core/format.js?v=20261027merge1';
+import { comboState, state } from '../core/state.js?v=20261027merge1';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261027merge1';
+import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261027merge1';
+import { recalcAll } from '../workflow/recalc.js?v=20261027merge1';
+import { skidSupportPreviewHtml } from '../tabs/skidSupports.js?v=20261027merge1';
 
 export const LC_LOADTYPE_DEFAULTS = {
   D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately
@@ -113,7 +114,16 @@ export function isLateralLoadType(lt) {
 }
 // Load Values table holds the actual P/H/M inputs, kept separate so registering a type doesn't force a value in.
 // Existing values in the DOM are preserved across re-renders (only a brand-new type falls back to its default/0).
+// Column meaning of the Load Values table: FAIR convention, or the components of a STAAD support reaction (see staadReactionToFair()).
+export function renderLoadValuesHeader() {
+  const head = document.getElementById('lc-loadvalue-head');
+  if (!head) return;
+  head.innerHTML = isStaadSignMode()
+    ? `<th>Load type</th><th>P = F<sub>Y</sub> <span class="unit">kN</span></th><th>H = F<sub>X</sub> (Z types: F<sub>Z</sub>) <span class="unit">kN</span></th><th>M = M<sub>Z</sub> (Z types: M<sub>X</sub>) <span class="unit">kN·m</span></th><th>H<sub>z</sub> = F<sub>Z</sub> <span class="unit">kN</span></th><th>M<sub>x</sub> = M<sub>X</sub> <span class="unit">kN·m</span></th>`
+    : `<th>Load type</th><th>P <span class="unit">kN</span></th><th>H / H<sub>x</sub> <span class="unit">kN</span></th><th>M / M<sub>z</sub> <span class="unit">kN·m</span></th><th>H<sub>z</sub> <span class="unit">kN</span></th><th>M<sub>x</sub> <span class="unit">kN·m</span></th>`;
+}
 export function renderLoadValuesTable() {
+  renderLoadValuesHeader();
   document.getElementById('lc-loadvalue-body').innerHTML = state.lcLoadTypes.map(lt => {
     const d = LC_LOADTYPE_DEFAULTS[lt.code] || {};
     const cur = (field, def) => { const el = document.getElementById(`lc-${lt.code}-${field}`); return el ? el.value : (def || 0); };
@@ -228,7 +238,7 @@ export function renderEquipmentLoad() {
   document.getElementById('eq-load-preview').innerHTML = `<div class="overflow-x"><table class="dl-worksheet dl-aligned"><colgroup><col style="width:34%"><col style="width:12%"><col style="width:3%"><col style="width:11%"><col style="width:40%"></colgroup>
     <caption>3.1.4. Equipment Load (E)</caption>
     ${trs}
-  </table></div>`;
+  </table></div>` + skidSupportPreviewHtml(); // 3.1.5 vendor reactions per support (skid), when entered
   // Keep the read-only P fields in Load Values (if that type still exists) in sync, without a full table re-render.
   Object.entries(EQUIPMENT_CODE_TO_FIELD).forEach(([code, eqId]) => {
     const el = document.getElementById(`lc-${code}-P`);

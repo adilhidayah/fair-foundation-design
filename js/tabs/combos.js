@@ -1,19 +1,28 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261015a';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
-import { fmt } from '../core/format.js?v=20261015a';
-import { comboState, state } from '../core/state.js?v=20261015a';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261015a';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261015a';
-import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261015a';
-import { getWorkflowStepStatus } from '../workflow/status.js?v=20261015a';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, staadReactionToFair, stdComboVector } from '../../lib/foundation/index.js?v=20261027merge1';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
+import { fmt } from '../core/format.js?v=20261027merge1';
+import { comboState, state } from '../core/state.js?v=20261027merge1';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261027merge1';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261027merge1';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261027merge1';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20261027merge1';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261027merge1';
 
+// "STAAD support reactions (Y up)" applies to the typed Load Values of the Support Reaction mode only (the manual-mode worksheets write the
+// FAIR convention). The conversion lives in staadReactionToFair() (lib) and is applied here, at the one place the values are read.
+export function isStaadSignMode() {
+  const sign = document.getElementById('ld-sign');
+  return getRadioVal('ld-mode') === 'reaction' && !!sign && getRadioVal('ld-sign') === 'staad';
+}
+const toFairInput = (kind, raw) => (isStaadSignMode() ? (staadReactionToFair(kind, raw) || raw) : raw);
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
   const loads = {};
   state.lcLoadTypes.forEach(lt => {
-    loads[lt.code] = { P: num(`lc-${lt.code}-P`), H: num(`lc-${lt.code}-H`), M: num(`lc-${lt.code}-M`) };
+    const f = toFairInput(lt.kind, { P: num(`lc-${lt.code}-P`), H: num(`lc-${lt.code}-H`), M: num(`lc-${lt.code}-M`) });
+    loads[lt.code] = { P: f.P, H: f.H, M: f.M };
   });
   return loads;
 }
@@ -105,7 +114,9 @@ export function renderLcSummary() {
   botEl.innerHTML = resultTable('lc', footBase, 'Load Combination Result at bottom of footing (ASD) — For Foundation Stability Calculation', 'For Foundation Stability Calculation', true);
   // Shallow footing with an offset pedestal: 4A adds the offset moments to these values (pedestalOffsetMoments()).
   const offX = num('fs-OffX'), offZ = num('fs-OffZ');
-  if (getRadioVal('fs-support') !== 'pile' && getRadioVal('fs-type') === 'pedestal' && (Math.abs(offX) > 1e-9 || Math.abs(offZ) > 1e-9)) {
+  if (getRadioVal('fs-support') !== 'pile' && activeLoadPoints()) {
+    botEl.innerHTML += `<div class="note">Moments about the footing centre with the whole load at the centre. Several load points are set in Section 02: Section 04 adds the moments of the point loads (shared out by their shares) about the footing centroid to these values — see the load-point table in 4.1.</div>`;
+  } else if (getRadioVal('fs-support') !== 'pile' && getRadioVal('fs-type') === 'pedestal' && (Math.abs(offX) > 1e-9 || Math.abs(offZ) > 1e-9)) {
     botEl.innerHTML += `<div class="note">Moments about the footing <em>centre line under the pedestal</em>. The pedestal is offset from the footing centre (Off<sub>X</sub> = ${fmt(offX,2)} m, Off<sub>Z</sub> = ${fmt(offZ,2)} m, Section 02): Section 04 adds the moments of the offset loads and self-weight about the footing centroid to these values — see the pedestal-offset table in 4.1.</div>`;
   }
   // LRFD results (strength design): the pedestal base carries H × pedestal height and the pedestal weight (5A pedestal design);
@@ -249,9 +260,9 @@ function buildComboBaseFor(dh, dWfoot) {
   const numOr0 = (id) => { const el = document.getElementById(id); if (!el) return 0; const v = parseFloat(el.value); return isFinite(v) ? v : 0; };
   const items = state.lcLoadTypes.map(lt => {
     const eqField = EQUIPMENT_CODE_TO_FIELD[lt.code];
-    return { code: lt.code, kind: lt.kind,
-      P: eqField ? num(eqField) : numOr0(`lc-${lt.code}-P`), H: numOr0(`lc-${lt.code}-H`), M: numOr0(`lc-${lt.code}-M`),
+    const raw = { P: eqField ? num(eqField) : numOr0(`lc-${lt.code}-P`), H: numOr0(`lc-${lt.code}-H`), M: numOr0(`lc-${lt.code}-M`),
       Hz: numOr0(`lc-${lt.code}-Hz`), Mx: numOr0(`lc-${lt.code}-Mx`) }; // Hz/Mx: vertical types only (absent -> 0)
+    return { code: lt.code, kind: lt.kind, ...toFairInput(lt.kind, raw) };
   });
   const { base, untyped } = buildComboBase(items, dh, dWfoot);
   state.lastUntypedLoadTypes = untyped;

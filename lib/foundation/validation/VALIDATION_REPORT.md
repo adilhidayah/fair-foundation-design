@@ -1,6 +1,10 @@
 # VALIDATION REPORT — Foundation Calculation Library
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
-**Total: 757 checks, 757 pass, 0 fail** (19 files, run 13 Oct 2026).
+**Total: 1207 checks, 1207 pass, 0 fail** (41 files, run 16 Oct 2026).
+
+> 16 Oct 2026 — several load points on a shallow footing (part40): the Tab 02 "Load points" now also apply to a shallow footing — 4A takes the group resultant of the points, 5B the soil pressure of that resultant with the point loads netted at every section (flexure also across the spans, e.g. hogging between skid runners). One point with share 1 reproduces the single-pedestal model exactly (part40 §2).
+
+> 16 Oct 2026 — side-face blowout fixed: the corner factor (1 + c_a2/c_a1)/4 (ACI 318M-19 §17.6.4.1.1) was missing in `anchorGroupCheck`, so N_sbg of corner anchors was 2× too high (SP-17M(14) Example 18 Step 10: UC 0.52 before, 1.05 = handbook after). part19 / part38 vectors updated (the 300 × 300 / M16 @ 130 / h_ef 300 group of part19 now governs by side-face blowout, UC 1.33). Known difference to the handbook (318M-14): l_dh of the pedestal bars as anchor reinforcement uses 318M-19 ψc and no A_s,req/A_s,prov reduction (FAIR more conservative, part39 Step 8).
 
 | File | Scope | Checks |
 |---|---|---:|
@@ -23,7 +27,29 @@ Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculatio
 | validation_shared_part17.mjs | footing punching at an edge / corner: critical section cut by the footing edges, J_c about its centroid, moment shift; two-way size effect λs | 31 |
 | validation_import_part18.mjs | STAAD import (.std load cases / REPEAT LOAD, .ANL support reactions, reaction → FAIR signs) + batch shallow-footing stability + footing and pedestal design + drawing + anchor-bolt top ties + pedestal auto-size + depth above the bottom mat (tools/staad-stability.mjs, tools/foundation-drawing.mjs) | 85 |
 | validation_shared_part19.mjs | anchor group ACI 318M-19 Ch. 17: forces on a rigid plate, breakout with edges and hef', pullout, side-face blowout, steel, shear, anchor reinforcement + l_dh | 19 |
-| **Total** | | **757** |
+| validation_shared_part20.mjs | autoSizeFooting() (B = L and H) + autoSizeDepth() (B, L, H fixed, Df only): 0.05 m grid vs known thresholds + 400 random brute-force cases | 29 |
+| validation_shared_part21.mjs | audit fixes 14 Oct 2026: anchor Vb (SI 0.6 / 3.7), one-way shear Vc (Table 22.5.5.1 cases, no 0.17 floor without Av,min), pedestal P-M (phi from net tensile strain, pure-tension end, envelope lookup) | 38 |
+| validation_shared_part22.mjs | independent spread-footing reference (spreadFooting.js): contact pressure (full / partial / biaxial), flexure at the pedestal faces, one-way shear at d, punching — closed forms + brute-force grid | 41 |
+| validation_shared_part23.mjs | STAAD support reactions → FAIR load inputs (staadReactionToFair): worked example, +x / +z lateral loads, 300 random load sets vs vector statics, vertical rows, kinds | 27 |
+| validation_shared_part24.mjs | cross-check footingDesign.js (app) vs spreadFooting.js (independent Newton-solver reference): contact plane, flexure at the pedestal faces, one-way shear, punching — 600 random cases, 449 with partial contact, agreement ≤ 1e-8 | 6 |
+| validation_shared_part25.mjs | pile group of the Filter Coalescer 101-F-2201 A/B/C foundation (12 piles): reactions with the correct moment lever arms (93.44 kN service / 119.5 kN factored vs 158.10 / 232.0 kN of the swapped pairing in the source document), lateral per pile, Converse–Labarre and manual Eg | 20 |
+| validation_shared_part26.mjs | pile settlement, Vesic (1977) / Das §11.18: S1, S2, S3, group factor, hand-worked values, negative control for the source document's tip-load error, scaling and invalid inputs | 17 |
+| validation_shared_part27.mjs | several load points on one pile cap: equivalent group load, global and section equilibrium on 400 random layouts (couples, cap weight), hand-worked sections of the 12-pile / 3-vessel cap, one point = single-pedestal model | 16 |
+| validation_shared_part36.mjs | minimum contact area (combineFootingChecks minContact): e/B 0.20 → contact 0.90, UC 0.7778; e/B 0.30 → 0.60, UC 1.1667 governs; full contact UC 0.70; biaxial; no contact UC ∞; criterion off = unchanged | 8 |
+| validation_import_part37.mjs | STAAD .std + .ANL import for the app (staadReactionCombos): nodes, dead case = lowest LOADTYPE Dead, last reaction table, kD (incl. nested REPEAT LOAD), temporary = Wind/Seismic, app vector (staadReactionToFair → buildComboBase → stdComboVector) = CLI reactionToFoundationLoad + kD·ΔW, M + H·Δh; unit / node / list errors | 14 |
+| validation_shared_part38.mjs | hairpin anchor reinforcement (anchorGroupCheck reinf.type 'hairpin'): tension legs (count, r ≤ 0.5 hef, development above the 35° plane, φ·ΣAs·fy replaces N_cbg, no seismic 0.75), shear hairpins of the front row (leg length vs l_dh / l_d, φ·ΣAs·fy replaces V_cbg, axis), l_d §25.4.2.3, pedestal-bar option unchanged, CLI anchorReinf, .fnd HAIRPIN | 28 |
+| validation_shared_part39.mjs | anchor group vs ACI SP-17M(14) Anchorage Example 18: steel, h_ef', A_Nc, ψ_ed,N, N_b, N_cbg (700 and 800 pedestal), pullout, side-face blowout with corner factor (2φN_sbg = 494 kN), pedestal bars as anchor reinforcement (strength; l_dh difference documented), ties in the top 125 mm (Case 1 A_s,req 106 mm², Case 2, §10.7.6.1.6 minimum, diamond flag), CLI anchorShearReinf, .fnd ANCHOR SHEAR | 30 |
+| validation_shared_part40.mjs | several load points on a SHALLOW footing (skid runners / base plates / pedestal per point): footingPointLoads (self-weight split, group resultant = pedestal-offset moments for one point), flexure at the point faces + span scan (hogging 75 kN·m between two runners, hand calc), one-way shear with the other points netted, punching = loads inside − net pressure inside, equilibrium on 400 random layouts, load points inside the footing (geometry) | 21 |
+| validation_shared_part41.mjs | skid support reactions -> equipment loads + load points (skidSupportLoads): sums per condition, shares = operating reactions, reaction centroid and its shift per condition (hand calc 4 base plates, shift 0.10725 m, M_x = −63 kN·m through footingPointLoads), fallbacks, uplift support | 11 |
+| validation_shared_part35.mjs | top reinforcement option (topLayerDesign): bottom only (top for hogging, previous behaviour) / two layers (top mat ≥ ρ_top·b·t, default 0.0009): 1080 mm², D16 @ 425 (7 bars) by hand, hogging design governs when larger, TOP MAT command, CLI tables shallow + pile cap with bottom layers unchanged | 15 |
+| validation_import_part34.mjs | report generator: Markdown → HTML (headings, tables with right-aligned numbers and the governing row, lists, bold / italic / code, subscripts, HTML escaping, images), document header (plain and document-table form), REPORT command, fair-run HTML with every number of the Markdown tables unchanged, PDF via an installed Chrome / Chromium / Edge (skipped when none; `FAIR_REQUIRE_PDF=1` makes a missing PDF a failure) | 22 |
+| validation_shared_part33.mjs | several load points on a pile cap WITH a pedestal under each point: foundationSizing(pedAreas) (ΔW 695.322 kN), splitCombinationLoad(pedFrac) (point loads 297.203 / 576.934 / 297.203 kN, group M_x −93.199 kN·m), equilibrium of 400 random layouts, pedestalBaseActions (hand values), pedestal geometry (outside, overlap) | 20 |
+| validation_import_part32.mjs | auto-thickness of a pile cap (AUTO THICKNESS with SUPPORT PILE): H = 0.30 m punching of the pedestal UC 1.136 by hand (ΔW 100.224 kN, d 209 mm, v_u 1.4063 / φv_c 1.2375 MPa), smallest passing H confirmed by single runs, Dp lock, no passing H, invalid trial | 12 |
+| validation_import_part31.mjs | pile cap structure from STAAD factored combinations (tools/staad-pile.mjs): flexure M_u = 359.01 kN·m, A_s,min governs, one-way V_u 190.5 kN, punching of the pedestal 908.19 kN and of the pile 132.97 kN (hand calculation), thin cap fails, missing LRFD reaction reported | 16 |
+| validation_import_part30.mjs | FAIR command input for a pile cap (SUPPORT PILE) + tools/staad-pile.mjs: parser, 3 × 3 pile group hand calculation (ΔW 251.424 kN, Eg 0.7269, F_max 83.49 / 89.05 kN, lateral 3.514 kN), CLI = tool, NOT SET limits fail | 21 |
+| validation_import_part29.mjs | FAIR command input (.fnd, STAAD style): every command → its config field, line-numbered errors, CLI report identical to the JSON route | 24 |
+| validation_shared_part28.mjs | punching of a pile through the pile cap (ACI 318M-19 §22.6, Table 22.6.5.2): interior / edge / corner sections, λs, φV_c = 797.2 kN for the Filter Coalescer pile (source document 797.22), tension pile, circular pile | 14 |
+| **Total** | | **1207** |
 
 Counts are the `PASS` lines each file prints; every file exits 0 on all-pass, 1 on any fail.
 
@@ -120,6 +146,42 @@ Parser vectors on a synthetic .std / .ANL (continuation lines, nested REPEAT LOA
   500×500, d = 400: bo = 3600, Jc = 204.0e9 mm⁴, γv = 0.4; Vu = 500 kN, Mz = 100 kN·m → 0.3472 + 0.0882 = 0.4355 MPa;
   equal biaxial moments add both terms; 600×400: γf 0.5729 / 0.6265, Jc 237.33e9 / 170.67e9; edge / corner → invalid.
 
+### part16 — STAAD support reactions → FAIR load inputs (14 Oct 2026)
+FAIR takes H and M of a lateral load with the same sign when they overturn the same way (P down +; Mz > 0 compresses +x, Mx > 0 compresses −z). STAAD (Y up) reports the forces the
+support exerts on the structure, so H = −FX, Hz = −FZ, M = +MZ (X types), M = −MX (Z types), P = FY, Mx = +MX (vertical rows). Check by vector statics (independent of the mapping):
+loads F at points r on the structure → reactions R = −ΣF, M_r = −Σ r×F → mapped → loadTypeVector() → the pressure centre (xe, ze) of the FAIR vector equals the one from statics
+(xe = −MZ_f/P, ze = MX_f/P for the action on the foundation): 300 random load sets, worst 3e-16. Worked example: +x load 100 kN at 5 m, dh 1.275 m: Mz at the underside = 627.5 kN·m;
+typing the STAAD numbers without the mapping gives 372.5 (41 % low, unconservative). In the browser: STAAD mode FX −100 / MZ +500 → Fx 100, Mz 500, dMz 127.5; FZ −60 / MX −240 → Fz 60, Mx −240, dMx −76.5.
+
+### part15 — spread footing from the soil pressure (14 Oct 2026)
+Replaces the pile-derived footing flexure / V_u that the shallow mode used (Mu = 0, minimum steel, always PASS). Rigid footing, linear pressure q = q0 + a·x + c·z, no tension
+(partial contact solved by Newton on exact polygon integrals), net of the factored footing + backfill weight w (pedestal weight = column load). Vectors:
+B = L = 4 m, P = 1000 kN, pedestal 1 × 1 m: q = 62.5 kPa, face moment q·L·c²/2 = 281.25 kN·m, one-way shear q·L·(c − d) = 275 kN (d 0.4), punching 1000 − 62.5·1.4² = 877.5 kN;
+with w = 20 kPa: 191.25 kN·m and 596.7 kN. Inside the kern (ex = 0.5 m): qmax/qmin = 109.375 / 15.625 kPa, M+ = 439.45 kN·m. Partial contact (ex = 1.2 m): qmax = 2P/(3L(B/2 − e)) = 208.33 kPa,
+contact 60 %. 40 random biaxial partial-contact cases: N, N·ex, N·ez of the solved plane match a brute-force grid (< 1 %); eccentric pedestal with w and partial contact: M, V and
+punching agree with the grid within 0.4 %. Signs: Mz > 0 → compression on +x, Mx > 0 → compression on −z; an offset column equals the equivalent moment. In the browser (4 × 4 × 0.7 m, 27 LRFD combinations)
+the UI moments and shear agree with an independent grid + numeric-Newton solver within 0.2 kN·m / 0.2 kN.
+
+### part14 — audit fixes (14 Oct 2026)
+Found by an independent recalculation of the shallow workflow against the UI (loads, 4A, bearing, shear, pedestal P-M, anchors all agreed except these):
+- Anchor shear breakout: Vb used the US-customary coefficient 7 with SI units (11.67x too high). Now min[0.6(le/da)^0.2·√da·λ√f'c·ca1^1.5, 3.7λ√f'c·ca1^1.5]
+  (ACI 318M-19 §17.7.2.2.1). Hand vectors: da 20 / hef 300 / f'c 25 / ca1 100 → (a) 20,335 N, (b) 18,500 N → Vb 18,500 N; da 12 / hef 200 / f'c 30 / ca1 200 → (a) 48,805 N governs;
+  US-customary equation converted to SI (19.70 kN) agrees with (a) within 4 %.
+- One-way shear (bw 1000, d 341, f'c 30, rho 0.5 %): Av < Av,min → Eq. (c) with λs = 0.924 → Vc 194.78 kN (UC 220 kN → 1.506); the 0.17 floor (317.5 kN) is only for Av ≥ Av,min (larger of (a), (b)).
+  Before: UC 0.924 for the same section. λs is kept for footings (conservative; §13.2.6.2 may exempt shallow foundations — verify).
+- Pedestal P-M (600 × 600, d' 65, 8 D25 per layer, f'c 30, fy 420): φ was taken from the compressive-positive strain, so φ = 0.65 over the whole flexure range (φMn 18–30 % low).
+  Now φ = 0.90 at c = 120 mm (net tensile strain 0.0104), 0.7869 at c = 240 mm, 0.65 once c > d2; pure-tension point φPn = −0.9·Ast·fy = −2,969 kN; Pu beyond it is out of range.
+  The full 1250 × 1250 section: φMn at Pu = 0 changes from 2,437 to 3,374 kN·m (strain-compatibility with a finer grid gives 3,385).
+- Not changed (by design, documented): the bolt group is assumed centred on the pedestal (ca1 from the group centroid).
+
+### part13 — autoSizeFooting (14 Oct 2026)
+The solver has no engineering formula; it searches B = L (stability) and H (shear) on a 0.05 m grid using caller-supplied checks. Vectors:
+stability needs B ≥ 2.37, shear needs H ≥ 0.62 → B = 2.40, H = 0.65 (20 trials, not a grid scan); thresholds on a grid point are accepted
+(2.40 / 0.65); B depending on H (B ≥ 4.0 − H, H ≥ 0.80 → B 3.20); H depending on B (H ≥ 0.2·B, B ≥ 3.0 → B 3.00, H 0.60); 200 random
+thresholds equal the brute-force grid answer; no solution (stability / shear / geometry / empty range) returns ok = false with the reason;
+no trial is evaluated twice. autoSizeDepth (footing size fixed by the site, only Df searched): stability needs Df ≥ 2.62 → 2.65; on-grid 2.60 accepted; 200 random thresholds = brute force; Dmax not enough → failed = stability; shear failing (independent of Df) → failed = shear. The UI wiring (js/tabs/autoSize.js) was checked in a headless browser: one step smaller (B − 0.05 or H − 0.05)
+fails a check, the found size passes all. Depth-only mode in the browser (default load data, pedestal): 3.5 × 3.5 × 0.40 m → Df 2.65 m (Df 2.60 gives kern UC 1.006), 3.0 × 4.0 × 0.40 m → Df 3.80 m (3.75 gives 1.002); footing only 3.0 × 4.0 × 0.40 m → Df 1.30 m (1.25 gives 1.035).
+
 ### part12 — foundation geometry consistency (26 Sep 2026)
 - foundationGeometryCheck: Bf, Lf, Hf > 0; Df ≥ Hf; pedestal inside the footing, |OffX| + Bp/2 ≤ Bf/2 and |OffZ| + Lp/2 ≤ Lf/2
   (flush edge allowed; 2.4 m footing, Bp 1.25, OffX −0.6 → 0.025 m out); pile embedment h < Hf (h = Hf fails);
@@ -162,6 +224,8 @@ node lib/foundation/validation/validation_shared_part11.mjs
 node lib/foundation/validation/validation_static_part12.mjs
 node lib/foundation/validation/validation_shared_part13.mjs
 node lib/foundation/validation/validation_shared_part14.mjs
+node lib/foundation/validation/validation_shared_part15.mjs
+node lib/foundation/validation/validation_shared_part16.mjs
 ```
 
 ## Notes
@@ -172,3 +236,16 @@ node lib/foundation/validation/validation_shared_part14.mjs
 - The library tests do not cover the UI wiring (unit conversions, which combinations a tab uses). Those were checked in a
   headless browser against independent hand calculations (see docs/PROJECT_INSTRUCTIONS.md §11) — the anchor-bolt unit bug
   found on 26 Sep 2026 was of that kind.
+- CLI pile cap 5B vs the app (15 Oct 2026, headless browser, not part of the CI): tools/staad-pile.mjs (`pileCapDesignCheck`) and the app's 5B tab
+  (Tab 02 pile support, Tab 03 STAAD support-reaction mode, LRFD combinations, 6.1 / 6.2 / 6.3 from the pile reactions) were run on the same
+  inputs: 2 geometries (centred 3 × 3 piles with a 0.6 × 0.6 pedestal; 2 × 4 piles with a 0.8 × 0.5 pedestal offset (0.15, −0.2) m) × 3 load sets
+  (gravity with small lateral, large biaxial lateral, net uplift with hogging) × 4 combinations. Compared: ΔW, M_u of the four sections (bottom and
+  top, x and z), V_u and UC of the one-way shear in both directions, V_u / v_u / UC of the pedestal punching, UC of the pile punching —
+  all equal (ΔW to 0.03 kN, forces and moments to ≤ 0.06, UC to ≤ 0.002; the app rounds its display). The STAAD → FAIR sign mapping is
+  independent in the two (`staadReactionToFair` in the app, `reactionToFoundationLoad` in the CLI). The app's equipment load types (E(E), E(O), E(T)) take
+  P from the equipment inputs, so a free-form vertical load type (Lr) was used for the third load set.
+- Multi-point pedestals, UI wiring (15 Oct 2026, headless browser): Tab 02 pile support + Pile Cap + Pedestal + 3 load points (shares 1 : 2 : 1, 0.8 × 0.8, 0.9 × 0.7, 0.8 × 0.8 m) on a 6.4 × 3.2 × 1.0 m cap, STAAD-sign loads D / L / Lr and 3 LRFD combinations. ΔW 695.3 kN, pedestal weights 12.288 / 12.096 / 12.288 kN and the 4B group load (P 2093.42, M_x −93.1997 kN·m for 1.4D) agree with the hand calculation of part33; 5A (bars, ρ, UC per pedestal) and 09 (c_a1 and UC per pedestal) were recomputed from the raw numbers outside the app with searchPedestalBars / evaluateAnchorCombo — all equal. The CLI-vs-app 5B comparison above was repeated after the change: unchanged (single pedestal).
+- App report export (15 Oct 2026, headless browser, not part of the CI): Summary tab → "Export report (HTML)" after visiting every tab: one standalone HTML file (315 KB, 12 report blocks, 43 tables, 8 diagrams, no "Show all N rows" buttons, all rows present, title / header / date from the Summary inputs), opened without the app and printed to a 30-page A4 PDF — text, tables and SVG diagrams (styles written inline) as in Report Preview, light palette, page numbers; no console errors. The CLI HTML / PDF (pile cap and shallow footing with drawings) were read page by page as PDF images.
+- Top reinforcement option, UI wiring (16 Oct 2026, headless browser): 5B "Top reinforcement" = Two layers on the default pile cap (2.4 × 2.4 × 0.4 m, no hogging) adds x / z top mats of 0.0009·2400·400 = 864 mm² (the minimum-mat rows say so), bottom layers unchanged; on the shallow default (hogging present) the hogging design (1728 mm²) governs in both modes. The CLI drawing shows the top bars in the section and a separate top-mat plan.
+- Kern with no eccentricity limit, UI (16 Oct 2026, headless browser): 4A "No limit — bearing governs" keeps the kern out of the governing UC (combineFootingChecks, unchanged); the Design Status list now shows it as "Contact area (kern, information) — min 72 % in contact — INFO" instead of "Eccentricity (kern) 1.953 NG"; with 1/6 the row stays a UC (1.953 NG). Auto-Size summaries print the same information text.
+- Minimum contact area, app vs CLI (16 Oct 2026, headless browser): footing 0.60 × 0.60 × 0.30, Df 0.95, pedestal 0.30 (Gp 0.275), STAAD-sign loads, 3 ASD combinations, no e limit, min contact 70 %: app UC per L/C 0.700 / 0.729 / 1.044 = tools/staad-stability.mjs 0.700 / 0.7292 / 1.0433 (app ΔW from the 0.1 kN display value 7.0 vs 7.014 kN); status FAIL governed by "Contact area (min 70 %)" at L/C 103, the same in the Design Status list and the Focus Canvas; without the criterion PASS, UC 0.848 (overturning). Also fixed: with "No limit" the app had still put the biaxial kern into the governing UC (r.allChecks) — now the kern is left out, as in combineFootingChecks().

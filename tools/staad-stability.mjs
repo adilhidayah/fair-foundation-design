@@ -29,7 +29,9 @@
 //                             "sameBothWays": true,                    // optional: same bars in x and z per face (larger steel / m governs)
 //                 "pedestal": { "bar": 16, "tie": 10, "legs": 2, "clearCover": 50, "fyt": 420, "rhoMin": 0.01 },  // optional: pedestal
 //                                                                          //   "boltBarClearMin": min. clear anchor bolt / bar (mm, default max(25, d_b))
-//                                                                          //   "anchor": { "Ase", "futa", "hef", "Abrg", "omega0", "reinforcement": true,
+//                                                                          //   "anchor": { "Ase", "futa", "hef", "Abrg", "omega0", "reinforcement": true | "bars" | "hairpin",
+//                                                                          //   "hairpin": { "db", "n", "r", "tension", "shear", "legEnd": "hook"|"straight", "sideCover" },
+//                                                                          //   "shearReinforcement": "ties"|"hairpin"|"none", "ties": { "n", "db", "case": 1|2, "diamond" },
 //                                                                          //   "spacings": [...] or "spacingStep": 10, "sMin": 100 (from the drawing
 //                                                                          //   spacing down) } -> ACI 318M-19 Ch. 17 check of the 4 anchors
 //                                                                          //   (anchorGroupCheck, lib); spacings tried from large to small per size
@@ -61,7 +63,7 @@ import { pathToFileURL } from 'node:url';
 import { buildFoundationDrawing, toDXF, toSVG } from './foundation-drawing.mjs';
 import {
   foundationSizing, evaluateFoundationCombo, evaluateBiaxialFooting, biaxialSoilPressure, combineFootingChecks,
-  pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign,
+  pedestalOffsetMoments, meyerhofEffectiveArea, bearingCapacityCheck, signedSoilPressure, footingFlexureAxis, flexuralDesign, topLayerDesign,
   footingOneWayShear, oneWayShearCheck, footingPunchingShear, footingPunchingStress, footingPunchingCapacity, barLayout, searchPedestalBars, pedestalShearCheck, anchorGroupCheck, parseStaadLoads, primaryFactors, parseStaadReactions, reactionToFoundationLoad, parseCaseList
 } from '../lib/foundation/index.js';
 
@@ -139,14 +141,8 @@ export function evaluateStaadFoundation(f, crit, loads, reac, lcList, deadCase) 
       else qBear = Infinity;
     }
     const ucBearingBiaxial = Number.isFinite(qBear) && qaBear > 0 ? qBear / qaBear : Infinity;
-    let comb = combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial });
-    // minimum contact area (project criterion): share of the base still pressed, rigid footing without tension (4A §4.2)
-    if (crit.minContact > 0 && comb && comb.checks) {
-      const ratio = bp.valid ? bp.contactRatio : 0;
-      const checks = [...comb.checks, { name: `Contact area (min ${n(crit.minContact * 100, 0)} %)`, uc: ratio > 0 ? crit.minContact / ratio : Infinity }];
-      const governingCheck = checks.reduce((a, b) => (b.uc > a.uc ? b : a));
-      comb = { checks, governingCheck, governingUC: governingCheck.uc, overallPass: checks.every(c => c.uc <= 1.0) };
-    }
+    // minimum contact area (project criterion): share of the base still pressed, rigid footing without tension (4A §4.2) — combineFootingChecks (lib)
+    const comb = combineFootingChecks(uni, bi, { eccLimit, ucBearingBiaxial, minContact: crit.minContact, contactRatio: bp.valid ? bp.contactRatio : 0 });
     // statics of a rigid footing on soil that cannot pull (biaxialSoilPressure): none = full contact (inside the kern),
     // partial = part of the base lifts off (outside the kern), net = P ≤ 0 (whole footing pulled up),
     // separation = P > 0 but the resultant at / outside the base edge (no equilibrium -> overturns)
@@ -237,7 +233,7 @@ function reportTables(r) {
   if (P && P.pm && P.pm.found) o.push('| **Pedestal** | | |', `| Width | ${n(f.Bp)} | m |`, `| Length | ${n(f.Lp)} | m |`,
     `| Height (below + above grade) | ${n(s.Dp + (f.pedGp || 0))} | m |`, `| Flexural reinforcement | ${P.pm.n * 2} D${P.bar} | - |`,
     `| Stirrups | Ø${P.tie}-${P.tieS}${P.topTies ? ` + ${P.topTies.n} Ø${P.topTies.dia} within ${P.topTies.within} mm of top` : ''} | - |`,
-    ...(P.topTies ? [`| Anchor bolts | ${P.topTies.bolts}${P.anchor ? ` (UC ${n(P.anchor.res.uc, 2)}${P.anchor.A.reinforcement ? (P.anchor.hairpin ? ', with hairpins' : ', with anchor reinforcement') : ''})` : ''} | - |`] : []));
+    ...(P.topTies ? [`| Anchor bolts | ${P.topTies.bolts}${P.anchor ? ` (UC ${n(P.anchor.res.uc, 2)}${(P.anchor.hairpin || P.anchor.A.reinforcement === 'hairpin') ? ', with hairpins' : P.anchor.A.reinforcement ? ', with anchor reinforcement' : ''})` : ''} | - |`] : []));
   const rows = r.rows.filter(x => x.valid), grp = (tmp) => rows.filter(x => x.temporary === tmp);
   const line = (label, tmp, val, lim, good, unit = '') => {
     const g = grp(tmp);
@@ -305,16 +301,26 @@ function pedestalReport(r) {
     const R = P.anchor.res, A = P.anchor.A;
     o.push('', `**Anchor bolts — ACI 318M-19 Chapter 17** (${P.topTies.bolts}, cast-in headed, A_se ${A.Ase} mm², f_uta ${A.futa} MPa, h_ef ${A.hef} mm, ` +
       `A_brg ${A.Abrg} mm²; cracked concrete; seismic: concrete strengths × 0.75 and the seismic M, H × Ω0 = ${P.anchor.omega0}` +
-      `${A.reinforcement ? (P.anchor.hairpin ? `; tension breakout replaced by anchor reinforcement = ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${P.anchor.hairpin.db} (4 legs at ±${P.anchor.hairpin.a} × ±${P.anchor.hairpin.b} mm from the centre, just inside the anchors) within 0.5 h_ef of the anchors in tension, 180° bend at the top (§17.5.2.1, l_dh §25.4.3, legs l_d §25.4.2.3)` : '; tension breakout replaced by anchor reinforcement = the pedestal bars within 0.5 h_ef of the anchors in tension, 90° hooks at the top (§17.5.2.1, l_dh §25.4.3)') : ''}). ` +
+      `${A.reinforcement ? (P.anchor.hairpin ? `; tension breakout replaced by anchor reinforcement = ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${P.anchor.hairpin.db} (4 legs at ±${P.anchor.hairpin.a} × ±${P.anchor.hairpin.b} mm from the centre, just inside the anchors) within 0.5 h_ef of the anchors in tension, 180° bend at the top (§17.5.2.1, l_dh §25.4.3, legs l_d §25.4.2.3)` : R.ar?.type === 'bars' ? '; tension breakout replaced by anchor reinforcement = the pedestal bars within 0.5 h_ef of the anchors in tension, 90° hooks at the top (§17.5.2.1, l_dh §25.4.3)' : '') : ''}; ` +
+      `${R.ar && R.ar.type === 'hairpin' || (R.arV && R.arV.type === 'hairpin') ? `; anchor reinforcement = hairpins around the anchors, replacing the concrete breakout in ${[R.ar && R.ar.type === 'hairpin' ? 'tension (§17.5.2.1(a))' : '', R.arV && R.arV.type === 'hairpin' ? 'shear (§17.5.2.1(b))' : ''].filter(Boolean).join(' and ')}` : ''}` +
+      `${R.arV && R.arV.type === 'ties' ? '; shear breakout replaced by the ties in the top 125 mm (§17.5.2.1(b))' : ''}; side-face blowout with the corner factor (1 + c_a2/c_a1)/4 = ${n(R.psiCornerSb, 2)} (§17.6.4.1.1)). ` +
       `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
-      `h_ef' = ${n(R.hefE, 1)} mm (edges).`, '',
+      `h_ef' = ${n(R.hefE, 1)} mm (edges). Open difference to SP-17M(14) Example 18: steel shear V_sa per anchor = V/4 without the 0.8 grout-pad factor (§17.7.1.2.1); ` +
+      `the handbook uses V/2 (Case 2) × 0.8 — verify V_sa where the base plate sits on grout.`, '',
       '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
       `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
     if (R.ar && R.ar.hairpin) o.push('', `Anchor reinforcement (hairpins): ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${R.ar.db}, ${R.ar.n} legs within 0.5 h_ef of the anchors in tension (A_s ${n(R.ar.As, 0)} mm²), nearest at ${n(R.ar.r, 0)} mm; ` +
       `legs ${n(R.ar.legLen, 0)} mm long from the top of the pedestal; above the 35° plane ${n(R.ar.avail, 0)} mm ${R.ar.avail >= R.ar.ldh - 1e-9 ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (ψr = 1.6); ` +
       `below the plane ${n(R.ar.availLow, 0)} mm ${R.ar.availLow >= R.ar.ld - 1e-9 ? '≥' : '<'} l_d ${n(R.ar.ld, 0)} mm. ` +
       `Clear distance hairpin / bolt ${n(P.anchor.hairpin.boltClear, 0)} mm, hairpin / bar ${n(P.anchor.hairpin.barClear, 0)} mm.`);
-    else if (R.ar) o.push('', `Anchor reinforcement: ${R.ar.n} × D${P.bar} (A_s ${n(R.ar.As, 0)} mm²) within 0.5 h_ef of the anchors in tension, nearest at ${n(R.ar.r, 0)} mm; ` +
+    if (R.ar && R.ar.type === 'hairpin') o.push('', `Hairpins, tension: ${R.ar.hairpins} vertical hairpins D${A.hairpin?.db ?? P.bar} (${R.ar.n} legs, A_s ${n(R.ar.As, 0)} mm²) at the anchors in tension, legs at ${n(R.ar.r, 0)} mm ${R.ar.within ? '≤' : '>'} 0.5 h_ef; ` +
+      `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (U-bend at the top = the hook); straight legs below the plane ≥ l_d ${n(R.ar.ldBelow, 0)} mm (detailing, SP-17M Fig. E18.5).`);
+    if (R.arV && R.arV.type === 'ties') o.push('', `Ties in the top 125 mm, shear (SP-17M(14) Example 18 Step 17b/17c, Case ${R.arV.case}): V_a = V/${R.arV.case === 1 ? 4 : 2} = ${n(R.arV.Va, 2)} kN per anchor, ` +
+      `strut α = 45° -> T = ${n(R.arV.T, 2)} kN; φT_n = 0.75·${R.arV.n}·${n(R.arV.As / R.arV.n, 0)} mm²·f_y; ${R.arV.n} × D${R.arV.db} ${R.arV.minOk ? '≥' : '<'} minimum ${R.arV.nMin} (§10.7.6.1.6)` +
+      `${R.arV.diamond ? '; diamond ties provided for the alternate strut to the middle bars (Fig. E18.14 / E18.16)' : ''}.`);
+    if (R.arV && R.arV.type === 'hairpin') o.push('', `Hairpins, shear (${R.arV.axis}): ${R.arV.hairpins} horizontal hairpins D${A.hairpin?.db ?? P.bar} around the ${R.arV.anchors} front anchors (${R.arV.n} legs, A_s ${n(R.arV.As, 0)} mm²), legs ${n(R.arV.legAvail, 0)} mm ` +
+      `${R.arV.developed ? '≥' : '<'} ${R.arV.legEnd === 'straight' ? 'l_d' : 'l_dh'} ${n(R.arV.ldReq, 0)} mm; φV = ${n(R.arV.phiVn / 1000, 1)} kN.`);
+    if (R.ar && R.ar.type === 'bars') o.push('', `Anchor reinforcement: ${R.ar.n} × D${P.bar} (A_s ${n(R.ar.As, 0)} mm²) within 0.5 h_ef of the anchors in tension, nearest at ${n(R.ar.r, 0)} mm; ` +
       `length above the 35° breakout plane ${n(R.ar.avail, 0)} mm ${R.ar.developed ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (hooked).`);
   }
   if (P.topTies) o.push('', `Top ties (anchor bolts in the top of the pedestal, ACI 318M-19 §10.7.6.1.6): **${P.topTies.n} × Ø${P.topTies.dia} within ` +
@@ -358,7 +364,7 @@ function designReport(r) {
   for (const c of D.flex || []) {
     if (!c.required) { o.push(`| ${c.key} | - | 0 (no hogging) | ${n(c.b, 0)} | ${n(c.dEff, 0)} | - | - | not required (detailing) | - | - |`); continue; }
     if (!c.des || !c.des.ok) { o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | section too small | - | - | - | NOT OK |`); continue; }
-    o.push(`| ${c.key} | ${c.lc} | ${n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
+    o.push(`| ${c.key} | ${c.lc} | ${c.minOnly ? `0 (minimum top mat, ρ_top ${D.topLayer.rhoTop ?? 0.0009})` : n(c.Mu, 2)} | ${n(c.b, 0)} | ${n(c.dEff, 0)} | ${n(c.des.AsCalc, 0)} | ${n(c.des.AsMin, 0)} | ` +
       `${c.s ? `D${D.bar} @ ${n(c.s, 0)} (${c.n} bars)` : 'spacing < step'} | ${n(c.AsProv, 0)} | ${c.ok ? 'OK' : 'NOT OK'} |`);
   }
   o.push('', `Footing design: **${D.pass ? 'OK' : 'NOT OK'}** — governing ${D.gov.name}, UC ${n(D.gov.uc, 3)}.`);
@@ -379,7 +385,7 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
   const wUnit = w0.Wfoot / Af + (Af - Ap > 1e-9 ? w0.Wsoil / (Af - Ap) : 0);
   const dead = deadCase ?? Math.min(...Object.entries(loads.primary).filter(([, p]) => /^dead$/i.test(p.type)).map(([n]) => +n));
   const d = t - cc - bar;                                       // mm, outer layer (x-bars); z-bars d − bar
-  const out = { f, B, L, t, cc, bar, fc, fy, d, wUnit, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25,
+  const out = { f, B, L, t, cc, bar, fc, fy, d, wUnit, asMinRule: D.asMin === 'beam' ? 'beam' : 'slab', spacingStep: D.spacingStep ?? 25, topLayer: { mode: D.topLayer?.mode === 'two' ? 'two' : 'bottom', rhoTop: D.topLayer?.rhoTop ?? 0.0009 },
     items: [], missing: [], checks: [], notes: [] };
   if (!(c1 > 0 && c2 > 0)) { out.notes.push('Pedestal / column size B_p × L_p must be > 0.'); out.pass = false; out.gov = { name: 'input', uc: Infinity }; return out; }
   for (const lc of lcList) {
@@ -412,12 +418,15 @@ export function footingDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     { key: 'z-top', get: it => it.mz.top, b: B * 1000, dEff: d - bar, face: 'top' }
   ].map(c => {
     const gov = ok.reduce((a, b2) => (c.get(b2) > c.get(a) ? b2 : a));
-    const Mu = c.get(gov), required = c.face === 'bottom' || Mu > 1e-6;   // top steel only where a combination gives hogging
-    const des = required ? flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, rule) : null;
+    // bottom layers always; top: where a combination gives hogging, or always with the two-layer option (design.topLayer, topLayerDesign)
+    const Mu = c.get(gov);
+    const top = c.face === 'top' ? topLayerDesign(Mu, c.b, c.dEff, t, fc, fy, { asMinRule: rule, mode: D.topLayer?.mode, rhoTop: D.topLayer?.rhoTop }) : null;
+    const required = top ? top.required : true, minOnly = !!(top && top.minOnly);
+    const des = top ? top.design : flexuralDesign(Mu, c.b, c.dEff, t, fc, fy, rule);
     // spacing in `step` mm steps, rounded down, ≤ min(3t, 450) (barLayout(), as the app's 5B)
     const lay = des && des.ok ? barLayout(des.As, c.b, bar, t, step, cc) : null;   // count rounded up over b − 2·cover, nominal s
     const n = lay && lay.valid ? lay.n : null, s = lay && lay.valid ? lay.s : null;
-    return { ...c, lc: gov.lc, Mu, required, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
+    return { ...c, lc: minOnly ? '-' : gov.lc, Mu: minOnly ? 0 : Mu, required, minOnly, des, n, s, sAct: lay && lay.valid ? lay.sAct : null, AsProv: lay && lay.valid ? lay.AsProv : 0,
       ok: !required || (!!des && des.ok && !!lay && lay.valid && s - bar >= minClear - 1e-9) };
   });
   // project option design.sameBothWays: the same bars in x and z per face (the larger required steel per metre width governs)
@@ -513,7 +522,7 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
     // hairpin anchor reinforcement (A.hairpin = { db, n }): U-bars along x, vertical legs (180° bend at the top) just inside the anchor
     // pattern, at (±a, ±b) = anchor position − 35 mm towards the centre (min. 30 mm); n = 2: one hairpin at each anchor row (z = ±b),
     // n = 1: only z = −b. The legs are 49 mm (diagonal) from the nearest anchor, so the 35° plane is as deep as possible.
-    const HP = P0.anchor && P0.anchor.reinforcement && P0.anchor.hairpin ? P0.anchor.hairpin : null;
+    const HP = P0.anchor && (P0.anchor.reinforcement === true || P0.anchor.reinforcement === 'bars') && P0.anchor.hairpin ? P0.anchor.hairpin : null;
     let hairpin = null;
     if (HP) {
       const hdb = HP.db ?? 10;
@@ -540,8 +549,9 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
         const k = seis ? om : 1, t0 = row.top;
         const res = anchorGroupCheck({ Bp, Lp, sx: bo.sx, sz: bo.sz, da: bo.dia, Ase: A.Ase, futa: A.futa, hef: A.hef, Abrg: A.Abrg, fc, lambda,
           seismic: A.seismic !== false, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
-          reinf: A.reinforcement ? (hairpin ? { hairpin: { legs: hairpin.legs, db: hairpin.db, maxLen: w0.Hp * 1000 - 75 }, fy, topCover: A.topCover ?? 50 }
-            : { bars, db: bar, fy, topCover: A.topCover ?? 50 }) : null });
+          reinf: hairpin ? { hairpin: { legs: hairpin.legs, db: hairpin.db, maxLen: w0.Hp * 1000 - 75 }, fy, topCover: A.topCover ?? 50 }
+            : anchorReinf(A, { bars, bar, fy, clearCover: P0.clearCover ?? 50 }),
+          shearReinf: anchorShearReinf(A, { bar, tie, nTop, fy, clearCover: P0.clearCover ?? 50 }) });
         if (!gov || res.uc > gov.res.uc) gov = { lc: row.lc, seis, res };
       }
       out.anchor = { ...gov, A, omega0: om, hairpin };
@@ -560,6 +570,38 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
   out.gov = out.checks.reduce((a, b) => (b.uc > a.uc ? b : a));
   out.pass = out.checks.every(c => c.uc <= 1) && !out.missing.length;
   return out;
+}
+
+// Anchor reinforcement of the anchor check (pedestal.anchor.reinforcement): true / "bars" = the pedestal longitudinal bars within
+// 0.5 hef of the anchors in tension; "hairpin" = hairpins around each anchor (pedestal.anchor.hairpin: { db, n, r, tension, shear,
+// legEnd, sideCover }, defaults: the pedestal bar size, 1 per anchor, legs in contact, tension and shear, hooked legs, the pedestal
+// clear cover) — anchorGroupCheck (lib) replaces the concrete breakout in tension and / or shear.
+export function anchorReinf(A, { bars, bar, fy, clearCover = 50 }) {
+  const t = A.reinforcement === true ? 'bars' : A.reinforcement;
+  if (t === 'bars') return { bars, db: bar, fy, topCover: A.topCover ?? 50 };
+  if (t === 'hairpin') {
+    const h = A.hairpin || {};
+    return { type: 'hairpin', db: h.db ?? bar, fy: h.fy ?? fy, n: h.n ?? 1, ...(h.r !== undefined ? { r: h.r } : {}), tension: h.tension !== false,
+      shear: h.shear !== false, legEnd: h.legEnd || 'hook', sideCover: h.sideCover ?? clearCover, topCover: A.topCover ?? 50 };
+  }
+  return null;
+}
+
+// Shear anchor reinforcement (pedestal.anchor.shearReinforcement): "ties" = the ties in the top 125 mm (anchor.ties: { n, db, case,
+// diamond }, defaults: the top ties of the pedestal, n = 2 (D13+) / 3, Case 2 = V/2 per anchor, SP-17M Example 18), "hairpin" = the
+// hairpin model (anchor.hairpin), "none" = concrete breakout; not given = the shear flag of the tension hairpins (anchorReinf).
+export function anchorShearReinf(A, { bar, tie, nTop, fy, clearCover = 50 }) {
+  const t = A.shearReinforcement;
+  if (!t) return null;
+  if (t === 'ties') {
+    const s = A.ties || {};
+    return { type: 'ties', n: s.n ?? nTop, db: s.db ?? tie, fy: s.fy ?? fy, case: s.case === 1 ? 1 : 2, diamond: !!s.diamond };
+  }
+  if (t === 'hairpin') {
+    const h = A.hairpin || {};
+    return { type: 'hairpin', db: h.db ?? bar, fy: h.fy ?? fy, n: h.n ?? 1, legEnd: h.legEnd || 'hook', sideCover: h.sideCover ?? clearCover };
+  }
+  return { type: 'none' };
 }
 
 // Smallest square footing (Bf = Lf, from..to by step) that passes every check; the trials are kept for the report.

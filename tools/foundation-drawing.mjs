@@ -68,7 +68,7 @@ export function buildFoundationDrawing(r, opts = {}) {
   const cc = D ? D.cc : 75, dbF = D ? D.bar : 13;
   const AN = P && P.anchor ? P.anchor : null, AA = AN ? AN.A : null, AR = AN && AN.res ? AN.res.ar : null;   // anchors (ACI 318M-19 ch. 17) when checked
   const HPN = AN && AN.hairpin ? AN.hairpin : null;                                                       // hairpin anchor reinforcement (legs in plan, e, d_b)
-  const hooked = !!(AA && AA.reinforcement) && !HPN;                                                      // pedestal bars = anchor reinforcement, 90° hook at the top
+  const hooked = AR?.type === 'bars';                                                      // pedestal bars = anchor reinforcement, 90° hook at the top
   const flex = D && D.flex ? Object.fromEntries(D.flex.map(c => [c.key, c])) : {};
   const barTxt = (c) => (c && c.required && c.s ? `D${dbF}-${c.s}` + (c.n ? ` (${c.n} bars)` : '') : null);
   const gap = 900;
@@ -147,6 +147,7 @@ export function buildFoundationDrawing(r, opts = {}) {
     const yt = -Df + t - cc - dbF / 2;
     S.line('REBAR', X(-B / 2 + cc), yt, X(B / 2 - cc), yt);
     [-1, 1].forEach(a => S.line('REBAR', X(a * (B / 2 - cc)), yt, X(a * (B / 2 - cc)), yt - Math.min(12 * dbF, t - 2 * cc)));
+    if (flex['z-top']?.required) even(flex['z-top'], B).forEach(x => S.circle('REBAR', X(x), yt - dbF, dbF / 2, true));   // inner top layer (z) under the x bars
   }
   // pedestal bars: vertical with 90° hook on the bottom mat; ties
   if (hasPed && P && P.pm && P.pm.found) {
@@ -221,6 +222,34 @@ export function buildFoundationDrawing(r, opts = {}) {
       [-1, 1].slice(HPN.n > 1 ? 0 : 0, HPN.n > 1 ? 2 : 1).forEach(sg => S.line('REBAR', PX(-HPN.a), PY(sg * HPN.b), PX(HPN.a), PY(sg * HPN.b)));   // bends of the hairpins along x
       S.text('TEXT', PX(Bp / 2 + 80), PY(-240), TXT, `${HPN.n} hairpin${HPN.n > 1 ? 's' : ''} Ø${HPN.db}, legs @ ±${HPN.a} × ±${HPN.b} mm`);
     }
+    // hairpins (anchor reinforcement, pedestal.anchor.reinforcement = "hairpin"): shear = horizontal U around every anchor, bend on
+    // the outer side, legs back into the pedestal (shear can reverse); tension = the two vertical legs beside each anchor (dots)
+    const R = P.anchor && P.anchor.res, hpV = R && R.arV && R.arV.type === 'hairpin', hpA = R && ((R.ar && R.ar.type === 'hairpin') || hpV);
+    // diamond ties (SP-17M Fig. E18.16): a square through the mid-points of the tie faces, in the top 125 mm
+    if (R && R.arV && R.arV.type === 'ties' && R.arV.diamond) {
+      const hx = Bp / 2 - c, hz = Lp / 2 - c, pts = [[0, -hz], [hx, 0], [0, hz], [-hx, 0], [0, -hz]];
+      for (let k = 0; k < 4; k++) S.line('REBAR', PX(pts[k][0]), PY(pts[k][1]), PX(pts[k + 1][0]), PY(pts[k + 1][1]));
+    }
+    if (R && R.arV && R.arV.type === 'ties') S.text('TEXT', PX(Bp / 2 + 80), PY(-240), TXT, `Anchor shear: ${R.arV.n} Ø${R.arV.db} ties in top 125${R.arV.diamond ? ' + diamond ties' : ''}`);
+    if (hpA && bolts) {
+      const db = P.anchor.A.hairpin?.db ?? P.bar, cov = P.anchor.A.hairpin?.sideCover ?? 40;
+      const rr = R.ar?.type === 'hairpin' ? R.ar.r : bolts.dia / 2 + db / 2;
+      const alongX = hpV ? R.arV.axis === 'x' : true;
+      [[-1, -1], [1, -1], [1, 1], [-1, 1]].slice(0, bolts.n || 4).forEach(([a, c]) => {
+        const x = a * bolts.sx / 2, z = c * bolts.sz / 2;
+        if (hpV) {
+          // U in plan: bend of radius rr on the outer side (toward the near face), legs to the far face less the cover
+          const seg = 8, u = alongX ? a : c;
+          const pt = (k) => { const t = Math.PI / 2 - Math.PI * k / seg; const d = rr * Math.cos(t), w = rr * Math.sin(t);
+            return alongX ? [x + u * d, z + w] : [x + w, z + u * d]; };
+          for (let k = 0; k < seg; k++) { const [x1, y1] = pt(k), [x2, y2] = pt(k + 1); S.line('REBAR', PX(x1), PY(y1), PX(x2), PY(y2)); }
+          const far = (alongX ? Bp : Lp) / 2 - cov;
+          for (const w of [rr, -rr]) alongX ? S.line('REBAR', PX(x), PY(z + w), PX(-u * far), PY(z + w)) : S.line('REBAR', PX(x + w), PY(z), PX(x + w), PY(-u * far));
+        }
+        if (R.ar && R.ar.type === 'hairpin') for (const w of [rr, -rr]) S.circle('REBAR', alongX ? PX(x + w) : PX(x), alongX ? PY(z) : PY(z + w), db / 2, true);
+      });
+      S.text('TEXT', PX(Bp / 2 + 80), PY(-170), TXT, `Hairpins D${db} at each anchor (${[R.ar && R.ar.type === 'hairpin' ? 'tension' : '', hpV ? 'shear' : ''].filter(Boolean).join(' + ')})`);
+    }
     S.text('TEXT', PX(0), PY(-Lp / 2 - 420), TXT_TITLE, 'PEDESTAL SECTION B-B', 'center');
   }
 
@@ -235,7 +264,18 @@ export function buildFoundationDrawing(r, opts = {}) {
   if (barTxt(flex['z-bottom'])) S.text('TEXT', FX(B / 2 + 80), FY(-10), TXT, `${barTxt(flex['z-bottom'])} along z (B)`);
   if (topReq) S.text('TEXT', FX(B / 2 + 80), FY(-80), TXT, `Top: ${barTxt(flex['x-top']) || '-'} along x, ${barTxt(flex['z-top']) || '-'} along z`);
   S.text('TEXT', FX(B / 2 + 80), FY(-150), TXT, `Cover ${cc} mm, H = ${r0(t)} mm`);
-  S.text('TEXT', FX(0), FY(-L / 2 - 420), TXT_TITLE, 'FOOTING REINFORCEMENT (bottom mat shown)', 'center');
+  S.text('TEXT', FX(0), FY(-L / 2 - 420), TXT_TITLE, topReq ? 'FOOTING REINFORCEMENT (bottom mat)' : 'FOOTING REINFORCEMENT (bottom mat shown)', 'center');
+  // top mat (designed for hogging, or the minimum top mat of the two-layer option): own plan to the right of the bottom mat
+  if (topReq) {
+    const tx0 = fx0 + B + gap, TX = (x) => tx0 + x;
+    S.rect('CONCRETE', TX(-B / 2), FY(-L / 2), B, L);
+    if (hasPed) S.rect('HIDDEN', TX(ox - Bp / 2), FY(oz - Lp / 2), Bp, Lp);
+    if (flex['x-top']?.s) even(flex['x-top'], L).forEach(z => S.line('REBAR', TX(-B / 2 + cc), FY(z), TX(B / 2 - cc), FY(z)));
+    if (flex['z-top']?.s) even(flex['z-top'], B).forEach(x => S.line('REBAR', TX(x), FY(-L / 2 + cc), TX(x), FY(L / 2 - cc)));
+    if (barTxt(flex['x-top'])) S.text('TEXT', TX(B / 2 + 80), FY(60), TXT, `${barTxt(flex['x-top'])} along x (T)`);
+    if (barTxt(flex['z-top'])) S.text('TEXT', TX(B / 2 + 80), FY(-10), TXT, `${barTxt(flex['z-top'])} along z (T)`);
+    S.text('TEXT', TX(0), FY(-L / 2 - 420), TXT_TITLE, 'FOOTING REINFORCEMENT (top mat)', 'center');
+  }
   return S.E;
 }
 
