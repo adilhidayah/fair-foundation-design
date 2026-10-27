@@ -1,8 +1,9 @@
 // Printable report builder (sections, logos, document header).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261013d';
-import { reportBlocks, state } from '../core/state.js?v=20261013d';
-import { buildQuickStatusHtml } from '../report/summary.js?v=20261013d';
+import { flushRecalc } from '../workflow/recalc.js?v=20261015a';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261015a';
+import { reportBlocks, state } from '../core/state.js?v=20261015a';
+import { buildQuickStatusHtml } from '../report/summary.js?v=20261015a';
 
 export function renderBlockList() {
   document.getElementById('rpt-block-body').innerHTML = reportBlocks.map((b, i) => `
@@ -48,6 +49,7 @@ export function buildDocHeaderTable(title, rev) {
   </table>`;
 }
 export function generateReport() {
+  flushRecalc(); // a debounced recalculation (large STAAD imports) must finish before the report reads the results
   const name = document.getElementById('rpt-project').value || 'Untitled Project';
   const loc = document.getElementById('rpt-location').value;
   const by = document.getElementById('rpt-by').value;

@@ -1,35 +1,35 @@
 import {
   windForceASCE722, designSpectralAccel, seismicResponseCoefficient
-} from '../lib/foundation/index.js?v=20261013d'; // ?v= cache-buster: bump when lib/ changes
-import { fmt } from './core/format.js?v=20261013d';
-import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261013d';
-import { dlWorksheetItem } from './core/worksheet.js?v=20261013d';
-import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261013d';
-import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261013d';
-import { loadTesseract } from './ocr/tesseract.js?v=20261013d';
-import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261013d';
-import { renderSummaryReport } from './report/summary.js?v=20261013d';
-import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261013d';
-import { loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261013d';
-import { calcFoundation } from './tabs/foundation.js?v=20261013d';
-import { calcFoundSize } from './tabs/foundSize.js?v=20261013d';
-import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261013d';
-import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261013d';
-import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261013d';
-import { calcRebar } from './tabs/rebar.js?v=20261013d';
-import { calcSettlement } from './tabs/settlement.js?v=20261013d';
-import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261013d';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261013d';
-import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261013d';
-import { resolveCheckTab, sync5BSources, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261013d';
-import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261013d';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261013d';
-import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261013d';
-import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261013d';
-import { setCadView } from './tabs/foundSizeFocus.js?v=20261013d';
-import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261013d';
-import { renderScopePanel } from './workflow/scope.js?v=20261013d';
-import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261013d';
+} from '../lib/foundation/index.js?v=20261015a'; // ?v= cache-buster: bump when lib/ changes
+import { fmt } from './core/format.js?v=20261015a';
+import { selectRadio, getRadioVal, num, openModal, closeModal, wireDecimalAutoFormat } from './core/dom.js?v=20261015a';
+import { dlWorksheetItem } from './core/worksheet.js?v=20261015a';
+import { state, comboState, designStandards, pileList, boltList, reportBlocks } from './core/state.js?v=20261015a';
+import { renderComboImportReview, renderEqOcrReview, renderFsAutoFillReview, renderLtOcrReview, renderOcrReview } from './ocr/review.js?v=20261015a';
+import { loadTesseract } from './ocr/tesseract.js?v=20261015a';
+import { generateReport, renderBlockList, wireLogoUpload } from './report/builder.js?v=20261015a';
+import { renderSummaryReport } from './report/summary.js?v=20261015a';
+import { calcAnchor, renderBoltTable } from './tabs/anchor.js?v=20261015a';
+import { ensureComboTable, loadLrfdCombos, loadStandardVesselCombos, renderComboTable, renderLcSummary, renderStdComboTables, wireComboTable } from './tabs/combos.js?v=20261015a';
+import { calcFoundation } from './tabs/foundation.js?v=20261015a';
+import { calcFoundSize } from './tabs/foundSize.js?v=20261015a';
+import { recalcAllGeneral, renderDesignStandardsTable, renderGeneralSummary, saveStandardEdit } from './tabs/general.js?v=20261015a';
+import { ensureLoadType, kindOptions, renderEquipmentLoad, renderLiveLoad, renderLoadSummary, renderLoadTypesTable, renderSeismicDirectPreview, renderWindDirectPreview, saveLoadTypeEdit, updateNewTypeSuggestion } from './tabs/loading.js?v=20261015a';
+import { calcPile, fitCapToPiles, generatePileGrid, renderPileTable, resetPMultiplierInputs } from './tabs/pile.js?v=20261015a';
+import { calcRebar } from './tabs/rebar.js?v=20261015a';
+import { calcSettlement } from './tabs/settlement.js?v=20261015a';
+import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261015a';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261015a';
+import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261015a';
+import { resolveCheckTab, sync5BSources, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261015a';
+import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261015a';
+import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261015a';
+import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261015a';
+import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261015a';
+import { setCadView } from './tabs/foundSizeFocus.js?v=20261015a';
+import { setShearFocusView, shearFocusHover } from './tabs/shearFocus.js?v=20261015a';
+import { renderScopePanel } from './workflow/scope.js?v=20261015a';
+import { applyProjectData, collectProject, parseProjectText, pickProjectFile, projectFile, resetProjectFile, saveProjectFile, setProjectDirty, setProjectFileName, validateProject } from './workflow/project.js?v=20261015a';
 
 // ---------- Design Standards register (editable — feeds the "1.1 Design Standards" table in the preview) ----------
 
@@ -286,7 +286,7 @@ document.getElementById('wl-open-calc').addEventListener('click', () => openModa
 document.getElementById('sg-open-calc').addEventListener('click', () => openModal('seismic-modal'));
 document.getElementById('lc-open-values').addEventListener('click', () => openModal('values-modal'));
 document.getElementById('lc-open-loadtypes').addEventListener('click', () => openModal('loadtypes-modal'));
-document.getElementById('lc-open-combos').addEventListener('click', () => openModal('combos-modal'));
+document.getElementById('lc-open-combos').addEventListener('click', () => { openModal('combos-modal'); ensureComboTable('lc'); });
 document.getElementById('gen-open-standards').addEventListener('click', () => openModal('standards-modal'));
 // ---------- AI Assistant drawer toggle (right panel: DESIGN STATUS | ✦ ASSISTANT) — UI only, no AI wired yet ----------
 
@@ -647,7 +647,7 @@ wireComboTable('lc', recalcAll);
 const recalcPileCap = () => { calcRebar(); calcOneWay(); calcTwoWay(); calcAnchor(); renderLcSummary(); }; // LRFD users (5A, 5B, 09) + the LRFD tables in Section 03
 wireComboTable('lrfd', recalcPileCap);
 document.getElementById('lrfd-reload-combos').addEventListener('click', () => { loadLrfdCombos(); recalcPileCap(); });
-document.querySelectorAll('.lrfd-open-btn').forEach(btn => btn.addEventListener('click', () => openModal('combos-lrfd-modal')));
+document.querySelectorAll('.lrfd-open-btn').forEach(btn => btn.addEventListener('click', () => { openModal('combos-lrfd-modal'); ensureComboTable('lrfd'); }));
 document.getElementById('lc-reload-std-combos').addEventListener('click', () => {
   loadStandardVesselCombos();
   recalcAll();

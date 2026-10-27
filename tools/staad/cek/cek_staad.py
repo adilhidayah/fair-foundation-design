@@ -615,7 +615,10 @@ def main():
             gagal += [mb for _, mb, v, _ in calon if v[1] == "FAIL" or v[2] > 1.0]
             if not calon:
                 rows.append([g["nama"], "-", "-", "-", "tidak ada data", "-", "?"]); continue
-            r, mb, v, k = max(calon, key=lambda c: (c[0], -c[1]))
+            # member tanpa rincian kekuatan (TRACK 0) hanya punya rasio penentu (bisa dari DFF) -> jangan dibandingkan
+            # dengan rasio kekuatan member TRACK 1
+            kuat_ = [c for c in calon if c[3]] or calon
+            r, mb, v, k = max(kuat_, key=lambda c: (c[0], -c[1]))
             lc, ref = (k[1], k[2]) if k else (v[3], d["desain"].get(mb, {}).get("head", {}).get("ref", ""))
             rows.append([g["nama"], mb, v[0], lc, f"{r:.2f}", ref, f"{lim:.2f}", "OK" if r <= lim + 1e-9 else "NOT OK"])
             gov = max(calon, key=lambda c: c[2][2])

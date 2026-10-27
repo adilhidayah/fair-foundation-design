@@ -199,7 +199,11 @@ def buat_tipe(tp, um, folder):
         if pr_["jenis"] == "L":
             lap += ["", f"Siku {pr_['nama']}: titik berat {pr_['cy']:.1f} mm dari punggung kaki; pusat geser di tumit, "
                     f"x0 = y0 = {pr_['x0']:.1f} mm dari titik berat; Iu = {pr_['Iu'] / 1e4:.2f} cm⁴, Iv = {pr_['Iv'] / 1e4:.2f} cm⁴, "
-                    f"J = {pr_['J'] / 1e4:.3f} cm⁴ (tanpa fillet). Orientasi STAAD: BETA ANGLE / RANGLE (kaki sejajar sumbu global)."]
+                    f"J = {pr_['J'] / 1e4:.3f} cm⁴ (tanpa fillet). Orientasi STAAD: "
+                    + (f"BETA {ti.get('beta', 'ANGLE')} tiang, " + ", ".join(f"BETA {inf['lv'].get('beta', 'ANGLE' if inf['toe'] < 0 else 'RANGLE')} lengan level {k + 1} "
+                       f"(ujung kaki horizontal {'+' if inf['toe'] > 0 else '-'}Z)" for k, inf in enumerate(info) if inf['pl']['jenis'] == 'L')
+                       if ti.get("beta") is not None or any(inf["lv"].get("beta") is not None for inf in info)
+                       else "BETA ANGLE / RANGLE") + " (kaki sejajar sumbu global)."]
             break
     if pt["jenis"] == "UNP":
         lap += ["", f"Pusat geser UNP {pt['nama']}: e0 = {pt['e0']:.1f} mm di belakang garis tengah web, "
@@ -509,11 +513,18 @@ def buat_tipe(tp, um, folder):
     if b180: out += bungkus(f"BETA 180 MEMB {daftar(b180)}")
     # siku: kaki sejajar sumbu global (diuji di STAAD 2025: lengan arah X, BETA ANGLE -> ujung kaki horizontal -Z,
     # BETA RANGLE -> +Z; tumit di atas / bawah setara untuk lentur karena simetri titik, torsi dimasukkan manual)
-    b_ang = ([m for m in col] if pt["jenis"] == "L" else []) + \
-            [m for inf in info if inf["toe"] < 0 and inf["pl"]["jenis"] == "L" for m in inf["members"]]
-    b_rang = [m for inf in info if inf["toe"] > 0 and inf["pl"]["jenis"] == "L" for m in inf["members"]]
+    # "beta" (derajat) di tiang / level siku: sudut BETA STAAD eksplisit untuk orientasi gambar (mis. 225 / 315);
+    # analisis setara dengan ANGLE / RANGLE, torsi tetap mengikuti 'ujung_sayap' (tumit lengan di atas).
+    beta_t = ti.get("beta") if pt["jenis"] == "L" else None
+    b_ang = ([m for m in col] if pt["jenis"] == "L" and beta_t is None else []) + \
+            [m for inf in info if inf["toe"] < 0 and inf["pl"]["jenis"] == "L" and inf["lv"].get("beta") is None for m in inf["members"]]
+    b_rang = [m for inf in info if inf["toe"] > 0 and inf["pl"]["jenis"] == "L" and inf["lv"].get("beta") is None for m in inf["members"]]
     if b_ang: out += bungkus(f"BETA ANGLE MEMB {daftar(b_ang)}")
     if b_rang: out += bungkus(f"BETA RANGLE MEMB {daftar(b_rang)}")
+    if beta_t is not None: out += bungkus(f"BETA {f3(float(beta_t))} MEMB {daftar(col)}")
+    for inf in info:
+        if inf["pl"]["jenis"] == "L" and inf["lv"].get("beta") is not None:
+            out += bungkus(f"BETA {f3(float(inf['lv']['beta']))} MEMB {daftar(inf['members'])}")
     if info[0]["atas"] and info[0]["y"] - H > 1e-6:
         off = info[0]["y"] - H
         out += ["MEMBER OFFSET", f"{col[-1]} END 0 {f3(-off)} 0"]

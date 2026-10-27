@@ -1,13 +1,13 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261013d';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261013d';
-import { fmt } from '../core/format.js?v=20261013d';
-import { comboState, state } from '../core/state.js?v=20261013d';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261013d';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261013d';
-import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261013d';
-import { getWorkflowStepStatus } from '../workflow/status.js?v=20261013d';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, stdComboVector } from '../../lib/foundation/index.js?v=20261015a';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261015a';
+import { fmt } from '../core/format.js?v=20261015a';
+import { comboState, state } from '../core/state.js?v=20261015a';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261015a';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261015a';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261015a';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20261015a';
 
 // Reads the shared unfactored load matrix (top of footing/pedestal) from the "03 — LOADING DATA" tab.
 export function getLcLoads() {
@@ -25,9 +25,21 @@ export function comboTopBottom(combo, loads) {
 }
 // Renders the editable combination table for `prefix` ('lc' = ASD set, 'lrfd' = factored set for pile cap 5B). The two
 // tables share the same load-type columns, so redrawing 'lc' (load type added / removed / renamed) also redraws 'lrfd'.
+// Drawing is lazy: with a STAAD import (hundreds of combinations x hundreds of load types) the two matrices hold >60 000
+// <input>s, which made every recalc and every input event slow even while their popups were closed. A table is only
+// drawn while its popup is open; otherwise it is marked stale and drawn by ensureComboTable() when the popup opens.
+const COMBO_MODAL = { lc: 'combos-modal', lrfd: 'combos-lrfd-modal' };
+const comboStale = { lc: false, lrfd: false };
 export function renderComboTable(prefix) {
+  comboStale[prefix] = true;
+  if (prefix === 'lc' && document.getElementById('lrfd-combo-body')) comboStale.lrfd = true;
+  ensureComboTable('lc'); ensureComboTable('lrfd');
+}
+export function ensureComboTable(prefix) {
+  const modal = document.getElementById(COMBO_MODAL[prefix]);
+  if (!comboStale[prefix] || !modal || !modal.classList.contains('open')) return;
+  comboStale[prefix] = false;
   renderOneComboTable(prefix);
-  if (prefix === 'lc' && document.getElementById('lrfd-combo-body')) renderOneComboTable('lrfd');
 }
 function renderOneComboTable(prefix) {
   const combos = comboState[prefix];

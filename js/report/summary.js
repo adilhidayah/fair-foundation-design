@@ -1,16 +1,23 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { lastResults } from '../core/state.js?v=20261013d';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261013d';
-import { generateReport } from '../report/builder.js?v=20261013d';
+import { getRadioVal } from '../core/dom.js?v=20261015a';
+import { lastResults } from '../core/state.js?v=20261015a';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261015a';
+import { generateReport } from '../report/builder.js?v=20261015a';
 
 export function buildQuickStatusHtml() {
   const order = ['oneway', 'twoway', 'foundation', 'pile', 'bearing', 'settlement', 'anchor', 'pedestalRebar', 'pileCapRebar'];
   // Checks taken out of scope in Section 00 are listed as NA (not counted), whatever their last computed status.
   const SCOPE_OF = { foundation: 'stability', pile: 'stability', settlement: 'settlement', oneway: 'structural', twoway: 'structural', pedestalRebar: 'structural', pileCapRebar: 'structural' };
+  // Checks of the other support type (Tab 02 Shallow / Deep) do not apply — same rule as the 4A / 4B workflow status:
+  // deep foundation -> shallow stability (4A) and soil bearing (08) are N/A; shallow -> pile stability (4B) is N/A.
+  const isPile = getRadioVal('fs-support') === 'pile';
+  const OTHER_SUPPORT = isPile ? { foundation: 'Shallow footing check — deep foundation selected (see 4B).', bearing: 'Shallow footing bearing — deep foundation selected (pile capacity in 4B).' }
+    : { pile: 'Pile check — shallow foundation selected (see 4A).' };
   const entries = order.map(key => {
     const e = lastResults[key];
     const sc = SCOPE_OF[key];
+    if (e && OTHER_SUPPORT[key]) return { ...e, status: 'NA', metric: 'N/A', detail: OTHER_SUPPORT[key] };
     return e && sc && !inScope(sc) ? { ...e, status: 'NA', metric: SCOPE_NA_LABEL[sc], detail: 'Not in scope (Section 00 → Scope of Work)' } : e;
   }).filter(Boolean);
   // 'NA' = out of scope (Section 00 → Scope of Work, e.g. anchor bolts by vendor): listed, but not counted.

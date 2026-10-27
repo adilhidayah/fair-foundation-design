@@ -4,7 +4,9 @@ tipe footing Fot# (B x L x H + tulangan) dan tipe pondasi F# = kombinasi (P#, Fo
 (tanpa auto-size footing / pedestal / tebal, jarak angkur tetap) sebagai konfirmasi; gambar pondasi per tipe F memakai kasus
 penentu (UC stabilitas terbesar). Output: <folder>/Jadwal Tipe Pondasi.md + tipe_pondasi.json, <folder>/Tipe Pondasi/<F#> .dxf/.svg,
 <folder>/PDF/Jadwal Tipe Pondasi.pdf.
-  python tipe_pondasi.py --folder <folder Kalkulasi> [--ps x.ps.json] [--fondasi y.Fondasi.proyek.json] [--tanpa-cek] [--tanpa-pdf]"""
+  python tipe_pondasi.py --folder <folder Kalkulasi> [--ps x.ps.json] [--fondasi y.Fondasi.proyek.json] [--tanpa-cek] [--tanpa-pdf] [--varian-angkur]
+  --varian-angkur: tipe pedestal hanya menurut ukuran + tulangan + kedalaman; angkur dan tinggi di atas tanah ikut base plate tiap kasus
+  (dicatat sebagai varian dalam tipe)."""
 import argparse, glob, html, importlib.util, json, os, re, shutil, subprocess, sys, urllib.parse
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -33,6 +35,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--folder", required=True); ap.add_argument("--ps"); ap.add_argument("--fondasi")
     ap.add_argument("--tanpa-cek", action="store_true"); ap.add_argument("--tanpa-pdf", action="store_true")
+    ap.add_argument("--varian-angkur", action="store_true")
     a = ap.parse_args(); ROOT = os.path.abspath(a.folder)
     ps_path = os.path.abspath(a.ps or sorted(glob.glob(os.path.join(ROOT, "*.ps.json")))[0])
     fp_path = os.path.abspath(a.fondasi or sorted(glob.glob(os.path.join(ROOT, "*Fondasi.proyek.json")))[0])
@@ -45,7 +48,10 @@ def main():
             d = baca(open(p, encoding="utf-8").read())
             if d: kasus.append((tp, d))
     # ---- kelompok
-    kp = lambda d: (d["Bp"], d["Lp"], d["bars"], d["ties"], json.dumps(d["anc"], sort_keys=True), d["Gp"], d["Dp"])
+    kp = lambda d: (d["Bp"], d["Lp"], d["bars"], d["ties"], "null" if a.varian_angkur else json.dumps(d["anc"], sort_keys=True),
+                    None if a.varian_angkur else d["Gp"], d["Dp"])
+    teks_anc = lambda an: f"{an['n']}-M{an['dia']} @ {an['sx']} × {an['sz']}" if an else "-"
+    varian = lambda d: f"{teks_anc(d['anc'])}, top {d['Gp']:.3f} m above grade"
     kf = lambda d: (d["B"], d["L"], d["H"], d["Df"], d["bot"], d["top"])
     ped = sorted({kp(d) for _, d in kasus}, key=lambda k: (k[0], k[1], -(json.loads(k[4]) or {}).get("dia", 0), k[5] or 0))
     fot = sorted({kf(d) for _, d in kasus}, key=lambda k: (k[0], k[1], k[2]))
@@ -56,11 +62,11 @@ def main():
     # ---- konfirmasi: hitung ulang tiap kasus dengan ukuran tipe dikunci
     hasil = {}
     out_dir = os.path.join(ROOT, "Tipe Pondasi"); os.makedirs(out_dir, exist_ok=True)
-    pre_map = fp.get("preset_per_tipe", {})
+    pre_map = fp.get("preset_per_tipe", {}); pre_model = fp.get("preset_per_model", {})
     for tp, d in kasus:
         t = tp["nama"]; m = peta[t]; nama_f = f"{m['F']} ({m['P']}-{m['Fot']})"
         if a.tanpa_cek: hasil[t] = ("-", d["uc"], None); continue
-        num = re.search(r"(\d+\.\d+)(-\w+)?", t); preset = pre_map.get(num.group(0)) or pre_map.get(num.group(1))
+        num = re.search(r"(\d+\.\d+)(-\w+)?", t); preset = pre_model.get(t) or pre_map.get(num.group(0)) or pre_map.get(num.group(1))
         pr = PS.dimensi_profil(tp["tiang"]["profil"])
         fnd = {"name": nama_f, "node": 1, "preset": preset, "Bf": d["B"], "Lf": d["L"], "Hf": d["H"], "Bp": d["Bp"], "Lp": d["Lp"],
                "autosize": None, "column": {"name": pr["nama"], "shape": "L" if pr["jenis"] == "L" else "C", "h": pr["h"], "b": pr["b"],
@@ -91,10 +97,20 @@ def main():
           "Grouped from the designed foundations (one per pipe support case); each case re-checked with its type sizes locked "
           "(no auto-size of footing, pedestal or thickness; anchor spacing fixed). Concrete f'c and rebar as the project criteria.", "",
           "## Pedestal types", "", "| Type | Size (mm) | Height above / below grade (m) | Longitudinal | Ties | Anchor bolts |", "|---|---|---|---|---|---|"]
+    if a.varian_angkur:
+        md[-3:-3] = ["Anchor bolts and pedestal top follow the base plate of each pipe support (variants within the type; "
+                     "the type drawing shows the governing case).", ""]
     for k, n in sorted(P.items(), key=lambda x: int(x[1][1:])):
         an = json.loads(k[4]) if k[4] != "null" else None
-        md.append(f"| **{n}** | {k[0] * 1000:.0f} × {k[1] * 1000:.0f} | {k[5]:.3f} / {k[6]:.3f} | {k[2]} | {k[3]} | "
-                  + (f"{an['n']}-M{an['dia']} @ {an['sx']} × {an['sz']}" if an else "-") + " |")
+        if a.varian_angkur:
+            vs = {}
+            for tp, d in kasus:
+                if kp(d) == k: vs.setdefault(varian(d), []).append(tp["nama"])
+            gps = sorted({d["Gp"] for _, d in kasus if kp(d) == k})
+            md.append(f"| **{n}** | {k[0] * 1000:.0f} × {k[1] * 1000:.0f} | {' / '.join(f'{g:.3f}' for g in gps)} / {k[6]:.3f} | {k[2]} | {k[3]} | "
+                      + "<br>".join(f"{v} ({', '.join(ts)})" for v, ts in vs.items()) + " |")
+        else:
+            md.append(f"| **{n}** | {k[0] * 1000:.0f} × {k[1] * 1000:.0f} | {k[5]:.3f} / {k[6]:.3f} | {k[2]} | {k[3]} | " + teks_anc(an) + " |")
     md += ["", "## Footing types", "", "| Type | B × L × H (m) | Depth FGL to bottom (m) | Bottom bars (x / z) | Top bars (x / z) |", "|---|---|---|---|---|"]
     for k, n in sorted(Fo.items(), key=lambda x: int(x[1][3:])):
         cnt = next(d for _, d in kasus if kf(d) == k)
@@ -113,11 +129,12 @@ def main():
                   f" | {sum(qty(t) for t in anggota) or '-'} | {'OK' if ok else 'NOT OK'} — {ucm:.3f} ({gov}) | `Tipe Pondasi/{F} ({c[1]}-{c[0]}).dxf` |")
     md += ["", "## Pipe support → foundation type", "",
            "| Pipe support no. | Qty (EA) | Pipe | T.O.S. (EL) | Case | Foundation | Pedestal | Footing | Check | UC |", "|---|---|---|---|---|---|---|---|---|---|"]
+    if a.varian_angkur: md[-2:] = [md[-2][:-1] + " Anchor bolts / pedestal top |", md[-1] + "---|"]
     for tp, d in kasus:
         t = tp["nama"]; m = peta[t]; s = hasil[t]
         for x in (psl[t] or [dict(no=lok[t], qty="-", pipa="-", tos="-")]):
             md.append(f"| {x['no']} | {x['qty']} | {x['pipa']} | {x['tos']} | {t} | {m['F']} | {m['P']} | {m['Fot']} | {s[0]} | "
-                      f"{s[1] if s[1] is not None else '-'} |")
+                      f"{s[1] if s[1] is not None else '-'} |" + (f" {varian(d)} |" if a.varian_angkur else ""))
     md += ["", f"Total pipe supports on own foundation: **{sum(qty(t) for t in peta)} EA**."]
     tanpa = [tp for tp in ps["tipe"] if tp["nama"] not in peta] + list(ps.get("kantilever", []))
     md += ["", "Without own foundation (existing platform / slab / foundation by another drawing / cantilever on the platform): " +

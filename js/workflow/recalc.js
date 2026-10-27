@@ -1,17 +1,31 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20261013d';
-import { calcBearing } from '../tabs/bearing.js?v=20261013d';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261013d';
-import { calcFoundation } from '../tabs/foundation.js?v=20261013d';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261013d';
-import { renderLoadSummary } from '../tabs/loading.js?v=20261013d';
-import { calcPile } from '../tabs/pile.js?v=20261013d';
-import { calcRebar } from '../tabs/rebar.js?v=20261013d';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261013d';
-import { renderWorkflowLive } from '../workflow/status.js?v=20261013d';
+import { calcAnchor } from '../tabs/anchor.js?v=20261015a';
+import { calcBearing } from '../tabs/bearing.js?v=20261015a';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261015a';
+import { calcFoundation } from '../tabs/foundation.js?v=20261015a';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261015a';
+import { renderLoadSummary } from '../tabs/loading.js?v=20261015a';
+import { calcPile } from '../tabs/pile.js?v=20261015a';
+import { calcRebar } from '../tabs/rebar.js?v=20261015a';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261015a';
+import { renderWorkflowLive } from '../workflow/status.js?v=20261015a';
+import { state } from '../core/state.js?v=20261015a';
 
+// With a STAAD import (hundreds of load combinations) one full recalculation takes 0.5-1 s, so doing it on every keystroke
+// froze the page. Above LARGE_LC load types the call is debounced (one recalculation after the user pauses); code that
+// needs fresh results right now (report, summary, workflow recalc) calls flushRecalc() first. Small projects stay
+// synchronous, exactly as before.
+const LARGE_LC = 40, RECALC_DELAY_MS = 300;
+let recalcTimer = null;
 export function recalcAll() {
+  if (state.lcLoadTypes.length <= LARGE_LC) { cancelPendingRecalc(); return recalcAllNow(); }
+  if (recalcTimer) clearTimeout(recalcTimer);
+  recalcTimer = setTimeout(() => { recalcTimer = null; recalcAllNow(); }, RECALC_DELAY_MS);
+}
+function cancelPendingRecalc() { if (recalcTimer) { clearTimeout(recalcTimer); recalcTimer = null; } }
+export function flushRecalc() { if (recalcTimer) { cancelPendingRecalc(); recalcAllNow(); } }
+export function recalcAllNow() {
   // Tab 08 reads its footing size / depth from Tab 02 (mirrored in calcFoundSize()), so q_a, the Table 1.3.1 summary
   // and 4A must follow every geometry change — calcBearing() first, calcFoundation() reads the same q_a.
   calcBearing();
