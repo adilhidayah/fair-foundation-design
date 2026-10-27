@@ -28,7 +28,7 @@ jobs:
       - name: Run all validations
         run: |
           fail=0; total=0
-          for f in lib/foundation/validation/validation_*.mjs lib/steel/validation/validation_*.mjs; do
+          for f in lib/foundation/validation/validation_*.mjs; do
             total=$((total + 1))
             echo "::group::$f"
             if node "$f"; then echo "OK   $f"; else echo "::error file=$f::validation failed"; fail=$((fail + 1)); fi

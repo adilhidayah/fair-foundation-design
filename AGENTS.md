@@ -6,6 +6,7 @@
 > Bila menyentuh UI: baca juga `js/README.md`. Mencari file: `docs/PROJECT_MAP.md`. Nama & filosofi: `docs/PHILOSOPHY.md`.
 
 ## 1. Apa Ini
+- Repo ini khusus pondasi dan pendukungnya. Library sambungan baja dan tools pemodelan / pengecekan struktur STAAD berada di proyek terpisah FAIR Structural Tools; jangan tambahkan kembali `lib/steel/` atau `tools/staad/` ke repo ini. Import reaksi STAAD untuk pondasi tetap di `lib/foundation/import/`. Rincian: `docs/SCOPE_AND_STRUCTURE.md`.
 - Web app **FAIR Foundation Design** — kalkulator fondasi. Modul pertama: equipment oil & gas (vessel, tank, heat exchanger, pompa, kompresor, turbin, pipe rack, skid-mounted package unit). Modul fondasi gedung direncanakan, belum ada.
 - Tulis nama sebagai **FAIR** Foundation Design, bukan "FAIR Foundation AI" (AI hanya untuk input data).
 - User: civil structure engineer. Output untuk submit ke client/checker — keselamatan struktur, jangan asal ubah rumus.

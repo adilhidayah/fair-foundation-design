@@ -1,4 +1,6 @@
-# Peta Proyek — Master Calculator
+# Peta Proyek — FAIR Foundation Design
+
+Repo ini khusus pondasi. Library sambungan baja dan tools struktur STAAD dipisahkan ke FAIR Structural Tools; lihat [batas cakupan dan folder terpisah](SCOPE_AND_STRUCTURE.md).
 
 Klik nama file untuk membukanya. Ukuran per 25 Sep 2026.
 

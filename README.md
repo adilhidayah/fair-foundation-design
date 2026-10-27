@@ -26,6 +26,8 @@ Input gaya STAAD (`.fnd`) → laporan Markdown / HTML / PDF. Contoh: `docs/examp
 Semua `lib/foundation/validation/validation_*.mjs` dijalankan CI di setiap push / PR (`.github/workflows/validation.yml`). Daftar perintah dan hasil: `AGENTS.md` §7 dan `lib/foundation/validation/VALIDATION_REPORT.md`.
 
 ## Struktur
+Repo ini khusus perhitungan pondasi dan pendukungnya: beban, tanah, pedestal, anchor, import reaksi, gambar dan laporan pondasi. Desain sambungan baja serta tools pemodelan / pengecekan struktur STAAD dipisahkan ke proyek lokal **FAIR Structural Tools**. Batas cakupan, peta folder dan lokasi barunya: [`docs/SCOPE_AND_STRUCTURE.md`](docs/SCOPE_AND_STRUCTURE.md).
+
 | Folder | Isi |
 |---|---|
 | `index.html`, `css/`, `js/` | UI (ES modules, entry `js/app.js`) |

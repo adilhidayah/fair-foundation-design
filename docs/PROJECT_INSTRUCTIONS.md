@@ -12,6 +12,7 @@
 > - `AGENTS.md` (root) — aturan kerja AI assistant
 
 ## 1. Tentang User & Proyek
+- Keputusan 27 Oktober 2026: repo FAIR Foundation Design khusus pondasi dan pendukungnya. Desain sambungan baja serta pemodelan / pengecekan struktur STAAD dipisahkan ke FAIR Structural Tools. Lokasi dan batas cakupan terkini: `docs/SCOPE_AND_STRUCTURE.md`.
 - Civil structure engineer di industri oil & gas.
 - Membangun **FAIR Foundation Design**, web app kalkulator fondasi. Modul pertama: SEMUA jenis equipment —
   vessel, tank, heat exchanger, pompa, kompresor, turbin, pipe rack, skid-mounted package unit, dll.
