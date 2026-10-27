@@ -1,14 +1,15 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028s1';
-import { getRadioVal, num } from '../core/dom.js?v=20261028s1';
-import { fmt } from '../core/format.js?v=20261028s1';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261028s1';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028s1';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028s1';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028s1';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261028s1';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028s1';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028a4';
+import { getRadioVal, num } from '../core/dom.js?v=20261028a4';
+import { fmt } from '../core/format.js?v=20261028a4';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261028a4';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028a4';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028a4';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028a4';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261028a4';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028a4';
+import { renderAnchorFocus } from './anchorFocus.js?v=20261028a4';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -22,6 +23,10 @@ export function renderBoltTable() {
 // computeGoverningCa1(), computeAnchorCapacity() and evaluateAnchorCombo() live in lib/foundation/shared/pedestalCheck.js.
 const AB_HEAD = () => chapterHeader('09. Anchor Bolt Design', `This chapter checks the anchor bolts at the base plate for tension, shear and their interaction under the factored LRFD combinations (LC201+) of Section 03, at the top of the pedestal — ACI 318M-19 Ch.17 (${getRadioVal('ab-method') === 'group' ? 'group of 4 anchors, projected areas' : 'single-anchor simplification'}). The status of the check is shown in the Design Status panel.`);
 export function calcAnchor() {
+  calculateAnchor();
+  renderAnchorFocus();
+}
+function calculateAnchor() {
   syncAnchorInputs();
   // Out of scope (Section 00 → Scope of Work): anchor bolts are designed and supplied by the mechanical vendor — no check here,
   // and nothing from this tab counts toward the governing UC.
@@ -96,6 +101,7 @@ export function calcAnchor() {
     detail: governing.valid ? `${multi ? `Pedestal ${worstSite.idx} of ${sites.length}: ` : ''}Governing: ${comboLabel(governing.combo)} — ${governing.governingCheck.name}, n=${boltList.length} bolts` : `${governing.note}`
   };
   lastResults.anchor.notices = [];
+  lastResults.anchor.viz = { method: 'single', site: worstSite, sites: siteRes, bolts: boltList.map(b => ({ ...b })), da: num('ab-da'), hef: num('ab-hef') };
   let html = AB_HEAD();
   if (multi) {
     html += sectionHeader('9.0', 'Pedestals (one per load point)', `The bolt pattern of this tab is checked on each of the ${sites.length} pedestals with its share of the factored loads at the top (P, H, M × share); c<sub>a1</sub> follows each pedestal width c<sub>1</sub>. The governing pedestal (${worstSite.idx}) is detailed below.`, true);
@@ -234,6 +240,7 @@ function calcAnchorGroup(sites, multi, base) {
     notices: []
   };
   const kN = (N) => fmt(N / 1000, 2);
+  lastResults.anchor.viz = { method: 'group', site: worst, sites: siteRes, rect, bolts: boltList.map(b => ({ ...b })), da: prop.da, hef: prop.hef };
   let html = AB_HEAD();
   if (multi) {
     html += sectionHeader('9.0', 'Pedestals (one per load point)', `The 4-bolt pattern is checked on each of the ${sites.length} pedestals with its share of the factored loads at the top. The governing pedestal (${worst.idx}) is detailed below.`, true);

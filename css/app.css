@@ -1745,8 +1745,9 @@
     .results[data-view="canvas"]:has(#calc-foundation.active) #focus-foundation,
     .results[data-view="canvas"]:has(#calc-pile.active) #focus-pile,
     .results[data-view="canvas"]:has(#calc-settlement.active) #focus-settlement,
+    .results[data-view="canvas"]:has(#calc-anchor.active) #focus-anchor,
     .results[data-view="canvas"]:has(#calc-oneway.active) #focus-capcheck { display: block; }
-    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway, #calc-settlement).active { display: none; }
+    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway, #calc-settlement, #calc-anchor).active { display: none; }
     /* 03: the sheet stays under the Focus view while an OCR / paste review is open there (it holds the review tables). */
     .ld-results[data-view="canvas"] #focus-loading { display: block; margin-bottom: 16px; }
     .ld-results[data-view="canvas"] .ld-page:not(:has(#eq-ocr-preview:not(:empty), #eq-ocr-review:not(:empty), #lc-ocr-preview:not(:empty), #lc-ocr-review:not(:empty))) { display: none; }
@@ -2060,3 +2061,21 @@
   .st-viewport[data-view="after"] .st-after { display: block; }
   .st-report-visual .fdn-diagram { width: 100%; height: auto; break-inside: avoid; }
   .st-report-visual .sub-title { margin: 14px 0 8px; }
+
+  /* 09 anchor Focus Canvas: calculation snapshots only. */
+  .ab-select { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ab-select label { font-size: 12px; font-weight: 600; }
+  .ab-select select { flex: 1 1 220px; min-width: 0; max-width: 100%; padding: 6px 8px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .ab-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 14px; align-items: start; }
+  .ab-layout > .fz-card { min-width: 0; }
+  .ab-plan { width: 100%; height: auto; border: none; background: transparent; margin: 6px auto; }
+  .ab-check-list { display: grid; gap: 16px; margin: 16px 0; }
+  .ab-check-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 7px; }
+  .ab-check-head strong { white-space: nowrap; font-family: var(--mono); }
+  .ab-pass { color: var(--pass); }
+  .ab-fail { color: var(--fail); }
+  .ab-meter { height: 8px; background: var(--bg-subtle); border-radius: 4px; position: relative; }
+  .ab-meter span { display: block; height: 100%; border-radius: inherit; }
+  .ab-meter i { position: absolute; left: 66.6667%; top: -3px; bottom: -3px; border-left: 2px solid var(--ink); }
+  .ab-strength { display: grid; gap: 10px; font-size: 12px; margin-top: 16px; }
+  .ab-limit { font-size: 12px; line-height: 1.7; border-left: 3px solid var(--caution); }
