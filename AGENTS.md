@@ -1,7 +1,7 @@
 # AGENTS.md — FAIR Foundation Design (Foundation Calculator Web App)
 
 > Instruksi universal untuk AI coding assistant (Cline, Copilot, Claude, Cursor, VS Code).
-> Workspace: `e:\MASTER CALCULATOR`. Bahasa user: Indonesia. Bahasa kode/komentar: English.
+> Workspace: `E:\KERJA\TOOLS\MASTER CALCULATOR`. Bahasa user: Indonesia. Bahasa kode/komentar: English.
 > Sebelum coding: baca file ini + `docs/PROJECT_INSTRUCTIONS.md` + `lib/foundation/index.js`.
 > Bila menyentuh UI: baca juga `js/README.md`. Mencari file: `docs/PROJECT_MAP.md`. Nama & filosofi: `docs/PHILOSOPHY.md`.
 

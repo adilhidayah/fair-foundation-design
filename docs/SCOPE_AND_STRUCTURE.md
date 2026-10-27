@@ -4,7 +4,7 @@ Keputusan 27 Oktober 2026: FAIR Foundation Design khusus perhitungan pondasi. Ba
 
 ## FAIR Foundation Design
 
-Folder utama di komputer ini: `E:\MASTER CALCULATOR`. Halaman masuk tetap `index.html`; tidak ada perubahan rumus maupun jalur import aplikasi akibat pemisahan ini.
+Folder utama di komputer ini: `E:\KERJA\TOOLS\MASTER CALCULATOR` (dipindahkan dari `E:\MASTER CALCULATOR` pada 27 Oktober 2026). Halaman masuk tetap `index.html`; tidak ada perubahan rumus maupun jalur import aplikasi akibat pemisahan ini.
 
 ```text
 MASTER CALCULATOR/
@@ -65,7 +65,7 @@ FAIR STRUCTURAL TOOLS/
 
 Paket batch pipe support tetap mencakup `tipe_pondasi.py`, brief drafter dan laporan gabungan karena bergantung pada konfigurasi serta output pipe support. Mesin perhitungan pondasinya tetap di FAIR Foundation Design; tidak disalin ke proyek struktur.
 
-Untuk menghubungkan batch dengan lokasi pondasi yang berbeda, gunakan `--foundation-root "<folder FAIR Foundation Design>"` pada `jalankan_semua.py` / `tipe_pondasi.py`, atau environment variable `FAIR_FOUNDATION_ROOT`. Default mencari repo saudara bernama `MASTER CALCULATOR` atau `fair-foundation-design`. Argumen lokasi diteruskan ke proses jadwal tipe pondasi.
+Untuk menghubungkan batch dengan lokasi pondasi yang berbeda, gunakan `--foundation-root "<folder FAIR Foundation Design>"` pada `jalankan_semua.py` / `tipe_pondasi.py`, atau environment variable `FAIR_FOUNDATION_ROOT`. Default mencari `KERJA/TOOLS/MASTER CALCULATOR` pada drive proyek struktur, lalu repo saudara bernama `MASTER CALCULATOR` atau `fair-foundation-design`. Argumen lokasi diteruskan ke proses jadwal tipe pondasi.
 
 ## Pemeliharaan
 

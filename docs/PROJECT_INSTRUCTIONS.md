@@ -2,7 +2,7 @@
 
 > File ini adalah simpanan instruksi user. JANGAN otak-atik kode existing tanpa perintah eksplisit.
 > Tanggal simpan: 18 Sep 2026 — update terakhir: 25 Sep 2026 (refactor struktur file, nama FAIR)
-> Lokasi workspace: e:\MASTER CALCULATOR
+> Lokasi workspace: E:\KERJA\TOOLS\MASTER CALCULATOR
 >
 > Dokumen terkait (indeks: `docs/README.md`):
 > - `docs/PHILOSOPHY.md` — nama, filosofi, dan cakupan aplikasi
