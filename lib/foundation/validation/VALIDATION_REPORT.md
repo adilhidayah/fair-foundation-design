@@ -1,4 +1,6 @@
 # VALIDATION REPORT — Foundation Calculation Library
+> 28 Oct 2026 — grout-pad steel shear correction, ACI 318M-19 §17.7.1.2.1: 46 validation scripts pass, including 21 new checks in part46. The two-versus-four-anchor sharing decision is still pending; see [audit details](../../../docs/ANCHOR_SHEAR_AUDIT.md). The totals below describe the earlier 16 Oct run.
+
 Date: 18 Sep 2026, last updated 13 Oct 2026. Method: independent hand-calculation vectors, run with Node 24.
 **Total: 1207 checks, 1207 pass, 0 fail** (41 files, run 16 Oct 2026).
 

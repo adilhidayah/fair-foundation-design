@@ -305,8 +305,8 @@ function pedestalReport(r) {
       `${R.ar && R.ar.type === 'hairpin' || (R.arV && R.arV.type === 'hairpin') ? `; anchor reinforcement = hairpins around the anchors, replacing the concrete breakout in ${[R.ar && R.ar.type === 'hairpin' ? 'tension (§17.5.2.1(a))' : '', R.arV && R.arV.type === 'hairpin' ? 'shear (§17.5.2.1(b))' : ''].filter(Boolean).join(' and ')}` : ''}` +
       `${R.arV && R.arV.type === 'ties' ? '; shear breakout replaced by the ties in the top 125 mm (§17.5.2.1(b))' : ''}; side-face blowout with the corner factor (1 + c_a2/c_a1)/4 = ${n(R.psiCornerSb, 2)} (§17.6.4.1.1)). ` +
       `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
-      `h_ef' = ${n(R.hefE, 1)} mm (edges). Open difference to SP-17M(14) Example 18: steel shear V_sa per anchor = V/4 without the 0.8 grout-pad factor (§17.7.1.2.1); ` +
-      `the handbook uses V/2 (Case 2) × 0.8 — verify V_sa where the base plate sits on grout.`, '',
+      `h_ef' = ${n(R.hefE, 1)} mm (edges). Steel shear V_sa = ${n(R.groutFactor, 2)} × 0.6 A_se,V f_uta = ${n(R.Vsa / 1000, 2)} kN per anchor ` +
+      `(${R.groutPad ? 'grout pad present' : 'no grout pad'}, §17.7.1.2.1). Steel shear demand currently uses V/4; sharing with two anchors (Case 2) remains under review.`, '',
       '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
       `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
     if (R.ar && R.ar.hairpin) o.push('', `Anchor reinforcement (hairpins): ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${R.ar.db}, ${R.ar.n} legs within 0.5 h_ef of the anchors in tension (A_s ${n(R.ar.As, 0)} mm²), nearest at ${n(R.ar.r, 0)} mm; ` +
@@ -548,7 +548,7 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
         const fac = primaryFactors(loads, row.lc), seis = Object.entries(fac).some(([p, v]) => v && /seismic/i.test(loads.primary[p]?.type || ''));
         const k = seis ? om : 1, t0 = row.top;
         const res = anchorGroupCheck({ Bp, Lp, sx: bo.sx, sz: bo.sz, da: bo.dia, Ase: A.Ase, futa: A.futa, hef: A.hef, Abrg: A.Abrg, fc, lambda,
-          seismic: A.seismic !== false, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
+          seismic: A.seismic !== false, groutPad: (f.groutT || 0) > 0, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
           reinf: hairpin ? { hairpin: { legs: hairpin.legs, db: hairpin.db, maxLen: w0.Hp * 1000 - 75 }, fy, topCover: A.topCover ?? 50 }
             : anchorReinf(A, { bars, bar, fy, clearCover: P0.clearCover ?? 50 }),
           shearReinf: anchorShearReinf(A, { bar, tie, nTop, fy, clearCover: P0.clearCover ?? 50 }) });

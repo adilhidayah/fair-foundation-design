@@ -1,14 +1,14 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261027merge1';
-import { getRadioVal, num } from '../core/dom.js?v=20261027merge1';
-import { fmt } from '../core/format.js?v=20261027merge1';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261027merge1';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261027merge1';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261027merge1';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261027merge1';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261027merge1';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261027merge1';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028a1';
+import { getRadioVal, num } from '../core/dom.js?v=20261028a1';
+import { fmt } from '../core/format.js?v=20261028a1';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261028a1';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028a1';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028a1';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028a1';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261028a1';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028a1';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -65,7 +65,7 @@ export function calcAnchor() {
     const cap = computeAnchorCapacity({
       ca1,
       da: num('ab-da'), Ase: num('ab-Ase'), futa: num('ab-futa'), hef: num('ab-hef'), Abrg: num('ab-Abrg'),
-      fc: num('gen-fc'), lambda: num('ab-lambda'),
+      fc: num('gen-fc'), lambda: num('ab-lambda'), groutPad: !!document.getElementById('fs-grout')?.checked,
       anchorType: getRadioVal('ab-type'), cracked: getRadioVal('ab-crack') === 'cracked',
       phiNsa: num('ab-phi-Nsa'), phiNcb: num('ab-phi-Ncb'), phiNpn: num('ab-phi-Npn'),
       phiVsa: num('ab-phi-Vsa'), phiVcb: num('ab-phi-Vcb'), phiVcp: num('ab-phi-Vcp')
@@ -112,6 +112,7 @@ export function calcAnchor() {
     html += sectionHeader('9.1', 'Bolt Layout', `Bolt group on the pedestal (${fmt(Bp,0)} × ${fmt(Lp,0)} mm) with the bolt tensions of the governing combination (${comboLabel(governing.combo)}).`, true);
     html += anchorDiagramSVG(boltList, governing.boltForces, Bp, Lp);
     html += sectionHeader('9.2', 'Anchor Capacity', 'Design strength of a single anchor in tension and shear for each failure mode; the smallest governs.');
+    html += `<div class="note">Steel shear: V<sub>sa</sub> = ${fmt(cap.groutFactor, 2)} × 0.6A<sub>se,V</sub>f<sub>uta</sub>. ${cap.groutPad ? 'Grout pad selected in Section 02: factor 0.80 applies (§17.7.1.2.1).' : 'No grout pad selected in Section 02: factor 1.00.'} Other failure modes are not multiplied by this factor.</div>`;
     html += `<div class="overflow-x"><table class="calc-table">
       <caption>Per-anchor capacity (single anchor, ACI 318M-19 Ch.17)</caption>
       <tr><th>Mode</th><th>Nominal</th><th>φ</th><th>φ·Nominal</th></tr>
@@ -146,6 +147,10 @@ export function calcAnchor() {
 
 // Tab 09 inputs shown per method: the group box for "ACI 17 group", the hairpin fields for hairpin anchor reinforcement.
 export function syncAnchorInputs() {
+  const groutNote = document.getElementById('ab-grout-note');
+  if (groutNote) groutNote.textContent = document.getElementById('fs-grout')?.checked
+    ? 'Grout pad: present (Section 02). Steel shear strength factor = 0.80, ACI 318M-19 §17.7.1.2.1.'
+    : 'Grout pad: absent (Section 02). Steel shear strength factor = 1.00.';
   const grp = getRadioVal('ab-method') === 'group';
   const show = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; };
   show('ab-group-box', grp);
@@ -205,7 +210,7 @@ function calcAnchorGroup(sites, multi, base) {
   if (!rect) return fail('the group method needs exactly 4 bolts in a rectangle about their centroid (x = ±s<sub>x</sub>/2, z = ±s<sub>z</sub>/2). Edit the bolt table or use "Single anchor".', 'Group method: 4 bolts in a rectangle needed.');
   if (getRadioVal('ab-type') !== 'cast-in') return fail('the group method covers cast-in headed anchors only — select "Cast-in" or use "Single anchor".', 'Group method: cast-in anchors only.');
   const fc = num('gen-fc'), seismic = !!document.getElementById('ab-seismic')?.checked;
-  const prop = { da: num('ab-da'), Ase: num('ab-Ase'), futa: num('ab-futa'), hef: num('ab-hef'), Abrg: num('ab-Abrg'), lambda: num('ab-lambda') || 1 };
+  const prop = { da: num('ab-da'), Ase: num('ab-Ase'), futa: num('ab-futa'), hef: num('ab-hef'), Abrg: num('ab-Abrg'), lambda: num('ab-lambda') || 1, groutPad: !!document.getElementById('fs-grout')?.checked };
   const phi = { sN: num('ab-phi-Nsa'), cN: num('ab-phi-Ncb'), pN: num('ab-phi-Npn'), sV: num('ab-phi-Vsa'), cV: num('ab-phi-Vcb'), ar: 0.75 };
   const siteRes = [];
   for (const st of sites) {
@@ -244,6 +249,7 @@ function calcAnchorGroup(sites, multi, base) {
   html += sectionHeader('9.1', 'Bolt Layout', `4 anchors at s<sub>x</sub> × s<sub>z</sub> = ${fmt(rect.sx, 0)} × ${fmt(rect.sz, 0)} mm, centred in the pedestal ${fmt(worst.Bp, 0)} × ${fmt(worst.Lp, 0)} mm (edge distances c<sub>x</sub> = ${fmt(res.cx, 1)}, c<sub>z</sub> = ${fmt(res.cz, 1)} mm), with the anchor tensions of ${comboLabel(g.combo)}.`, true);
   html += anchorDiagramSVG(boltList, forces, worst.Bp, worst.Lp);
   html += sectionHeader('9.2', 'Anchor Group Strength — ACI 318M-19 Chapter 17', `Cast-in headed anchors, cracked concrete${seismic ? ', seismic: concrete-governed strengths × 0.75 (§17.10.5.4, §17.10.6.4)' : ''}. h<sub>ef</sub>′ = ${fmt(res.hefE, 1)} mm (§17.6.2.1.2). Governing combination ${comboLabel(g.combo)}: T<sub>u</sub> = ${fmt(res.Tmax, 2)} kN per anchor, ${fmt(res.Tgrp, 2)} kN group, V<sub>u</sub> = ${fmt(res.V, 2)} kN.`);
+  html += `<div class="note">Steel shear: V<sub>sa</sub> = ${fmt(res.groutFactor, 2)} × 0.6A<sub>se,V</sub>f<sub>uta</sub> = ${kN(res.Vsa)} kN per anchor. ${res.groutPad ? 'Grout pad selected in Section 02: factor 0.80 applies (§17.7.1.2.1).' : 'No grout pad selected in Section 02: factor 1.00.'} Other failure modes are not multiplied by this factor.</div>`;
   const capN = { 'Steel N_sa': `${kN(res.Nsa)} kN per anchor`, 'Concrete breakout N_cbg': `${kN(res.Ncbg)} kN (group)`, 'Pullout N_pn': `${kN(res.Npn)} kN per anchor`,
     'Side-face blowout N_sbg': Number.isFinite(res.Nsbg) ? `${kN(res.Nsbg)} kN` : 'n/a (h<sub>ef</sub> ≤ 2.5 c<sub>a1</sub>)' };
   const capV = { 'Steel V_sa': `${kN(res.Vsa)} kN per anchor`, 'Concrete breakout V_cbg': `${kN(res.Vcbg)} kN (front row)`, 'Pryout V_cpg': `${kN(res.Vcpg)} kN (group)` };
@@ -268,6 +274,6 @@ function calcAnchorGroup(sites, multi, base) {
     <tr><th>Combination</th><th>P (kN)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th><th>F<sub>x</sub> (kN)</th><th>F<sub>z</sub> (kN)</th><th>T<sub>max</sub> (kN)</th><th>V (kN)</th><th>UC</th><th>Status</th></tr>
     ${worst.results.map(r => `<tr class="${r === g ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.P, 1)}</td><td class="num">${fmt(r.Mx, 2)}</td><td class="num">${fmt(r.Mz, 2)}</td><td class="num">${fmt(r.Fx, 2)}</td><td class="num">${fmt(r.Fz, 2)}</td><td class="num">${fmt(r.res.Tmax, 2)}</td><td class="num">${fmt(r.res.V, 2)}</td><td class="num">${Number.isFinite(r.res.uc) ? fmt(r.res.uc, 3) : '∞'}</td><td>${r.res.pass ? 'OK' : 'EXCEEDS'}</td></tr>`).join('')}
   </table></div>`;
-  html += `<div class="limits-box"><strong>Limitation:</strong> 4 cast-in headed anchors in a rectangle centred in the pedestal, rigid base plate (anchor forces F = P/4 + M<sub>z</sub>·x/Σx² − M<sub>x</sub>·z/Σz²), cracked concrete. Shear breakout and the shear hairpins use the front row in the dominant shear direction. Seismic actions are not amplified here (Ω<sub>0</sub>); base plate bearing / grout is not checked. Open differences to SP-17M(14) Example 18: steel shear V<sub>sa</sub> uses V/4 per anchor without the 0.8 grout-pad factor (§17.7.1.2.1) — the handbook checks V/2 per anchor (Case 2) × 0.8 with grout, so V<sub>sa</sub> here is not conservative under a grout pad; ψ<sub>c,V</sub> = 1.2 (tied pedestal) and the l<sub>dh</sub> reduction A<sub>s,req</sub>/A<sub>s,prov</sub> are not used (conservative). Hairpin model: verify the detail (contact with the anchor, position near the top, closed end below the head) against the drawing.</div>`;
+  html += `<div class="limits-box"><strong>Limitation:</strong> 4 cast-in headed anchors in a rectangle centred in the pedestal, rigid base plate (anchor forces F = P/4 + M<sub>z</sub>·x/Σx² − M<sub>x</sub>·z/Σz²), cracked concrete. Shear breakout and the shear hairpins use the front row in the dominant shear direction. Seismic actions are not amplified here (Ω<sub>0</sub>); base plate bearing and grout compressive strength are not checked. Steel shear includes the grout-pad factor 0.80 when Section 02 specifies grout (§17.7.1.2.1). Open sharing issue: steel shear demand still uses V/4, while the Case 2 tie model uses V/2 per anchor; ψ<sub>c,V</sub> = 1.2 (tied pedestal) and the l<sub>dh</sub> reduction A<sub>s,req</sub>/A<sub>s,prov</sub> are not used (conservative). Hairpin model: verify the detail (contact with the anchor, position near the top, closed end below the head) against the drawing.</div>`;
   el.innerHTML = numberTables(html, '9');
 }

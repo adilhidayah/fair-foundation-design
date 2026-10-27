@@ -2,9 +2,9 @@
 // Builds markup only from lastResults.platformCapViz (set by calcPlatformCap(), js/tabs/platformCap.js): a plan of the cap with the
 // piles, the vessel footprint and base rings and the 12 platform columns, the moment curves of the governing combinations, and the
 // ratio of every check as a bar. Nothing is recomputed here.
-import { escapeHtml } from '../core/dom.js?v=20261027merge1';
-import { fmt } from '../core/format.js?v=20261027merge1';
-import { lastResults } from '../core/state.js?v=20261027merge1';
+import { escapeHtml } from '../core/dom.js?v=20261028a1';
+import { fmt } from '../core/format.js?v=20261028a1';
+import { lastResults } from '../core/state.js?v=20261028a1';
 
 const tile = (label, value, sub) => `<div class="fz-tile"><div class="fz-tile-label">${label}</div><div class="fz-tile-value">${value}</div>${sub ? `<div class="fz-tile-sub">${sub}</div>` : ''}</div>`;
 
