@@ -1,5 +1,5 @@
 // Presence checks only. Blank project inputs must not be presented as calculated zeroes.
-import { pileList, boltList } from '../core/state.js?v=20261028e4';
+import { pileList, boltList } from '../core/state.js?v=20261028s3';
 const selected=id=>document.querySelector(`#${id} button.sel`)?.dataset.val;
 const missing=id=>{const el=document.getElementById(id);return !!el&&(el.value.trim()===''||!Number.isFinite(Number(el.value)));};
 const MATERIAL=['gen-fc','gen-fy','gen-gc','gen-gs'];
@@ -49,6 +49,17 @@ export function pendingInputs(tab='summary') {
   if(['settlement','summary'].includes(tab))ids.push('st-allowTotal',...(pile?['st-pile-L','st-pile-Ep','st-pile-Es','st-pile-mu','st-pile-shaft','st-pile-Iwp']:['st-Es','st-nu','st-qNet']));
   if(['anchor','summary'].includes(tab))ids.push('ab-da','ab-Ase','ab-futa','ab-hef','ab-Abrg');
   const gaps=[...base,...loadGaps(),...ids.filter(missing)];
+  if(tab==='anchor'&&selected('ab-method')==='group'){
+    const n=document.getElementById('ab-shear-anchors').value;
+    if(!['2','4'].includes(n))gaps.push('ab-shear-anchors');
+    if(n==='4'&&!document.getElementById('ab-shear-basis').value.trim())gaps.push('ab-shear-basis');
+    const tension=document.getElementById('ab-reinf').value, shear=document.getElementById('ab-vreinf').value;
+    const reinforcement=[];
+    if(shear==='ties')reinforcement.push('ab-tie-n','ab-tie-db');
+    if(tension!=='none')reinforcement.push('ab-topcover');
+    if(tension==='hairpin'||shear==='hairpin')reinforcement.push('ab-hp-db','ab-hp-n','ab-hp-cover');
+    gaps.push(...reinforcement.filter(missing));
+  }
   if(pile&&!pileList.length)gaps.push('pile-layout');
   if(['anchor','summary'].includes(tab)&&!boltList.length)gaps.push('anchor-layout');
   return [...new Set(gaps)];

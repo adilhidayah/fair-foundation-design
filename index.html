@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261028h2">
+<link rel="stylesheet" href="css/app.css?v=20261028s3">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
@@ -1279,12 +1279,16 @@
         <div class="field">
           <label id="ab-method-label">Check method</label>
           <div class="radio-row" id="ab-method" role="radiogroup" aria-labelledby="ab-method-label">
-            <button data-val="single" class="sel">Single anchor</button>
-            <button data-val="group">ACI 17 group (4 anchors)</button>
+            <button data-val="single">Single anchor (simplified)</button>
+            <button data-val="group" class="sel">ACI 17 group (4 anchors)</button>
           </div>
         </div>
         <div class="note" id="ab-grout-note"></div>
         <div id="ab-group-box" style="display:none;">
+        <div class="field"><label for="ab-shear-anchors">Anchors resisting shear — project selection (§17.7.1.1)</label>
+          <select id="ab-shear-anchors"><option value="" selected>Choose for this project — no default</option><option value="2">2 front-row anchors: V/2 per anchor</option><option value="4">4 anchors: V/4, verified load-transfer detail required</option></select>
+        </div>
+        <div class="field" id="ab-shear-basis-field"><label for="ab-shear-basis">Load-transfer detail / drawing reference (required for 4)</label><input type="text" id="ab-shear-basis" value="" placeholder="Drawing / detail supporting equal shear sharing"></div>
         <div class="note">Group of 4 cast-in headed anchors in a rectangle, centred in the pedestal (anchorGroupCheck, the same check as the CLI): projected areas A<sub>Nc</sub> / A<sub>Vc</sub>, h<sub>ef</sub>′ near 3+ edges, side-face blowout, P with M<sub>x</sub>, M<sub>z</sub>, F<sub>x</sub>, F<sub>z</sub> of each combination. Cracked concrete. The φ factors below are used.</div>
         <div class="field check-field">
           <label for="ab-seismic">
@@ -1319,9 +1323,10 @@
         </div>
         <div class="field">
           <label for="ab-tie-case">Shear per anchor</label>
-          <select id="ab-tie-case">
-            <option value="2" selected>Case 2: V/2 (two anchors take all of V)</option>
-            <option value="1">Case 1: V/4 (oversized holes, V shared by 4)</option>
+          <select id="ab-tie-case" disabled>
+            <option value="" selected>Follows the project shear-sharing selection</option>
+            <option value="2">Case 2: V/2 (two anchors take all of V)</option>
+            <option value="1">Case 1: V/4 (detail must ensure four-anchor sharing)</option>
           </select>
         </div>
         <div class="field check-field">
@@ -1994,6 +1999,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261028h2"></script>
+<script type="module" src="js/app.js?v=20261028s3"></script>
 </body>
 </html>

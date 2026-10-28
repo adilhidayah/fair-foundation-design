@@ -1,11 +1,11 @@
 // Tab 03 — vendor reactions per skid support (base plate / runner): the table of state.skidSupportList and its "Apply", which writes the
 // sums into the Equipment Load fields E(E) / E(O) / E(T) and the supports into the Tab 02 load points (skidSupportLoads(), lib).
 // Function/const declarations only; event wiring stays in app.js.
-import { skidSupportLoads } from '../../lib/foundation/index.js?v=20261028e4';
-import { escapeHtml, num } from '../core/dom.js?v=20261028e4';
-import { fmt } from '../core/format.js?v=20261028e4';
-import { loadPointList, skidSupportList } from '../core/state.js?v=20261028e4';
-import { renderLoadPointTable } from '../tabs/loadPoints.js?v=20261028e4';
+import { skidSupportLoads } from '../../lib/foundation/index.js?v=20261028s3';
+import { escapeHtml, num } from '../core/dom.js?v=20261028s3';
+import { fmt } from '../core/format.js?v=20261028s3';
+import { loadPointList, skidSupportList } from '../core/state.js?v=20261028s3';
+import { renderLoadPointTable } from '../tabs/loadPoints.js?v=20261028s3';
 
 export const SKID_FIELDS = [['x', 'x (m)', 0.05], ['z', 'z (m)', 0.05], ['c1', 'c₁ (m)', 0.05], ['c2', 'c₂ (m)', 0.05],
   ['PE', 'P empty (kN)', 0.1], ['PO', 'P operating (kN)', 0.1], ['PT', 'P test (kN)', 0.1]];

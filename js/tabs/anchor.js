@@ -1,15 +1,15 @@
 // 09 — Anchor bolt design.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028e4';
-import { getRadioVal, num } from '../core/dom.js?v=20261028e4';
-import { fmt } from '../core/format.js?v=20261028e4';
-import { boltList, comboState, lastResults } from '../core/state.js?v=20261028e4';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028e4';
-import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028e4';
-import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028e4';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261028e4';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028e4';
-import { renderAnchorFocus } from './anchorFocus.js?v=20261028e4';
+import { anchorGroupCheck, computeAnchorCapacity, computeGoverningCa1, evaluateAnchorCombo, normalisePoints, stdComboVector } from '../../lib/foundation/index.js?v=20261028s3';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028s3';
+import { fmt } from '../core/format.js?v=20261028s3';
+import { boltList, comboState, lastResults } from '../core/state.js?v=20261028s3';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028s3';
+import { chapterHeader, comboLabel, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028s3';
+import { anchorDiagramSVG } from '../diagrams/anchorDiagram.js?v=20261028s3';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261028s3';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028s3';
+import { renderAnchorFocus } from './anchorFocus.js?v=20261028s3';
 
 export function renderBoltTable() {
   document.getElementById('ab-bolt-body').innerHTML = boltList.map((b, i) => `
@@ -160,6 +160,9 @@ export function syncAnchorInputs() {
   const grp = getRadioVal('ab-method') === 'group';
   const show = (id, on) => { const e = document.getElementById(id); if (e) e.style.display = on ? '' : 'none'; };
   show('ab-group-box', grp);
+  const sharing=document.getElementById('ab-shear-anchors').value;
+  document.getElementById('ab-tie-case').value=sharing==='4'?'1':sharing==='2'?'2':'';
+  show('ab-shear-basis-field',grp&&sharing==='4');
   show('ab-hp-box', grp && (document.getElementById('ab-reinf')?.value === 'hairpin' || document.getElementById('ab-vreinf')?.value === 'hairpin'));
   show('ab-tie-box', grp && document.getElementById('ab-vreinf')?.value === 'ties');
 }
@@ -212,6 +215,9 @@ function groupReinf(Bp, Lp) {
 function calcAnchorGroup(sites, multi, base) {
   const el = document.getElementById('calc-anchor');
   const fail = (msg, detail) => { el.innerHTML = AB_HEAD() + `<div class="warn-box"><strong>⚠  ACI 17 group:</strong> ${msg}</div>`; lastResults.anchor.detail = detail; };
+  const shearAnchors=Number(document.getElementById('ab-shear-anchors').value), shearBasis=document.getElementById('ab-shear-basis').value.trim();
+  if(![2,4].includes(shearAnchors))return fail('choose 2 or 4 shear-resisting anchors for this project; no default is assumed.','Shear-sharing selection not set.');
+  if(shearAnchors===4&&!shearBasis)return fail('state the detail / drawing that ensures equal sharing among four anchors.','Four-anchor load-transfer detail not stated.');
   const rect = boltRectangle();
   if (!rect) return fail('the group method needs exactly 4 bolts in a rectangle about their centroid (x = ±s<sub>x</sub>/2, z = ±s<sub>z</sub>/2). Edit the bolt table or use "Single anchor".', 'Group method: 4 bolts in a rectangle needed.');
   if (getRadioVal('ab-type') !== 'cast-in') return fail('the group method covers cast-in headed anchors only — select "Cast-in" or use "Single anchor".', 'Group method: cast-in anchors only.');
@@ -226,7 +232,7 @@ function calcAnchorGroup(sites, multi, base) {
     const results = comboState.lrfd.map(combo => {
       const v = stdComboVector(combo.f, base);
       const a = { P: st.f * v.P, Mx: st.f * v.Mx, Mz: st.f * v.Mz, Fx: st.f * v.Fx, Fz: st.f * v.Fz };
-      return { combo, ...a, res: anchorGroupCheck({ Bp: st.Bp, Lp: st.Lp, sx: rect.sx, sz: rect.sz, ...prop, fc, seismic, phi, ...a, reinf: R.reinf, shearReinf: R.shearReinf }) };
+      return { combo, ...a, res: anchorGroupCheck({ Bp: st.Bp, Lp: st.Lp, sx: rect.sx, sz: rect.sz, ...prop, fc, seismic, phi, ...a, shearAnchors,shearBasis, reinf: R.reinf, shearReinf: R.shearReinf }) };
     });
     siteRes.push({ ...st, R, results, governing: results.reduce((g, r) => (r.res.uc > g.res.uc ? r : g)) });
   }
@@ -242,6 +248,7 @@ function calcAnchorGroup(sites, multi, base) {
   const kN = (N) => fmt(N / 1000, 2);
   lastResults.anchor.viz = { method: 'group', site: worst, sites: siteRes, rect, bolts: boltList.map(b => ({ ...b })), da: prop.da, hef: prop.hef };
   let html = AB_HEAD();
+  html += `<div class="note"><strong>Project shear sharing:</strong> ${shearAnchors} anchors, V/${shearAnchors} = ${fmt(res.Va,2)} kN per anchor. ${shearAnchors===4?escapeHtml(shearBasis):'Front row in the dominant shear direction.'} Steel and ties use the same selection. Pryout uses the projected area of these ${shearAnchors} shear-loaded anchors (§17.7.3.1). Concrete shear breakout is checked conservatively with the full resultant V on the front-row surface.</div>`;
   if (multi) {
     html += sectionHeader('9.0', 'Pedestals (one per load point)', `The 4-bolt pattern is checked on each of the ${sites.length} pedestals with its share of the factored loads at the top. The governing pedestal (${worst.idx}) is detailed below.`, true);
     html += `<div class="overflow-x"><table class="calc-table"><caption>Anchor group per pedestal</caption>
@@ -262,7 +269,7 @@ function calcAnchorGroup(sites, multi, base) {
   const capV = { 'Steel V_sa': `${kN(res.Vsa)} kN per anchor`, 'Concrete breakout V_cbg': `${kN(res.Vcbg)} kN (front row)`, 'Pryout V_cpg': `${kN(res.Vcpg)} kN (group)` };
   if (res.ar) capN[res.tension[1].name] = `φN = ${kN(res.ar.phiNn)} kN (${res.ar.n} legs / bars)`;
   if (res.arV) capV[res.shear[1].name] = res.arV.type === 'ties' ? `φV = ${kN(res.arV.phiVn)} kN (${res.arV.n} ties × V/${res.arV.case === 1 ? 4 : 2})` : `φV = ${kN(res.arV.phiVn)} kN (${res.arV.n} legs)`;
-  const row = (kind, m, cap) => `<tr class="${m === res.govT || m === res.govV ? 'governing' : ''}"><td>${kind} — ${m.name}</td><td class="num">${cap || '—'}</td><td class="num">${Number.isFinite(m.uc) ? fmt(m.uc, 3) : '∞'}</td><td>${m.uc <= 1 ? 'OK' : 'EXCEEDS'}</td></tr>`;
+  const row = (kind, m, cap) => res.modeDetails.find(d=>d.name===m.name)?.applicable===false ? `<tr><td>${kind} — ${m.name}</td><td>—</td><td>—</td><td>NOT REQUIRED</td></tr>` : `<tr class="${m === res.govT || m === res.govV ? 'governing' : ''}"><td>${kind} — ${m.name}</td><td class="num">${cap || '—'}</td><td class="num">${Number.isFinite(m.uc) ? fmt(m.uc, 3) : '∞'}</td><td>${m.uc <= 1 ? 'OK' : 'EXCEEDS'}</td></tr>`;
   html += `<div class="overflow-x"><table class="calc-table">
     <caption>Anchor group checks — governing combination ${comboLabel(g.combo)}</caption>
     <tr><th>Mode</th><th>Nominal strength</th><th>UC</th><th>Status</th></tr>
@@ -281,6 +288,6 @@ function calcAnchorGroup(sites, multi, base) {
     <tr><th>Combination</th><th>P (kN)</th><th>M<sub>x</sub> (kN·m)</th><th>M<sub>z</sub> (kN·m)</th><th>F<sub>x</sub> (kN)</th><th>F<sub>z</sub> (kN)</th><th>T<sub>max</sub> (kN)</th><th>V (kN)</th><th>UC</th><th>Status</th></tr>
     ${worst.results.map(r => `<tr class="${r === g ? 'governing' : ''}"><td>${comboLabel(r.combo)}</td><td class="num">${fmt(r.P, 1)}</td><td class="num">${fmt(r.Mx, 2)}</td><td class="num">${fmt(r.Mz, 2)}</td><td class="num">${fmt(r.Fx, 2)}</td><td class="num">${fmt(r.Fz, 2)}</td><td class="num">${fmt(r.res.Tmax, 2)}</td><td class="num">${fmt(r.res.V, 2)}</td><td class="num">${Number.isFinite(r.res.uc) ? fmt(r.res.uc, 3) : '∞'}</td><td>${r.res.pass ? 'OK' : 'EXCEEDS'}</td></tr>`).join('')}
   </table></div>`;
-  html += `<div class="limits-box"><strong>Limitation:</strong> 4 cast-in headed anchors in a rectangle centred in the pedestal, rigid base plate (anchor forces F = P/4 + M<sub>z</sub>·x/Σx² − M<sub>x</sub>·z/Σz²), cracked concrete. Shear breakout and the shear hairpins use the front row in the dominant shear direction. Seismic actions are not amplified here (Ω<sub>0</sub>); base plate bearing and grout compressive strength are not checked. Steel shear includes the grout-pad factor 0.80 when Section 02 specifies grout (§17.7.1.2.1). Open sharing issue: steel shear demand still uses V/4, while the Case 2 tie model uses V/2 per anchor; ψ<sub>c,V</sub> = 1.2 (tied pedestal) and the l<sub>dh</sub> reduction A<sub>s,req</sub>/A<sub>s,prov</sub> are not used (conservative). Hairpin model: verify the detail (contact with the anchor, position near the top, closed end below the head) against the drawing.</div>`;
+  html += `<div class="limits-box"><strong>Limitation:</strong> 4 cast-in headed anchors in a rectangle centred in the pedestal, rigid base plate (anchor forces F = P/4 + M<sub>z</sub>·x/Σx² − M<sub>x</sub>·z/Σz²), cracked concrete. Shear breakout and the shear hairpins use the front row in the dominant shear direction. Seismic actions are not amplified here (Ω<sub>0</sub>); base plate bearing and grout compressive strength are not checked. Steel shear includes the grout-pad factor 0.80 when Section 02 specifies grout (§17.7.1.2.1). Shear sharing is selected per project; steel and ties use the same count, and pryout uses the selected shear-loaded anchors. Full V is checked on the front-row concrete breakout surface (conservative); ψ<sub>c,V</sub> = 1.2 (tied pedestal) and the l<sub>dh</sub> reduction A<sub>s,req</sub>/A<sub>s,prov</sub> are not used (conservative). Hairpin model: verify the detail (contact with the anchor, position near the top, closed end below the head) against the drawing.</div>`;
   el.innerHTML = numberTables(html, '9');
 }

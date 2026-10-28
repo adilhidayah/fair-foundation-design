@@ -306,8 +306,8 @@ function pedestalReport(r) {
       `${R.arV && R.arV.type === 'ties' ? '; shear breakout replaced by the ties in the top 125 mm (§17.5.2.1(b))' : ''}; side-face blowout with the corner factor (1 + c_a2/c_a1)/4 = ${n(R.psiCornerSb, 2)} (§17.6.4.1.1)). ` +
       `Governing L/C ${P.anchor.lc}${P.anchor.seis ? ' (seismic)' : ''}: T_u = ${n(R.Tmax, 2)} kN per anchor, ${n(R.Tgrp, 2)} kN group, V_u = ${n(R.V, 2)} kN; ` +
       `h_ef' = ${n(R.hefE, 1)} mm (edges). Steel shear V_sa = ${n(R.groutFactor, 2)} × 0.6 A_se,V f_uta = ${n(R.Vsa / 1000, 2)} kN per anchor ` +
-      `(${R.groutPad ? 'grout pad present' : 'no grout pad'}, §17.7.1.2.1). Steel shear demand currently uses V/4; sharing with two anchors (Case 2) remains under review.`, '',
-      '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${n(m.uc, 3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
+      `(${R.groutPad ? 'grout pad present' : 'no grout pad'}, §17.7.1.2.1). Shear sharing: ${R.shearAnchors||'NOT SET'} anchors; per-anchor V = ${R.Va===null?'NOT SET':n(R.Va,3)+' kN'}. ${R.shearBasis||R.note||'Front row, dominant shear direction.'} Pryout uses ${R.pryout.n} shear-loaded anchors, A_Nc = ${n(R.pryout.ANc,0)} mm². Full V on the front-row concrete breakout surface is a conservative bound.`, '',
+      '| Mode | UC |', '|---|---|', ...R.tension.map(m => `| Tension — ${m.name} | ${R.modeDetails.find(d=>d.name===m.name)?.applicable===false?'NOT REQUIRED':n(m.uc,3)} |`), ...R.shear.map(m => `| Shear — ${m.name} | ${n(m.uc, 3)} |`),
       `| Interaction (§17.8) | ${n(R.interaction, 3)} |`, `| **Governing** | **${n(R.uc, 3)} ${R.pass ? 'OK' : 'NOT OK'}** |`);
     if (R.ar && R.ar.hairpin) o.push('', `Anchor reinforcement (hairpins): ${P.anchor.hairpin.n} hairpin${P.anchor.hairpin.n > 1 ? 's' : ''} Ø${R.ar.db}, ${R.ar.n} legs within 0.5 h_ef of the anchors in tension (A_s ${n(R.ar.As, 0)} mm²), nearest at ${n(R.ar.r, 0)} mm; ` +
       `legs ${n(R.ar.legLen, 0)} mm long from the top of the pedestal; above the 35° plane ${n(R.ar.avail, 0)} mm ${R.ar.avail >= R.ar.ldh - 1e-9 ? '≥' : '<'} l_dh ${n(R.ar.ldh, 0)} mm (ψr = 1.6); ` +
@@ -548,10 +548,11 @@ export function pedestalDesignCheck(f, crit, loads, reac, lcList, deadCase) {
         const fac = primaryFactors(loads, row.lc), seis = Object.entries(fac).some(([p, v]) => v && /seismic/i.test(loads.primary[p]?.type || ''));
         const k = seis ? om : 1, t0 = row.top;
         const res = anchorGroupCheck({ Bp, Lp, sx: bo.sx, sz: bo.sz, da: bo.dia, Ase: A.Ase, futa: A.futa, hef: A.hef, Abrg: A.Abrg, fc, lambda,
-          seismic: A.seismic !== false, groutPad: (f.groutT || 0) > 0, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
+          seismic: A.seismic !== false, groutPad: (f.groutT || 0) > 0, shearAnchors:A.shearAnchors, shearBasis:A.shearBasis, P: t0.P, Mx: t0.Mx * k, Mz: t0.Mz * k, Fx: t0.Fx * k, Fz: t0.Fz * k,
           reinf: hairpin ? { hairpin: { legs: hairpin.legs, db: hairpin.db, maxLen: w0.Hp * 1000 - 75 }, fy, topCover: A.topCover ?? 50 }
             : anchorReinf(A, { bars, bar, fy, clearCover: P0.clearCover ?? 50 }),
           shearReinf: anchorShearReinf(A, { bar, tie, nTop, fy, clearCover: P0.clearCover ?? 50 }) });
+        if(!res.valid&&!out.missing.includes(res.note))out.missing.push(res.note);
         if (!gov || res.uc > gov.res.uc) gov = { lc: row.lc, seis, res };
       }
       out.anchor = { ...gov, A, omega0: om, hairpin };
@@ -588,14 +589,14 @@ export function anchorReinf(A, { bars, bar, fy, clearCover = 50 }) {
 }
 
 // Shear anchor reinforcement (pedestal.anchor.shearReinforcement): "ties" = the ties in the top 125 mm (anchor.ties: { n, db, case,
-// diamond }, defaults: the top ties of the pedestal, n = 2 (D13+) / 3, Case 2 = V/2 per anchor, SP-17M Example 18), "hairpin" = the
+// diamond }, defaults: the top ties of the pedestal; case follows explicit anchor.shearAnchors (SP-17M Example 18)), "hairpin" = the
 // hairpin model (anchor.hairpin), "none" = concrete breakout; not given = the shear flag of the tension hairpins (anchorReinf).
 export function anchorShearReinf(A, { bar, tie, nTop, fy, clearCover = 50 }) {
   const t = A.shearReinforcement;
   if (!t) return null;
   if (t === 'ties') {
     const s = A.ties || {};
-    return { type: 'ties', n: s.n ?? nTop, db: s.db ?? tie, fy: s.fy ?? fy, case: s.case === 1 ? 1 : 2, diamond: !!s.diamond };
+    return { type: 'ties', n: s.n ?? nTop, db: s.db ?? tie, fy: s.fy ?? fy, case: s.case ?? (A.shearAnchors===4?1:A.shearAnchors===2?2:undefined), diamond: !!s.diamond };
   }
   if (t === 'hairpin') {
     const h = A.hairpin || {};

@@ -1,10 +1,10 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getRadioVal } from '../core/dom.js?v=20261028e4';
-import { lastResults } from '../core/state.js?v=20261028e4';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028e4';
-import { generateReport } from '../report/builder.js?v=20261028e4';
-import { pendingInputs, pendingProjectHtml } from '../workflow/projectReadiness.js?v=20261028e4';
+import { getRadioVal } from '../core/dom.js?v=20261028s3';
+import { lastResults } from '../core/state.js?v=20261028s3';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028s3';
+import { generateReport } from '../report/builder.js?v=20261028s3';
+import { pendingInputs, pendingProjectHtml } from '../workflow/projectReadiness.js?v=20261028s3';
 
 export function buildQuickStatusHtml() {
   if(pendingInputs('summary').length)return pendingProjectHtml();
