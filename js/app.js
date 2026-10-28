@@ -44,6 +44,11 @@ import { applyProjectData, collectProject, emptyProjectData, parseProjectText, p
 import { pendingInputs, refreshProjectReadiness } from './workflow/projectReadiness.js?v=20261028e4';
 
 installLazyPanels();
+// Keep sticky section bars below the blue header, including wrapped mobile/project-name layouts.
+const headerSizeObserver = new ResizeObserver(entries => {
+  document.documentElement.style.setProperty('--app-header-height', Math.ceil(entries[0].target.getBoundingClientRect().height) + 'px');
+});
+headerSizeObserver.observe(document.querySelector('.titleblock'));
 document.getElementById('focus-flexure').addEventListener('click', e => {
   const view=e.target.closest('[data-fx-view]'), layer=e.target.closest('[data-fx-case]');
   if(view)setFlexureView(view.dataset.fxView);
