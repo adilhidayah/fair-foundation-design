@@ -1,20 +1,14 @@
 // 03 — Loading Data: load types, load values, live/equipment/wind/seismic entry, design load summary.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261027merge1';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
-import { fmt } from '../core/format.js?v=20261027merge1';
-import { comboState, state } from '../core/state.js?v=20261027merge1';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261027merge1';
-import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261027merge1';
-import { recalcAll } from '../workflow/recalc.js?v=20261027merge1';
-import { skidSupportPreviewHtml } from '../tabs/skidSupports.js?v=20261027merge1';
+import { DEFAULT_KIND_BY_CODE, LOAD_KINDS } from '../../lib/foundation/index.js?v=20261028s3';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028s3';
+import { fmt } from '../core/format.js?v=20261028s3';
+import { comboState, state } from '../core/state.js?v=20261028s3';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261028s3';
+import { buildStdComboBase, isStaadSignMode, renderComboTable } from '../tabs/combos.js?v=20261028s3';
+import { recalcAll } from '../workflow/recalc.js?v=20261028s3';
+import { skidSupportPreviewHtml } from '../tabs/skidSupports.js?v=20261028s3';
 
-export const LC_LOADTYPE_DEFAULTS = {
-  D: { P: 0 }, L: { P: 200 }, Lr: { P: 0 }, // D starts at 0 — the foundation self-weight ΔW is added separately
-  WX: { H: 60, M: 90 }, WZ: { H: 60, M: 90 },
-  'EQX(E)': { H: 45, M: 70 }, 'EQZ(E)': { H: 45, M: 70 }, 'EQX(O)': { H: 45, M: 70 }, 'EQZ(O)': { H: 45, M: 70 },
-  W: { H: 60, M: 90 }, E: { H: 45, M: 70 }
-};
 // Registers a load type if it isn't already present (used by generator buttons — Wind/Seismic Apply, ASCE 7-22
 // generators, Pipe Rack/Vessel/Tank "Generate combos" — before they write into that type's lc-<code>-P/H/M
 // fields, so writing to a type that isn't in the default set doesn't throw on a missing element).
@@ -125,20 +119,20 @@ export function renderLoadValuesHeader() {
 export function renderLoadValuesTable() {
   renderLoadValuesHeader();
   document.getElementById('lc-loadvalue-body').innerHTML = state.lcLoadTypes.map(lt => {
-    const d = LC_LOADTYPE_DEFAULTS[lt.code] || {};
-    const cur = (field, def) => { const el = document.getElementById(`lc-${lt.code}-${field}`); return el ? el.value : (def || 0); };
+    const cur = field => { const el = document.getElementById(`lc-${lt.code}-${field}`); return el ? el.value : ''; };
     const eqField = EQUIPMENT_CODE_TO_FIELD[lt.code];
     const directField = DIRECT_CODE_TO_FIELD_KN[lt.code];
     // Lateral types (wind / earthquake / other lateral X/Z) carry no vertical load: P is fixed at 0 and locked,
     // so no calculation (vector or scalar getLcLoads()) can pick up a stray P for them.
     const lateral = isLateralLoadType(lt);
     const pReadonly = (eqField || directField || lateral) ? ' readonly' : '';
-    const pVal = lateral ? '0' : eqField ? num(eqField).toFixed(2) : directField ? num(directField).toFixed(2) : cur('P', d.P);
+    const source=eqField||directField;
+    const pVal = lateral ? '0' : source ? (document.getElementById(source).value.trim()===''?'':num(source).toFixed(2)) : cur('P');
     return `<tr>
       <td>${escapeHtml(lt.label)}</td>
       <td><input type="number" class="lc-value-input" id="lc-${lt.code}-P" value="${pVal}"${pReadonly}${lateral ? ' title="Lateral load type — P = 0"' : ''}></td>
-      <td><input type="number" class="lc-value-input" id="lc-${lt.code}-H" value="${cur('H', d.H)}"></td>
-      <td><input type="number" class="lc-value-input" id="lc-${lt.code}-M" value="${cur('M', d.M)}"></td>
+      <td><input type="number" class="lc-value-input" id="lc-${lt.code}-H" value="${cur('H')}"></td>
+      <td><input type="number" class="lc-value-input" id="lc-${lt.code}-M" value="${cur('M')}"></td>
       ${lateral ? `<td class="clause" title="Direction fixed by the load type">—</td><td class="clause" title="Direction fixed by the load type">—</td>`
         : `<td><input type="number" class="lc-value-input" id="lc-${lt.code}-Hz" value="${cur('Hz', 0)}"></td>
       <td><input type="number" class="lc-value-input" id="lc-${lt.code}-Mx" value="${cur('Mx', 0)}"></td>`}
@@ -214,9 +208,9 @@ export function renderLiveLoad() {
   const lrContainer = document.getElementById('lr-load-preview');
   if (lrContainer) lrContainer.innerHTML = hasLr ? table('3.1.3. Roof Live Load (Lr)', 'Roof live load,', 'Lr', Pr) : '';
   const lcL = document.getElementById('lc-L-P');
-  if (lcL) lcL.value = P.toFixed(2);
+  if (lcL) lcL.value = document.getElementById('ll-load-p').value.trim()===''?'':P.toFixed(2);
   const lcLr = document.getElementById('lc-Lr-P');
-  if (lcLr) lcLr.value = Pr.toFixed(2);
+  if (lcLr) lcLr.value = document.getElementById('lr-load-p').value.trim()===''?'':Pr.toFixed(2);
   if (typeof renderLoadSummary === 'function') renderLoadSummary();
 }
 export function renderEquipmentLoad() {
@@ -242,7 +236,7 @@ export function renderEquipmentLoad() {
   // Keep the read-only P fields in Load Values (if that type still exists) in sync, without a full table re-render.
   Object.entries(EQUIPMENT_CODE_TO_FIELD).forEach(([code, eqId]) => {
     const el = document.getElementById(`lc-${code}-P`);
-    if (el) el.value = num(eqId).toFixed(2);
+    if (el) el.value = document.getElementById(eqId).value.trim()===''?'':num(eqId).toFixed(2);
   });
   if (typeof renderLoadSummary === 'function') renderLoadSummary();
 }

@@ -3,13 +3,13 @@
 // pileCapPlatform.js gives the face moments, the moments / shears of the cap as a beam between the pile rows and lines, and this
 // panel shows the envelope against the bars: flexure x / z top / bottom, one-way shear, crack control and the punching of the columns.
 // Display + input parsing only — all formulas are in lib/.
-import { evaluatePileGroupCombo, eccentricPunchingStress, pileCapPlatformCombo, pileCapPlatformEnvelope, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261027merge1';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
-import { fmt } from '../core/format.js?v=20261027merge1';
-import { lastResults, pileList, platformColumnList } from '../core/state.js?v=20261027merge1';
-import { loadPointsActive } from '../tabs/loadPoints.js?v=20261027merge1';
-import { pileComboLoads } from '../tabs/pile.js?v=20261027merge1';
-import { renderShearFocus } from '../tabs/shearFocus.js?v=20261027merge1';
+import { evaluatePileGroupCombo, eccentricPunchingStress, pileCapPlatformCombo, pileCapPlatformEnvelope, twoWayShearCheck } from '../../lib/foundation/index.js?v=20261028s3';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028s3';
+import { fmt } from '../core/format.js?v=20261028s3';
+import { lastResults, pileList, platformColumnList } from '../core/state.js?v=20261028s3';
+import { loadPointsActive } from '../tabs/loadPoints.js?v=20261028s3';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028s3';
+import { renderShearFocus } from '../tabs/shearFocus.js?v=20261028s3';
 
 const NO_CAP = { Qc: 1e12, Qt: 1e12, Ql: 1e12 };
 

@@ -1,8 +1,9 @@
 const fs = require('fs');
+const path = require('path');
 // The two SVG diagram modules this script maintains (moved out of app.js into js/diagrams/).
 const FILES = {
-  foundationDiagramSVG: "E:\\MASTER CALCULATOR\\js\\diagrams\\foundationDiagram.js",
-  foundSizeDiagramSVG: "E:\\MASTER CALCULATOR\\js\\diagrams\\foundSizeDiagram.js",
+  foundationDiagramSVG: path.join(__dirname, 'js', 'diagrams', 'foundationDiagram.js'),
+  foundSizeDiagramSVG: path.join(__dirname, 'js', 'diagrams', 'foundSizeDiagram.js'),
 };
 for (const [fnName, path] of Object.entries(FILES)) {
 let content = fs.readFileSync(path, 'utf8');

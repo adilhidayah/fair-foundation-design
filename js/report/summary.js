@@ -1,11 +1,13 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getRadioVal } from '../core/dom.js?v=20261027merge1';
-import { lastResults } from '../core/state.js?v=20261027merge1';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261027merge1';
-import { generateReport } from '../report/builder.js?v=20261027merge1';
+import { getRadioVal } from '../core/dom.js?v=20261028s3';
+import { lastResults } from '../core/state.js?v=20261028s3';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028s3';
+import { generateReport } from '../report/builder.js?v=20261028s3';
+import { pendingInputs, pendingProjectHtml } from '../workflow/projectReadiness.js?v=20261028s3';
 
 export function buildQuickStatusHtml() {
+  if(pendingInputs('summary').length)return pendingProjectHtml();
   // 4A (shallow) and 4B (pile) are exclusive: the stability check of the other support is not part of this design
   const order = ['oneway', 'twoway', getRadioVal('fs-support') === 'pile' ? 'pile' : 'foundation', 'bearing', 'settlement', 'anchor', 'pedestalRebar', 'pileCapRebar'];
   // Checks taken out of scope in Section 00 are listed as NA (not counted), whatever their last computed status.

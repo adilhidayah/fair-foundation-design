@@ -1,10 +1,19 @@
 // 08B — Settlement (soil).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261027merge1';
-import { getRadioVal, num } from '../core/dom.js?v=20261027merge1';
-import { fmt } from '../core/format.js?v=20261027merge1';
-import { lastResults, pileList } from '../core/state.js?v=20261027merge1';
-import { pileComboLoads } from '../tabs/pile.js?v=20261027merge1';
+import { consolidationSettlement, correctSPT, cuFromSPT, elasticSettlement, esFromSPT, phiFromSPT, pileSettlementVesic, settlementCheck } from '../../lib/foundation/index.js?v=20261028s3';
+import { getRadioVal, num } from '../core/dom.js?v=20261028s3';
+import { fmt } from '../core/format.js?v=20261028s3';
+import { lastResults, pileList } from '../core/state.js?v=20261028s3';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028s3';
+import { settlementFocusHTML, settlementReportVisualHTML } from './settlementFocus.js?v=20261028s3';
+
+// Both views receive the same calculation snapshot. An invalid calculation clears the previous visualization.
+function settlementVisuals(viz = null) {
+  lastResults.settlement.viz = viz;
+  const panel = document.getElementById('focus-settlement');
+  if (panel) panel.innerHTML = settlementFocusHTML(lastResults.settlement);
+  return settlementReportVisualHTML(viz);
+}
 
 // correctSPT/phiFromSPT/cuFromSPT/esFromSPT live in shared/soilProperties.js;
 // elasticSettlement/consolidationSettlement/settlementCheck live in shared/settlementCheck.js.
@@ -26,7 +35,7 @@ function pileWorkingLoad() {
 function calcPileSettlement() {
   lastResults.settlement = { label: 'Pile Group Settlement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   const out = document.getElementById('calc-settlement');
-  const fail = (msg) => { out.innerHTML = `<div class="warn-box"><strong>Invalid input:</strong> ${msg}</div>`; lastResults.settlement.detail = 'Invalid input: ' + msg; };
+  const fail = (msg) => { out.innerHTML = `<div class="warn-box"><strong>Invalid input:</strong> ${msg}</div>`; lastResults.settlement.detail = 'Invalid input: ' + msg; settlementVisuals(); };
   const D = num('pf-dia') / 1000;
   if (!pileList.length) return fail('no piles defined in 4B.');
   if (!(D > 0)) return fail('pile width D (4B) must be greater than zero.');
@@ -44,6 +53,17 @@ function calcPileSettlement() {
   const pass = r.overallPass;
   lastResults.settlement = { label: 'Pile Group Settlement', status: pass ? 'PASS' : 'FAIL', metric: 'T=' + fmt(r.Sg, 2) + 'mm', detail: `S_g=${fmt(r.Sg, 2)}mm (S_e=${fmt(r.Se, 2)}mm x F_g=${fmt(r.Fg, 2)}) vs ${fmt(allow, 0)}mm, Q_w=${fmt(Qw, 1)}kN` };
   let html = '<div class="verdict' + (pass ? '' : ' fail') + '"><div class="stamp">' + (pass ? 'PILE SETTLEMENT PASS' : 'PILE SETTLEMENT FAIL') + '</div><div class="uc"><div class="val">' + fmt(r.Sg, 2) + '</div><div class="lbl">mm group settlement vs allow ' + fmt(allow, 1) + ' mm (UC=' + fmt(r.uc, 3) + ')</div></div></div>';
+  const viz = [r.Sg, r.Se, r.Fg, r.uc, r.S1, r.S2, r.S3].every(x => Number.isFinite(x) && x >= 0) ? {
+    kind: 'pile', total: r.Sg, allow, uc: r.uc, ucTotal: r.uc, pass, single: r.Se, factor: r.Fg, B: Bg, D, Qw,
+    sectionAxis: Math.max(...xs) - Math.min(...xs) <= Math.max(...ys) - Math.min(...ys) ? 'x' : 'z',
+    piles: pileList.map(p => ({ x: p.x, z: p.y })),
+    loadSource: override > 0 ? 'User-entered working load' : `Service combination LC ${auto?.lc ?? '—'}`,
+    components: [{ label: 'S1 · Pile shortening', value: r.S1, description: 'Elastic shortening of one pile' },
+      { label: 'S2 · Tip contribution', value: r.S2, description: 'Single-pile settlement from tip load' },
+      { label: 'S3 · Shaft contribution', value: r.S3, description: 'Single-pile settlement from shaft load' }]
+  } : null;
+  if (!viz) lastResults.settlement.vizNote = 'The calculation returned non-finite or negative settlement values; a diagram cannot be shown.';
+  html += settlementVisuals(viz);
   const row = (a, e, v, cls = '') => `<tr${cls}><td>${a}</td><td class="clause">${e}</td><td class="num">${v}</td></tr>`;
   html += '<div class="overflow-x"><table class="calc-table"><caption>Single pile — Vesic (1977), Das §11.18</caption><tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>' +
     row('Q<sub>w</sub>, working load', override > 0 ? 'input' : 'auto (P / n)', fmt(Qw, 2) + ' kN') +
@@ -79,11 +99,13 @@ export function calcSettlement() {
   if (B <= 0 || L <= 0) {
     document.getElementById('calc-settlement').innerHTML = `<div class="warn-box"><strong>Invalid input:</strong> B and L must be greater than zero.</div>`;
     lastResults.settlement.detail = 'Invalid input (B, L must be > 0).';
+    settlementVisuals();
     return;
   }
   if (Es <= 0) {
     document.getElementById('calc-settlement').innerHTML = `<div class="warn-box"><strong>Invalid input:</strong> Es must be greater than zero.</div>`;
     lastResults.settlement.detail = 'Invalid input (Es must be > 0).';
+    settlementVisuals();
     return;
   }
   const spt = correctSPT(N, sigmaV, ER);
@@ -104,6 +126,14 @@ export function calcSettlement() {
   const chkTotal = fmt(chk.total_mm,2);
   lastResults.settlement = { label: 'Settlement (Soil)', status: (pass ? 'PASS' : 'FAIL'), metric: ('T=' + chkTotal + 'mm'), detail: 'Se+Sc vs allow' };
   let html = '<div class="verdict' + (pass ? '' : ' fail') + '"><div class="stamp">' + (pass ? 'SETTLEMENT PASS' : 'SETTLEMENT FAIL') + '</div><div class="uc"><div class="val">' + fmt(chk.total_mm,2) + ' mm</div><div class="lbl">total vs allow ' + fmt(allowTotal,1) + ' mm (UC=' + fmt(chk.governingUC,3) + ')</div></div></div>';
+  const viz = elas.valid && consol.valid && allowTotal > 0 && allowDiff > 0 && [Se, Sc, chk.total_mm, chk.governingUC, chk.ucTotal, chk.ucDiff, diff].every(x => Number.isFinite(x) && x >= 0) ? {
+    kind: 'shallow', total: chk.total_mm, allow: allowTotal, uc: chk.governingUC, ucTotal: chk.ucTotal, pass,
+    diff, allowDiff, ucDiff: chk.ucDiff, B, L, Es, rigid, H, consolidationSkipped: consol.skipped,
+    components: [{ label: 'Se · Immediate', value: Se, description: 'Elastic settlement from the existing calculation' },
+      { label: 'Sc · Consolidation', value: Sc, description: consol.skipped ? 'Not included: H = 0' : 'Single-layer 1-D consolidation result' }]
+  } : null;
+  if (!viz) lastResults.settlement.vizNote = 'Check the elastic / consolidation inputs. A valid finite result is required for the visualization.';
+  html += settlementVisuals(viz);
   html += '<div class="overflow-x"><table class="calc-table"><caption>SPT correlation (verify vs geotech report)</caption><tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>';
   html += '<tr><td>Cn</td><td class="clause">sqrt(100/sv)</td><td class="num">' + (spt.valid ? fmt(spt.Cn,3) : '--') + '</td></tr>';
   html += '<tr><td>N60</td><td class="clause">N.(ER/60).Cn</td><td class="num">' + (spt.valid ? fmt(N60,2) : '--') + '</td></tr>';

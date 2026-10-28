@@ -164,9 +164,7 @@
     color: var(--ink-soft);
     color: #a0aec0;
   }
-  /* Top nav ribbon — a horizontal tab strip under the header (STAAD/ribbon-style) instead of a
-     vertical sidebar, so it costs a fixed ~40px of page height rather than a whole column's width.
-     Scrolls horizontally if all 13 tabs don't fit rather than wrapping, so its height stays fixed. */
+  /* Shared section-menu styles; the screen layout below places the menu in a collapsible left rail. */
   .sidebar-menu {
     display: flex;
     align-items: center;
@@ -1543,7 +1541,7 @@
     table.calc-table, .verdict, .warn-box, .limits-box, .doc-header-table, .fdn-diagram, svg { break-inside: avoid; }
     .report-header, .section-label { break-after: avoid; }
   }
-  /* ===== 05 STRUCTURAL DESIGN: group label in the tab ribbon (not a tab itself) ===== */
+  /* ===== 05 STRUCTURAL DESIGN: navigation group label (not a section button) ===== */
   .sidebar-menu .tab-group-label {
     flex-shrink: 0;
     margin-left: 6px;
@@ -1744,8 +1742,12 @@
     .results[data-view="canvas"]:has(#calc-general.active) #focus-general,
     .results[data-view="canvas"]:has(#calc-foundation.active) #focus-foundation,
     .results[data-view="canvas"]:has(#calc-pile.active) #focus-pile,
+    .results[data-view="canvas"]:has(#calc-settlement.active) #focus-settlement,
+    .results[data-view="canvas"]:has(#calc-anchor.active) #focus-anchor,
+    .results[data-view="canvas"]:has(#calc-rebar.active) #focus-pedestal,
+    .results[data-view="canvas"]:has(#calc-rebarcap.active) #focus-flexure,
     .results[data-view="canvas"]:has(#calc-oneway.active) #focus-capcheck { display: block; }
-    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway).active { display: none; }
+    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway, #calc-settlement, #calc-anchor, #calc-rebar, #calc-rebarcap).active { display: none; }
     /* 03: the sheet stays under the Focus view while an OCR / paste review is open there (it holds the review tables). */
     .ld-results[data-view="canvas"] #focus-loading { display: block; margin-bottom: 16px; }
     .ld-results[data-view="canvas"] .ld-page:not(:has(#eq-ocr-preview:not(:empty), #eq-ocr-review:not(:empty), #lc-ocr-preview:not(:empty), #lc-ocr-review:not(:empty))) { display: none; }
@@ -2047,3 +2049,169 @@
   .lp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px 6px; }
   .lp-grid label { display: flex; flex-direction: column; gap: 2px; font-size: 10px; font-weight: 600; color: var(--ink-soft); }
   .lp-grid input { min-width: 0; padding: 4px 6px; font-size: 11.5px; }
+
+  /* 08B settlement: schematic result diagrams, shared by Focus Canvas and the printable report. */
+  .st-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; align-items: start; }
+  .st-layout > .fz-card { min-width: 0; }
+  .st-layout .fdn-diagram { width: 100%; max-width: 680px; height: auto; margin: 0 auto 8px; border: none; background: transparent; }
+  .st-viewport .cad-switcher { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .st-view { display: none; }
+  .st-viewport[data-view="overlay"] .st-overlay,
+  .st-viewport[data-view="before"] .st-before,
+  .st-viewport[data-view="after"] .st-after { display: block; }
+  .st-report-visual .fdn-diagram { width: 100%; height: auto; break-inside: avoid; }
+  .st-report-visual .sub-title { margin: 14px 0 8px; }
+
+  /* 09 anchor Focus Canvas: calculation snapshots only. */
+  .ab-select { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ab-select label { font-size: 12px; font-weight: 600; }
+  .ab-select select { flex: 1 1 220px; min-width: 0; max-width: 100%; padding: 6px 8px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .ab-plan { width: 100%; height: auto; border: none; background: transparent; margin: 6px auto; }
+  .ab-check-list { display: grid; gap: 16px; margin: 16px 0; }
+  .ab-check-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 7px; }
+  .ab-check-head strong { white-space: nowrap; font-family: var(--mono); }
+  .ab-pass { color: var(--pass); }
+  .ab-fail { color: var(--fail); }
+  .ab-meter { height: 8px; background: var(--bg-subtle); border-radius: 4px; position: relative; }
+  .ab-meter span { display: block; height: 100%; border-radius: inherit; }
+  .ab-meter i { position: absolute; left: 66.6667%; top: -3px; bottom: -3px; border-left: 2px solid var(--ink); }
+  .ab-strength { display: grid; gap: 10px; font-size: 12px; margin-top: 16px; }
+  .ab-limit { font-size: 12px; line-height: 1.7; border-left: 3px solid var(--caution); }
+
+  /* Anchor mechanism cards: concept sketches, not calculated failure geometry. */
+  .af-mode { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
+  .af-mode header { display: flex; align-items: start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .af-mode h3 { margin: 0 0 5px; font-size: 13px; color: var(--ink); }
+  .af-clause, .af-basis { font: 10px var(--mono); color: var(--ink-soft); }
+  .af-diagram { width: 100%; max-width: 360px; display: block; margin: 12px auto 8px; }
+  .af-force { fill: none; stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+  .af-zone { fill: color-mix(in srgb, var(--caution) 18%, transparent); stroke: var(--caution); stroke-width: 2; stroke-dasharray: 5 3; }
+  .af-crack { fill: none; stroke: var(--caution); stroke-width: 3; stroke-linejoin: round; }
+  .af-rebar { fill: none; stroke: var(--caution); stroke-width: 4; stroke-linejoin: round; }
+  .af-description { font-size: 12px; color: var(--ink-soft); line-height: 1.6; margin: 6px 0 12px; }
+  .af-mode dl { margin: 10px 0 0; font-size: 12px; }
+  .af-mode dl > div { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); }
+  .af-mode dd { margin: 0; font-family: var(--mono); font-weight: 600; }
+  .af-mode dt { color: var(--ink-soft); }
+  .af-inactive { font-size: 12px; color: var(--ink-soft); padding: 12px 0; }
+
+  /* 09 uses the same single CAD viewport pattern as Section 02. */
+  .av-scene { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 16px; align-items: start; }
+  .av-stage { min-width: 0; padding: 12px; }
+  .av-stage .fdn-diagram, .av-stage .af-diagram { display: block; width: 100%; max-width: 740px; max-height: 52vh; height: auto; margin: 0 auto; border: none; background: transparent; }
+  .av-stage .af-diagram { max-width: 600px; }
+  .av-inspector { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .av-inspector dl { margin: 12px 0; font-size: 12px; }
+  .av-inspector dl > div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .av-inspector dd { margin: 0; font: 600 11px var(--mono); text-align: right; }
+  .av-inspector dt { color: var(--ink-soft); }
+  .av-caption { padding: 8px; color: var(--ink-soft); text-align: center; font-size: 11px; }
+  .av-mode-select { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 10px 0 14px; font-size: 12px; }
+  .av-mode-select select { flex: 1; min-width: min(100%, 240px); color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 7px; border-radius: var(--radius-sm); }
+  @container (max-width: 750px) { .av-scene { grid-template-columns: minmax(0, 1fr); } }
+  .av-viewport { container-type: inline-size; }
+  #focus-flexure { margin-top: 24px; }
+
+  /* Calculation navigation stays separate from the input and status panels. */
+  @media screen {
+    body { padding: 12px 12px 32px; }
+    .sheet { display: grid; grid-template-columns: 208px minmax(0, 1fr); max-width: 1920px; width: 100%; }
+    .titleblock { grid-column: 1 / -1; gap: 10px; padding: 12px 16px; }
+    .tb-main { min-width: 160px; }
+    .tb-file { flex-wrap: wrap; justify-content: flex-end; margin-right: 0; }
+    .tb-file-name { max-width: 180px; }
+    .tb-ai-btn { margin-left: 0; }
+    .sidebar-menu {
+      grid-column: 1; align-self: start; position: sticky; top: 0; max-height: 100vh;
+      display: block; padding: 12px 8px; overflow: auto; border-bottom: none;
+      border-right: 1px solid var(--line); background: var(--panel);
+    }
+    .layout-wrapper { grid-column: 2; min-width: 0; border-radius: 0 0 var(--radius-lg) 0; }
+    .nav-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 12px; }
+    .nav-heading { font: 600 10px var(--sans); letter-spacing: 1px; color: var(--ink-soft); }
+    #navigation-toggle { flex-shrink: 0; }
+    .navigation-items { display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-menu .tab { width: 100%; min-height: 42px; padding: 9px 8px; gap: 10px; border: 1px solid transparent; background: transparent; text-align: left; font-size: 11px; white-space: normal; line-height: 1.45; }
+    .sidebar-menu .tab-code { width: 29px; font: 600 11px var(--mono); text-align: center; }
+    .sidebar-menu .tab-label { font-weight: 500; }
+    .sidebar-menu .tab.active { background: var(--accent-soft); color: var(--accent); border-color: var(--line); box-shadow: inset 3px 0 var(--accent); }
+    .sidebar-menu .tab:focus-visible, #navigation-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .sidebar-menu .tab-group-label { display: flex; align-items: center; gap: 10px; margin: 10px 0 0; padding: 12px 8px 4px; border-left: 0; border-top: 1px solid var(--line); font-size: 9px; letter-spacing: .5px; }
+    .nav-group-code { width: 29px; text-align: center; font-family: var(--mono); }
+    .sidebar-menu :is([data-tab="pedcheck"], [data-tab="capcheck"]) .tab-label { padding-left: 8px; border-left: 1px solid var(--line); }
+    .sidebar-menu [data-tab="bearing"] { margin-top: 10px; }
+    .workspace-section { display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-bottom: 1px solid var(--line); background: var(--panel); position: relative; z-index: 5; }
+    .main-content > .workspace-section { flex-grow: 0; }
+    .workspace-section > span { font: 600 11px var(--mono); color: var(--accent); }
+    .workspace-section h2 { margin: 0; font: 600 13px var(--sans); color: var(--ink); }
+    .sheet[data-navigation="collapsed"] { grid-template-columns: 64px minmax(0, 1fr); }
+    .sheet[data-navigation="collapsed"] .nav-head { justify-content: center; padding-inline: 0; }
+    .sheet[data-navigation="collapsed"] :is(.nav-heading, .tab-label, .nav-group-name) { display: none; }
+    .sheet[data-navigation="collapsed"] .sidebar-menu .tab { justify-content: center; padding-inline: 0; }
+    .sheet[data-navigation="collapsed"] .sidebar-menu .tab-group-label { justify-content: center; padding-inline: 0; }
+  }
+  @media screen and (max-width: 1100px) {
+    .titleblock { flex-wrap: wrap; }
+    .tb-main { flex-basis: calc(100% - 210px); }
+    .tb-file { order: 2; flex-basis: 100%; justify-content: flex-start; }
+    .tb-file-name { display: inline; flex: 1; max-width: none; }
+  }
+  @media screen and (max-width: 820px) {
+    body { padding: 0; }
+    .sheet, .sheet[data-navigation="collapsed"] { grid-template-columns: 56px minmax(0, 1fr); border-radius: 0; }
+    .sidebar-menu { padding-inline: 4px; }
+    .sheet[data-navigation="expanded"] .sidebar-menu { position: fixed; top: 0; left: 0; bottom: 0; width: 240px; max-height: 100dvh; z-index: 45; padding: 14px 10px; box-shadow: var(--shadow-lg); }
+    .titleblock { border-radius: 0; padding: 10px; }
+    .tb-main { flex-basis: 100%; }
+    .tb-ai-btn { margin-left: auto; }
+    .tb-main p { display: none; }
+    .tb-main h1 { font-size: 12px; }
+    .tb-file { gap: 5px; }
+    .tb-file-name { flex-basis: 100%; }
+    .tb-file-btn { padding: 5px 7px; font-size: 10px; }
+    .tb-ai-btn kbd { display: none; }
+    .workspace-section { padding: 12px; }
+    .results, .ld-results { padding-inline: 12px; }
+  }
+  @media print { .workspace-section { display: none !important; } }
+
+  /* One UI font for project entry, selectors, labels and actions, including table/modal controls. */
+  body :is(input, select, textarea, button, label) { font-family: var(--sans) !important; font-variant-numeric: tabular-nums; }
+  .project-pending { display: none; }
+  .results[data-inputs-pending="true"] > .project-pending,
+  .ld-results[data-inputs-pending="true"] > .project-pending { display: block; }
+  :is(.results, .ld-results)[data-inputs-pending="true"] > :is(.calc-panel, .focus-panel, .ld-page) { display: none !important; }
+  .project-pending-card { max-width: 620px; padding: 24px; margin: 12px auto; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); font: 13px/1.6 var(--sans); }
+  .project-pending-card h2 { margin: 8px 0; font-size: 18px; font-weight: 600; }
+  .project-pending-card p, .project-pending-card ul { color: var(--ink-soft); }
+  .project-pending-card li { margin: 4px 0; }
+  .right-panel .project-pending-card { padding: 12px; margin: 0; font-size: 11px; }
+  .right-panel .project-pending-card h2 { font-size: 14px; }
+  @media screen {
+    body[data-project-readiness="pending"] :is(.results, .ld-results) > :is(.calc-panel, .focus-panel, .ld-page):not(#setup-status) { display: none !important; }
+    body[data-project-readiness="pending"] :is(#opt-oneway, #opt-twoway) { display: none; }
+  }
+
+  /* Compact application chrome. Offsets follow the actual header height when it wraps. */
+  @media screen {
+    :root { --app-header-height: 40px; --app-section-height: 32px; scroll-padding-top: calc(var(--app-header-height) + var(--app-section-height)); }
+    .titleblock { position: sticky; top: 0; z-index: 40; padding: 5px 14px; gap: 8px; border-bottom-width: 2px; }
+    .tb-main h1 { font-size: 12px; line-height: 1.25; margin-bottom: 1px; }
+    .tb-main p { font-size: 9px; line-height: 1.25; }
+    .tb-file-btn { padding: 4px 8px; font-size: 10px; }
+    .tb-theme-btn { width: 28px; height: 26px; margin-right: 0; font-size: 13px; }
+    .tb-ai-btn { padding: 5px 9px; font-size: 10px; }
+    /* Reserve room for the footer so tall sticky rails do not slide under the header at the page end. */
+    .sidebar-menu { top: var(--app-header-height); max-height: calc(100vh - var(--app-header-height) - 72px); padding-top: 0; }
+    .nav-head { position: sticky; top: 0; z-index: 2; min-height: var(--app-section-height); padding: 3px 4px; background: var(--panel); border-bottom: 1px solid var(--line); }
+    .navigation-items { padding-top: 8px; }
+    .workspace-section { position: sticky; top: var(--app-header-height); z-index: 10; min-height: var(--app-section-height); padding: 4px 14px; }
+    .workspace-section h2 { font-size: 12px; }
+    .rp-inner { top: var(--app-header-height); max-height: calc(100vh - var(--app-header-height) - 72px); }
+    .rp-head { min-height: var(--app-section-height); padding-inline: 12px; }
+    .results, .ld-results { top: calc(var(--app-header-height) + var(--app-section-height)); max-height: calc(100vh - var(--app-header-height) - var(--app-section-height)); }
+  }
+  @media screen and (max-width: 820px) {
+    .results, .ld-results { position: static; max-height: none; }
+    .rp-inner { position: static; max-height: none; }
+  }

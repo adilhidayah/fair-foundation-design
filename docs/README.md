@@ -2,6 +2,7 @@
 
 | File | Isi | Kapan dibaca |
 |---|---|---|
+| [ANCHOR_SHEAR_AUDIT.md](ANCHOR_SHEAR_AUDIT.md) | Koreksi faktor grout, vektor hitungan dan keputusan pembagian geser yang masih diperlukan | Saat mereview geser anchor |
 | [SCOPE_AND_STRUCTURE.md](SCOPE_AND_STRUCTURE.md) | Batas cakupan pondasi, foldertree dan pemisahan tools struktur | Saat mencari lokasi proyek pondasi / baja |
 | [PROJECT_INSTRUCTIONS.md](PROJECT_INSTRUCTIONS.md) | Instruksi utama dari user: tujuan, struktur section, dependency, kategori equipment, UX journey, status & item terbuka | Sebelum mulai kerja |
 | [PROJECT_MAP.md](PROJECT_MAP.md) | Peta semua file: "mau ubah apa → buka file mana" | Saat mencari file |

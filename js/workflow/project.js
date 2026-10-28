@@ -9,7 +9,7 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, loadPointList, pileList, platformColumnList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261027merge1';
+import { boltList, comboState, designStandards, loadPointList, pileList, platformColumnList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261028s3';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
@@ -22,7 +22,7 @@ const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)
 // Inputs that are NOT stored by id: file pickers, buttons, and rows rebuilt from `lists` / load types (their values are in the
 // lists), plus the lcx-* Load Case boxes that only mirror the lc-* Load Values inputs.
 function skipInput(el) {
-  return !el.id || ['file', 'button', 'submit', 'reset'].includes(el.type) || el.id.startsWith('lcx-') ||
+  return !el.id || ['ab-focus-combo', 'ab-focus-mode', 'pd-focus-combo', 'fx-focus-combo'].includes(el.id) || ['file', 'button', 'submit', 'reset'].includes(el.type) || el.id.startsWith('lcx-') ||
     ['pile-input', 'bolt-input', 'combo-input', 'row-edit-input', 'skid-sup-input'].some((c) => el.classList.contains(c));
 }
 // Radio-style button groups (selectRadio / getRadioVal): the nearest ancestor with an id of each button[data-val].
@@ -53,6 +53,24 @@ export function collectProject() {
     project: ((document.getElementById('gen-proj') || {}).value || '').trim(),
     inputs, radios, lists, state: st
   };
+}
+
+// Keep application choices and code factors, remove project measurements and example layouts.
+export function emptyProjectData(template) {
+  const p=clone(template);
+  const criteria=/^(ab-phi-|ab-lambda$|fd-fs|fd-mincontact$|bc-FS$|rb-rhotop$)/;
+  Object.keys(p.inputs).forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||el.tagName==='SELECT'||criteria.test(id))return;
+    if(el.type==='checkbox'||el.type==='radio')return;
+    p.inputs[id]='';
+  });
+  p.inputs['fs-grout']=false;p.project='';
+  ['pileList','boltList','loadPointList','platformColumnList','skidSupportList'].forEach(k=>{p.lists[k]=[];});
+  p.state.windDirState=null;
+  Object.keys(p.state.seismicDirState||{}).forEach(k=>{p.state.seismicDirState[k]=0;});
+  p.state.rptLogo1='';p.state.rptLogo2='';
+  return p;
 }
 
 // Throws a readable error when `p` is not a FAIR project this version can read.

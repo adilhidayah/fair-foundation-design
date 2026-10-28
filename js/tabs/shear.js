@@ -1,14 +1,14 @@
 // Pile cap / shallow footing one-way and punching shear (tab 5B, report chapter 06, sections 6.1 and 6.2).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingOneWayShearPoints, footingPunchingCapacity, footingPunchingPoint, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck, pilePunchingCheck } from '../../lib/foundation/index.js?v=20261027merge1';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261027merge1';
-import { fmt } from '../core/format.js?v=20261027merge1';
-import { lastResults, pileList } from '../core/state.js?v=20261027merge1';
-import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261027merge1';
-import { pileComboLoads } from '../tabs/pile.js?v=20261027merge1';
-import { buildPedestalComboBase } from '../tabs/combos.js?v=20261027merge1';
-import { renderShearFocus } from '../tabs/shearFocus.js?v=20261027merge1';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261027merge1';
+import { eccentricPunchingStress, evaluatePileGroupCombo, footingOneWayShear, footingOneWayShearPoints, footingPunchingCapacity, footingPunchingPoint, footingPunchingShear, footingPunchingStress, oneWayPileShear, oneWayShearCheck, punchingPileShear, stdComboVector, twoWayShearCheck, pilePunchingCheck } from '../../lib/foundation/index.js?v=20261028s3';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028s3';
+import { fmt } from '../core/format.js?v=20261028s3';
+import { lastResults, pileList } from '../core/state.js?v=20261028s3';
+import { chapterHeader, comboLabel, efficiencyBadge, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028s3';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028s3';
+import { buildPedestalComboBase } from '../tabs/combos.js?v=20261028s3';
+import { renderShearFocus } from '../tabs/shearFocus.js?v=20261028s3';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028s3';
 
 // Geometry shared by the 5B Focus Canvas pictures (js/tabs/shearFocus.js): footing (m), pedestal centre / size (m), section depth.
 // Values only — read from the same fields the checks use; nothing here feeds a calculation.

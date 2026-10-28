@@ -50,6 +50,7 @@ MASTER CALCULATOR/
 | 4B — Pile Stability | [js/tabs/pile.js](../js/tabs/pile.js), diagram [pileDiagram.js](../js/diagrams/pileDiagram.js) | [shared/pileGroup.js](../lib/foundation/shared/pileGroup.js) (spasi/tepi, efisiensi, p-multiplier, biaksial + torsi); `pileComboLoads()` (pile.js) juga dipakai 5B; `evaluatePileCombo` (uniaksial lama) di [shared/stabilityCheck.js](../lib/foundation/shared/stabilityCheck.js) tidak lagi dipakai UI |
 | 5A — Pedestal (P-M) | [js/tabs/rebar.js](../js/tabs/rebar.js), diagram [pmDiagram.js](../js/diagrams/pmDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
 | 5B — Pile cap / footing shear + flexure | [js/tabs/shear.js](../js/tabs/shear.js), [js/tabs/rebar.js](../js/tabs/rebar.js), [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | [shared/footingCheck.js](../lib/foundation/shared/footingCheck.js), [shared/pileCapShear.js](../lib/foundation/shared/pileCapShear.js), [shared/footingDesign.js](../lib/foundation/shared/footingDesign.js) |
+| 5B — Flexure Focus Canvas | [js/tabs/flexureFocus.js](../js/tabs/flexureFocus.js), [js/diagrams/flexureFocusDiagram.js](../js/diagrams/flexureFocusDiagram.js) | Display existing reinforcement and design-section moments; no new calculation formulas |
 | 08 — Bearing Capacity | [js/tabs/bearing.js](../js/tabs/bearing.js) | [shared/bearingCapacity.js](../lib/foundation/shared/bearingCapacity.js) |
 | 08B — Settlement (footing: elastis + konsolidasi; pile: Vesic) | [js/tabs/settlement.js](../js/tabs/settlement.js) | [shared/settlementCheck.js](../lib/foundation/shared/settlementCheck.js), [shared/pileSettlement.js](../lib/foundation/shared/pileSettlement.js), [shared/soilProperties.js](../lib/foundation/shared/soilProperties.js) |
 | 09 — Anchor Bolt | [js/tabs/anchor.js](../js/tabs/anchor.js), diagram [anchorDiagram.js](../js/diagrams/anchorDiagram.js) | [shared/pedestalCheck.js](../lib/foundation/shared/pedestalCheck.js) |
@@ -94,11 +95,16 @@ MASTER CALCULATOR/
 | [js/tabs/foundation.js](../js/tabs/foundation.js) | 18 KB | 4A — `calcFoundation()` |
 | [js/tabs/pile.js](../js/tabs/pile.js) | 10 KB | 4B — tabel tiang + `calcPile()` |
 | [js/tabs/rebar.js](../js/tabs/rebar.js) | 10 KB | 5A/5B — `calcRebar()` |
+| [js/tabs/pedestalFocus.js](../js/tabs/pedestalFocus.js), [js/diagrams/pedestalFocusDiagram.js](../js/diagrams/pedestalFocusDiagram.js) | — | 5A — Focus Canvas penampang / elevasi / isometrik / P–M, pilihan kombinasi LRFD, jarak tulangan dan pedestal penentu; data hitungan existing |
 | [js/tabs/shear.js](../js/tabs/shear.js) | 10 KB | 5B — `calcOneWay()`, `calcTwoWay()` |
 | [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | 5 KB | 5B shallow — `footingLrfdActions()` (beban LRFD di dasar footing + bidang tekanan tanah per kombinasi), `soilPressureHtml()` |
 | [js/tabs/bearing.js](../js/tabs/bearing.js) | 6 KB | 08 — `calcBearing()` |
 | [js/tabs/settlement.js](../js/tabs/settlement.js) | 6 KB | 08B — `calcSettlement()` |
+| [js/tabs/settlementFocus.js](../js/tabs/settlementFocus.js), [js/diagrams/settlementDiagram.js](../js/diagrams/settlementDiagram.js) | — | 08B — Focus Canvas + SVG laporan: sebelum/sesudah, komponen settlement, batas izin; memakai hasil hitungan existing |
 | [js/tabs/anchor.js](../js/tabs/anchor.js) | 8 KB | 09 — tabel bolt + `calcAnchor()` |
+| [js/tabs/anchorFocus.js](../js/tabs/anchorFocus.js), [js/diagrams/anchorFocusDiagram.js](../js/diagrams/anchorFocusDiagram.js) | — | 09 — Focus Canvas: denah gaya tarik angkur, pilihan kombinasi LRFD, rasio tiap cek, envelope pedestal penentu; hasil dari kalkulasi existing |
+| [js/tabs/anchorViewport.js](../js/tabs/anchorViewport.js), [js/diagrams/anchorGeometryDiagram.js](../js/diagrams/anchorGeometryDiagram.js) | — | 09 — viewport seperti Section 02: Plan / Elevation / Isometric 2.5D / Failure Modes, satu gambar besar + inspector; geometri terbatas zona embedment |
+| [js/tabs/anchorModes.js](../js/tabs/anchorModes.js), [js/diagrams/anchorFailureDiagram.js](../js/diagrams/anchorFailureDiagram.js) | — | 09 — pemilih satu mekanisme keruntuhan dalam viewport, pasal ACI, demand / kapasitas desain / UC dari `modeDetails`; bukan gambar detail pelaksanaan |
 | [js/ocr/tesseract.js](../js/ocr/tesseract.js) | 1 KB | Loader Tesseract (diunduh saat OCR diklik) |
 | [js/ocr/review.js](../js/ocr/review.js) | 9 KB | Tabel review hasil OCR / paste |
 | [js/report/summary.js](../js/report/summary.js) | 2 KB | Tab Summary Report |
