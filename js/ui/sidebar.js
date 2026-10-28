@@ -1,4 +1,4 @@
-// Collapsible input panel (the left ".inputs" / ".ld-inputs" column of every tab).
+// Independent calculation navigation and collapsible input/status panels.
 // Declarations only — injection at startup and event wiring live in app.js.
 // Two states on ".layout-wrapper[data-sidebar]": expanded (full input panel) and collapsed (hidden; the preview takes the
 // full width, "▶ Inputs" in the preview bar brings it back). The preference is kept per browser. (The former "compact" code
@@ -7,6 +7,24 @@ import { escapeHtml } from '../core/dom.js?v=20261028f2';
 
 export const SIDEBAR_KEY = 'fair_fdn_sidebar_state';
 export const SIDEBAR_STATES = ['expanded', 'collapsed'];
+const NAVIGATION_KEY = 'fair_fdn_navigation_state';
+export function getSavedNavigationState() {
+  try {
+    const saved = localStorage.getItem(NAVIGATION_KEY);
+    if (['expanded', 'collapsed'].includes(saved)) return saved;
+  } catch (e) {}
+  return matchMedia('(max-width: 1200px)').matches ? 'collapsed' : 'expanded';
+}
+export function setNavigationState(value, persist = true) {
+  const next = value === 'collapsed' ? 'collapsed' : 'expanded';
+  document.querySelector('.sheet').dataset.navigation = next;
+  const button = document.getElementById('navigation-toggle');
+  const label = next === 'collapsed' ? 'Expand navigation' : 'Collapse navigation';
+  button.textContent = next === 'collapsed' ? '›' : '‹';
+  button.setAttribute('aria-expanded', String(next === 'expanded'));
+  button.setAttribute('aria-label', label); button.title = label;
+  if (persist) { try { localStorage.setItem(NAVIGATION_KEY, next); } catch (e) {} }
+}
 const INPUT_COLUMNS = '.body-grid > .inputs, .ld-grid > .ld-inputs';
 
 export function getSavedSidebarState() {
@@ -44,11 +62,23 @@ export function injectSectionNavs() {
 }
 // "GENERAL INPUT DATA" -> "General Input Data" (keeps short all-caps tokens like 4A / 08B as they are).
 const titleCase = (t) => t.toLowerCase().replace(/(^|[\s(\/-])([a-z])/g, (m, p, c) => p + c.toUpperCase());
-// The Previous / Next bar mirrors the visible ribbon tabs (4A / 4B follow the Support
-// selection), in ribbon order.
+// The Previous / Next bar mirrors the visible section buttons (4A / 4B follow Support),
+// in navigation order.
 export function syncSidebarRails() {
   const tabs = [...document.querySelectorAll('.sidebar-menu .tab')].filter((t) => t.style.display !== 'none');
   const i = tabs.findIndex((t) => t.classList.contains('active'));
+  document.querySelectorAll('.sidebar-menu .tab').forEach(t => {
+    const label = (t.querySelector('.tab-label')?.textContent || '').trim();
+    const code = (t.querySelector('.tab-code')?.textContent || '').trim();
+    t.title = code + ' — ' + titleCase(label);
+    t.setAttribute('aria-label', t.title);
+    if (t.classList.contains('active')) t.setAttribute('aria-current', 'step');
+    else t.removeAttribute('aria-current');
+  });
+  if (tabs[i]) {
+    document.getElementById('workspace-section-code').textContent = tabs[i].querySelector('.tab-code').textContent;
+    document.getElementById('workspace-section-title').textContent = titleCase(tabs[i].querySelector('.tab-label').textContent);
+  }
   const navBtn = (t, dir) => {
     if (!t) return '<span class="sn-spacer"></span>';
     const code = (t.querySelector('.tab-code')?.textContent || '').trim();

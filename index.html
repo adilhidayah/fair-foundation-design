@@ -8,12 +8,12 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261028f2">
+<link rel="stylesheet" href="css/app.css?v=20261028n2">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
 <body>
-<div class="sheet">
+<div class="sheet" data-navigation="expanded">
   <div class="titleblock">
     <div class="tb-main">
       <h1>FAIR FOUNDATION DESIGN</h1>
@@ -26,27 +26,32 @@
       <button type="button" class="tb-file-btn" id="project-open" title="Open a project file (Ctrl+O)">Open</button>
       <button type="button" class="tb-file-btn" id="project-save" title="Save (Ctrl+S)">Save</button>
       <button type="button" class="tb-file-btn" id="project-saveas" title="Save As (Ctrl+Shift+S)">Save As</button>
+      <button type="button" class="tb-file-btn" id="project-export" title="Export calculation report (HTML)">Export report</button>
     </div>
     <button type="button" class="tb-theme-btn" id="theme-toggle" title="Switch to dark theme" aria-label="Switch to dark theme">☾</button>
     <button type="button" class="tb-ai-btn" id="ai-assistant-toggle" aria-expanded="false" aria-controls="right-panel" title="Open AI Assistant (Ctrl+J)">✦ AI Assistant <kbd>Ctrl+J</kbd></button>
   </div>
-  <div class="sidebar-menu">
-      <div class="tab active" data-tab="setup"><span class="tab-code">00</span><span class="tab-label">EQUIPMENT SETUP</span></div>
-      <div class="tab" data-tab="general"><span class="tab-code">01</span><span class="tab-label">GENERAL INPUT DATA</span></div>
-      <div class="tab" data-tab="foundsize"><span class="tab-code">02</span><span class="tab-label">FOUNDATION DIMENSION</span></div>
-      <div class="tab" data-tab="loadingdata"><span class="tab-code">03</span><span class="tab-label">LOADING DATA</span></div>
-      <div class="tab" data-tab="foundation"><span class="tab-code">4A</span><span class="tab-label">FOUNDATION STABILITY</span></div>
-      <div class="tab" data-tab="pile"><span class="tab-code">4B</span><span class="tab-label">PILE FOUNDATION STABILITY</span></div>
-      <span class="tab-group-label" title="05 — Structural Design">05 STRUCTURAL DESIGN</span>
-      <div class="tab" data-tab="pedcheck"><span class="tab-code">5A</span><span class="tab-label">PEDESTAL CHECK</span></div>
-      <div class="tab" data-tab="capcheck"><span class="tab-code">5B</span><span class="tab-label" id="capcheck-tab-label">PILE CAP CHECK</span></div>
-      <div class="tab" data-tab="bearing"><span class="tab-code">08</span><span class="tab-label">BEARING CAPACITY (SOIL)</span></div>
-      <div class="tab" data-tab="settlement"><span class="tab-code">08B</span><span class="tab-label" id="settlement-tab-label">SETTLEMENT (SOIL)</span></div>
-      <div class="tab" data-tab="anchor"><span class="tab-code">09</span><span class="tab-label">ANCHOR BOLT DESIGN</span></div>
-      <div class="tab" data-tab="summary"><span class="tab-code">11</span><span class="tab-label">SUMMARY REPORT</span></div>
-  </div>
+  <nav class="sidebar-menu" id="section-navigation" aria-label="Calculation sections">
+    <div class="nav-head"><span class="nav-heading">CALCULATION</span><button type="button" id="navigation-toggle" aria-expanded="true" aria-controls="navigation-items" aria-label="Collapse navigation" title="Collapse navigation">‹</button></div>
+    <div id="navigation-items" class="navigation-items">
+      <button type="button" class="tab active" data-tab="setup"><span class="tab-code">00</span><span class="tab-label">EQUIPMENT SETUP</span></button>
+      <button type="button" class="tab" data-tab="general"><span class="tab-code">01</span><span class="tab-label">GENERAL INPUT DATA</span></button>
+      <button type="button" class="tab" data-tab="foundsize"><span class="tab-code">02</span><span class="tab-label">FOUNDATION DIMENSION</span></button>
+      <button type="button" class="tab" data-tab="loadingdata"><span class="tab-code">03</span><span class="tab-label">LOADING DATA</span></button>
+      <button type="button" class="tab" data-tab="foundation"><span class="tab-code">4A</span><span class="tab-label">FOUNDATION STABILITY</span></button>
+      <button type="button" class="tab" data-tab="pile"><span class="tab-code">4B</span><span class="tab-label">PILE FOUNDATION STABILITY</span></button>
+      <span class="tab-group-label" title="05 — Structural Design"><span class="nav-group-code">05</span><span class="nav-group-name">STRUCTURAL DESIGN</span></span>
+      <button type="button" class="tab" data-tab="pedcheck"><span class="tab-code">5A</span><span class="tab-label">PEDESTAL CHECK</span></button>
+      <button type="button" class="tab" data-tab="capcheck"><span class="tab-code">5B</span><span class="tab-label" id="capcheck-tab-label">PILE CAP CHECK</span></button>
+      <button type="button" class="tab" data-tab="bearing"><span class="tab-code">08</span><span class="tab-label">BEARING CAPACITY (SOIL)</span></button>
+      <button type="button" class="tab" data-tab="settlement"><span class="tab-code">08B</span><span class="tab-label" id="settlement-tab-label">SETTLEMENT (SOIL)</span></button>
+      <button type="button" class="tab" data-tab="anchor"><span class="tab-code">09</span><span class="tab-label">ANCHOR BOLT DESIGN</span></button>
+      <button type="button" class="tab" data-tab="summary"><span class="tab-code">11</span><span class="tab-label">SUMMARY REPORT</span></button>
+    </div>
+  </nav>
   <div class="layout-wrapper" data-sidebar="expanded">
     <div class="main-content">
+      <div class="workspace-section" aria-live="polite"><span id="workspace-section-code">00</span><h2 id="workspace-section-title">Equipment Setup</h2></div>
       <!-- EQUIPMENT SETUP INPUTS (UX Journey §9.1 — visual cards + dynamic adaptation) -->
       <div id="in-setup" style="display:block;">
         <div class="body-grid">
@@ -1989,6 +1994,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261028f2"></script>
+<script type="module" src="js/app.js?v=20261028n2"></script>
 </body>
 </html>

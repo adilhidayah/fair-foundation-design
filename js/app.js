@@ -30,11 +30,11 @@ import { setPedestalFocusView, selectPedestalFocusCombo } from './tabs/pedestalF
 import { setFlexureView, selectFlexureCase, selectFlexureCombo } from './tabs/flexureFocus.js?v=20261028f2';
 import { calcOneWay, calcTwoWay } from './tabs/shear.js?v=20261028f2';
 import { calcPlatformCap, parsePlatformColumns } from './tabs/platformCap.js?v=20261028f2';
-import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261028f2';
+import { setAssistantOpen, setRightPanelView, updateAssistantContext } from './workflow/assistant.js?v=20261028n2';
 import { calcBearingAndFoundation, calcFoundationAndGeneral, recalcAll } from './workflow/recalc.js?v=20261028f2';
 import { resolveCheckTab, sync5BSources, syncLoadPointBox, syncPedestalTab, toggleLoadInputMode, updateEquipmentSetup, updateFoundationTabVisibility } from './workflow/setup.js?v=20261028f2';
 import { recalcAllWorkflow, renderLiveBar, renderWorkflowLive, scheduleWorkflowLive, switchWorkflowTab } from './workflow/status.js?v=20261028f2';
-import { getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261028f2';
+import { getSavedNavigationState, setNavigationState, getSavedRightPanelState, getSavedSidebarState, injectSectionNavs, injectSidebarRails, setRightPanelState, setSidebarState, shrinkSidebar, syncSidebarRails } from './ui/sidebar.js?v=20261028n2';
 import { getSavedViewMode, injectViewSwitchers, setViewMode } from './ui/viewMode.js?v=20261028f2';
 import { syncThemeButton, toggleTheme } from './ui/theme.js?v=20261028f2';
 import { setCadView } from './tabs/foundSizeFocus.js?v=20261028f2';
@@ -722,6 +722,10 @@ document.getElementById('summary-print').addEventListener('click', () => window.
 ['std', 'anl'].forEach((w) => document.getElementById('sti-' + w).addEventListener('change', (e) => { readStaadImportFile(w, e.target.files[0]); }));
 document.getElementById('sti-import').addEventListener('click', () => { applyStaadImport(); });
 document.getElementById('summary-export').addEventListener('click', () => { exportReportHtml().catch((e) => console.error('exportReportHtml:', e)); });
+document.getElementById('project-export').addEventListener('click', () => {
+  switchWorkflowTab('summary');
+  exportReportHtml().catch((e) => console.error('exportReportHtml:', e));
+});
 // wire up radios
 selectRadio('ow-lambda', calcOneWay);
 selectRadio('ow-method', calcOneWay);
@@ -977,6 +981,19 @@ injectSectionNavs(); // sticky Previous / Next section bar at the bottom of the 
 injectViewSwitchers();
 setSidebarState(getSavedSidebarState(), false);
 setRightPanelState(getSavedRightPanelState(), false);
+setNavigationState(getSavedNavigationState(), false);
+document.getElementById('navigation-toggle').addEventListener('click', () => {
+  setNavigationState(document.querySelector('.sheet').dataset.navigation === 'collapsed' ? 'expanded' : 'collapsed');
+});
+document.querySelectorAll('.sidebar-menu .tab').forEach(t => t.addEventListener('click', () => {
+  if (matchMedia('(max-width: 820px)').matches) setNavigationState('collapsed', false);
+}));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.querySelector('.sidebar-menu').contains(document.activeElement)) {
+    setNavigationState('collapsed', false);
+    document.getElementById('navigation-toggle').focus();
+  }
+});
 setViewMode(getSavedViewMode(), false);
 document.addEventListener('click', (e) => {
   const t = e.target.closest && e.target.closest('[data-sidebar-set], [data-sidebar-step], [data-go-tab], [data-rp-set], .view-switcher-bar [data-mode]');
