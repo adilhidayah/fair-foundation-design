@@ -1,4 +1,76 @@
-# HANDOFF — FAIR Foundation Design (per 16 Okt 2026)
+# HANDOFF — FAIR Foundation Design (28 Oktober 2026)
+
+## Status terkini — baca bagian ini terlebih dahulu
+
+User berbahasa Indonesia, civil/structural engineer, bukan programmer. Keputusan terakhir: **hentikan perapian visual sementara; prioritaskan kelengkapan dan ketepatan fitur anchor ACI**. Perbaikan visual berikutnya hanya bila mengganggu penggunaan atau diminta user.
+
+### Lokasi dan Git
+
+- Folder utama: `E:\KERJA\_FAIR-WORKSPACE\MASTER CALCULATOR`.
+- Salinan kerja chat ini: `C:\Users\M S I\.codex\worktrees\merge-local-github\MASTER CALCULATOR`.
+- Folder utama dulu berada di `E:\KERJA\TOOLS\MASTER CALCULATOR`; sudah dipindahkan. Pointer `.git` salinan kerja telah diperbaiki ke lokasi baru.
+- Branch salinan kerja: `codex/merge-local-github`. Folder utama memakai `codex/unified-local-github` dan telah di-fast-forward ke kode yang sama.
+- Commit kode terakhir: **`b663268`**, `Require explicit ACI anchor shear sharing and align steel ties and pryout`.
+- Semua perubahan aplikasi sudah disimpan dan disinkronkan lokal. **Belum di-push ke GitHub / dipublikasikan.** Jangan mengganti checkout ke `origin/main` atau menimpa perubahan lokal berdasarkan catatan arsip di bawah.
+- Perubahan user yang harus dipertahankan di folder utama: `AGENTS.md`, `docs/SCOPE_AND_STRUCTURE.md`, dan untracked `repo-comparison-2026-10-27.md`. Salinan kerja C bersih sebelum pembaruan catatan handoff ini.
+- Web lokal terakhir: `http://127.0.0.1:8872/?v=20261028s3`, dilayani dari folder utama oleh Python tersembunyi. Jika tidak berjalan, jalankan dev server dari folder utama. Server uji port 8874 sudah dihentikan.
+
+### Anchor ACI — perubahan yang sudah selesai
+
+Catatan rinci dan vektor hitungan: [ANCHOR_SHEAR_AUDIT.md](ANCHOR_SHEAR_AUDIT.md).
+
+1. User secara eksplisit memilih **jumlah angkur penahan geser wajib dipilih per proyek, tanpa nilai bawaan**.
+2. API `anchorGroupCheck` menerima `shearAnchors: 2 | 4`. Pilihan 4 wajib disertai string `shearBasis`, rujukan detail penyaluran gaya. Teks rujukan bukan verifikasi otomatis atas detail.
+3. Demand baja = V/2 atau V/4 sesuai pilihan (§17.7.1.1). Faktor grout 0,80 (§17.7.1.2.1) tetap hanya pada kapasitas baja geser.
+4. Sengkang mengikuti pilihan yang sama: 2 → Case 2, 4 → Case 1. `ab-tie-case` diturunkan otomatis dan disabled. Library menolak Case lama yang bertentangan.
+5. Pryout (§17.7.3.1) memakai proyeksi dan hef efektif dari angkur yang menerima geser: dua di baris depan pada arah dominan atau keempat angkur. Sebelumnya selalu memakai empat.
+6. Breakout geser beton tetap diperiksa dengan seluruh V pada permukaan baris depan sebagai batas konservatif. Hairpin geser tetap memikul seluruh V melalui dua angkur depan, tanpa bonus kapasitas karena pilihan empat angkur.
+7. Tanpa gaya tarik, breakout tarik ditandai **NOT REQUIRED**; tidak lagi menghasilkan 0/0. Tidak ada kapasitas fiktif yang ditambahkan.
+8. Pilihan kosong/tidak valid, rujukan empat angkur kosong, atau Case bertentangan tidak boleh PASS. Proyek lama perlu dipilih ulang; tidak ada migrasi diam-diam ke empat angkur.
+9. Proyek baru memakai metode **ACI 17 group**. Metode single-anchor masih tersedia dan diberi label simplified.
+10. CLI JSON: `pedestal.anchor.shearAnchors` / `shearBasis`. `.fnd`: `ANCHOR SHARING 2` atau `ANCHOR SHARING 4 Drawing S-101 detail ...`. Contoh `.fnd` telah menyatakan pilihan dua secara eksplisit.
+
+File utama: `lib/foundation/shared/anchorGroup.js`, `js/tabs/anchor.js`, `js/tabs/anchorFocus.js`, `js/workflow/projectReadiness.js`, `tools/staad-stability.mjs`, `lib/foundation/import/fndCommands.js`, dan markup Tab 09 di `index.html`.
+
+### Verifikasi terakhir
+
+- **48 skrip validasi lulus**; **153 modul lulus pemeriksaan sintaks**.
+- `validation_shared_part48.mjs`: **36 pemeriksaan baru**, termasuk hand-vector V=133,7 kN, konsistensi baja/sengkang, grout, pryout dua/empat dan arah x/z, tiga tepi dekat, pilihan wajib, parser `.fnd`, dan integrasi CLI.
+- Vektor lama di part19/38/39/45/46/47 kini menyatakan asumsi empat angkur secara eksplisit; vektor Case 2 menyatakan dua. Part47 menguji NOT REQUIRED ketika tidak ada tarik.
+- Browser: tanpa pilihan → PENDING; empat tanpa rujukan → PENDING; dua/empat dengan data lengkap → hasil tampil, Case terkunci sesuai pilihan. Pada LC201 contoh, demand per angkur 93,59 / 46,79 kN. Kasus tanpa tarik menampilkan NOT REQUIRED, sementara kegagalan geser tetap FAIL. Tidak ada error console.
+- Screenshot contoh uji: `C:\Users\M S I\.codex\visualizations\2026\10\27\01a17e07-35cc-79b3-8da4-7955c528e4b5\anchor-aci-sharing.png`. Itu data uji, bukan proyek user.
+
+### Yang masih perlu dikembangkan / diperiksa
+
+- **Torsi base plate** belum dicakup oleh model anchor grup saat ini.
+- **Breakout untuk geser miring pada dua tepi / sudut** belum diperiksa penuh; model masih memakai arah geser dominan.
+- Model grup hanya empat cast-in headed anchors dalam persegi panjang, base plate kaku, beton retak. Bearing base plate / tekan grout dan kelengkapan detail penyaluran gaya belum dicakup.
+- Penyelesaian di atas menutup inkonsistensi sharing yang tertunda; **jangan menyatakan seluruh Chapter 17 sudah lengkap atau tersertifikasi**.
+- Untuk langkah berikutnya, kaji dan usulkan lingkup torsi / geser dua arah terlebih dahulu. Ikuti AGENTS: bila ada pilihan metode engineering baru, tanyakan kepada user, jangan menetapkan asumsi diam-diam.
+
+### Perubahan aplikasi lain yang sudah selesai
+
+- Focus Canvas Section 02-style untuk settlement, anchor (termasuk failure modes), pedestal 5A, dan lentur 5B (plan / section / isometric / design-section moments). Grafik momen 5B adalah nilai penampang yang sudah dihitung, bukan medan momen kontinu.
+- Navigasi di kiri, bisa dilipat; 5A/5B dikelompokkan di Desain Struktur. Bar biru sekitar 40 px dan putih 32 px, tetap terlihat saat scroll; ResizeObserver di `app.js` menyesuaikan offset header bila terbungkus pada layar kecil.
+- Font kontrol UI IBM Plex Sans. Proyek baru dan startup **kosong**: tidak ada contoh dimensi/material/beban/layout tiang/angkur. Standar, metode, dan faktor code tetap tersedia.
+- `projectReadiness.js` menjaga isian kosong agar hasil, status dan laporan menunggu data; jangan melewati gate ini untuk memaksa PASS. Ada tindakan eksplisit untuk mengisi komponen beban kosong dengan 0.
+- Commit terkait: `0b88776` (5B flexure), `cd4747a` (navigasi kiri), `8ac713e` (proyek kosong/font), `b94d9b2` (header tipis/freeze), `b663268` (anchor sharing).
+
+### Aturan kerja penting
+
+- Sebelum coding baca `AGENTS.md`, `docs/PROJECT_INSTRUCTIONS.md`, `lib/foundation/index.js`; UI juga `js/README.md`.
+- Tanpa framework/bundler baru. Rumus deterministik dan pure di `lib/`; UI impor melalui index library.
+- Cache-buster sekarang **`20261028s3`**. Pertahankan versi impor yang seragam, khususnya state bersama, agar tidak terbentuk dua instance state.
+- Node 22+; gunakan parser repo untuk ESM, bukan `node --check`.
+- Re-run semua `validation_*.mjs` untuk perubahan rumus; beri acuan pasal dan hand-vector. Perubahan UI saja cukup pemeriksaan yang sesuai.
+- Line ending campuran: pertahankan format, gunakan patch kecil. Untuk diff check: `git -c core.whitespace=cr-at-eol diff --check`.
+- Repo hanya pondasi dan pendukungnya; sambungan baja / pemodelan STAAD berada di FAIR Structural Tools terpisah. Jangan menambahkan kembali `lib/steel/` atau `tools/staad/`.
+
+---
+
+## Arsip handoff 16 Oktober 2026 — bukan status terkini
+
+Bagian berikut dipertahankan untuk riwayat. Nomor commit, lokasi, hasil validasi, asumsi default, dan daftar keterbatasannya mungkin sudah berubah; gunakan status 28 Oktober di atas dan sumber aktual sebagai acuan.
 
 ## Status repo
 - `main` = `b9bdd4f` (merge PR #15, hairpin + Tab 09 ACI 17 group). Semua PR sebelumnya (#4 Focus Canvas, #5 font + lag, #6 pile settlement / load points / pile punching, … #14, #15) sudah merged.
