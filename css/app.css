@@ -2066,8 +2066,6 @@
   .ab-select { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .ab-select label { font-size: 12px; font-weight: 600; }
   .ab-select select { flex: 1 1 220px; min-width: 0; max-width: 100%; padding: 6px 8px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-sm); }
-  .ab-layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 350px), 1fr)); gap: 14px; align-items: start; }
-  .ab-layout > .fz-card { min-width: 0; }
   .ab-plan { width: 100%; height: auto; border: none; background: transparent; margin: 6px auto; }
   .ab-check-list { display: grid; gap: 16px; margin: 16px 0; }
   .ab-check-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 7px; }
@@ -2081,7 +2079,6 @@
   .ab-limit { font-size: 12px; line-height: 1.7; border-left: 3px solid var(--caution); }
 
   /* Anchor mechanism cards: concept sketches, not calculated failure geometry. */
-  .af-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 275px), 1fr)); gap: 14px; margin-top: 16px; }
   .af-mode { border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; min-width: 0; }
   .af-mode header { display: flex; align-items: start; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
   .af-mode h3 { margin: 0 0 5px; font-size: 13px; color: var(--ink); }
@@ -2097,3 +2094,19 @@
   .af-mode dd { margin: 0; font-family: var(--mono); font-weight: 600; }
   .af-mode dt { color: var(--ink-soft); }
   .af-inactive { font-size: 12px; color: var(--ink-soft); padding: 12px 0; }
+
+  /* 09 uses the same single CAD viewport pattern as Section 02. */
+  .av-scene { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 16px; align-items: start; }
+  .av-stage { min-width: 0; padding: 12px; }
+  .av-stage .fdn-diagram, .av-stage .af-diagram { display: block; width: 100%; max-width: 740px; max-height: 52vh; height: auto; margin: 0 auto; border: none; background: transparent; }
+  .av-stage .af-diagram { max-width: 600px; }
+  .av-inspector { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); }
+  .av-inspector dl { margin: 12px 0; font-size: 12px; }
+  .av-inspector dl > div { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .av-inspector dd { margin: 0; font: 600 11px var(--mono); text-align: right; }
+  .av-inspector dt { color: var(--ink-soft); }
+  .av-caption { padding: 8px; color: var(--ink-soft); text-align: center; font-size: 11px; }
+  .av-mode-select { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 10px 0 14px; font-size: 12px; }
+  .av-mode-select select { flex: 1; min-width: min(100%, 240px); color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 7px; border-radius: var(--radius-sm); }
+  @container (max-width: 750px) { .av-scene { grid-template-columns: minmax(0, 1fr); } }
+  .av-viewport { container-type: inline-size; }

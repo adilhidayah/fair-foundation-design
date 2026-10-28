@@ -1,6 +1,6 @@
 // Display-only plan of existing anchor forces. Geometry mm; tension kN.
-import { escapeHtml } from '../core/dom.js?v=20261028m2';
-import { fmt } from '../core/format.js?v=20261028m2';
+import { escapeHtml } from '../core/dom.js?v=20261028c4';
+import { fmt } from '../core/format.js?v=20261028c4';
 
 export function anchorFocusDiagramSVG(forces, Bp, Lp) {
   if (!forces?.length || ![Bp, Lp].every(n => Number.isFinite(n) && n > 0) || forces.some(f => ![f.x, f.y, f.tension].every(Number.isFinite))) return '<div class="fz-note">Plan unavailable: non-finite geometry or forces.</div>';

@@ -2,9 +2,9 @@
 // lib/foundation/report/reportDocument.js), with a Print / Save as PDF button on top. Declarations only — wiring is in app.js.
 // The Summary panel (#calc-summary) is the report the user sees in Report Preview: its HTML is taken as is (full tables), and the SVG diagrams,
 // which are styled by the app's stylesheet, get their computed style written into the elements so they look the same outside the app.
-import { buildReportDocument } from '../../lib/foundation/index.js?v=20261028m2';
-import { state } from '../core/state.js?v=20261028m2';
-import { generateReport } from '../report/builder.js?v=20261028m2';
+import { buildReportDocument } from '../../lib/foundation/index.js?v=20261028c4';
+import { state } from '../core/state.js?v=20261028c4';
+import { generateReport } from '../report/builder.js?v=20261028c4';
 
 const SVG_PROPS = ['fill', 'stroke', 'stroke-width', 'stroke-dasharray', 'stroke-linecap', 'stroke-linejoin', 'fill-opacity', 'stroke-opacity', 'opacity',
   'font-family', 'font-size', 'font-weight', 'text-anchor', 'dominant-baseline', 'paint-order', 'letter-spacing'];
