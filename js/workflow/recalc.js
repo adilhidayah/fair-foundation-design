@@ -1,18 +1,18 @@
 // Recalculate-everything entry points.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { calcAnchor } from '../tabs/anchor.js?v=20261028p3';
-import { calcBearing } from '../tabs/bearing.js?v=20261028p3';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261028p3';
-import { calcFoundation } from '../tabs/foundation.js?v=20261028p3';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261028p3';
-import { renderLoadSummary } from '../tabs/loading.js?v=20261028p3';
-import { calcPile } from '../tabs/pile.js?v=20261028p3';
-import { calcSettlement } from '../tabs/settlement.js?v=20261028p3';
-import { calcRebar } from '../tabs/rebar.js?v=20261028p3';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261028p3';
-import { calcPlatformCap } from '../tabs/platformCap.js?v=20261028p3';
-import { renderWorkflowLive } from '../workflow/status.js?v=20261028p3';
-import { state } from '../core/state.js?v=20261028p3';
+import { calcAnchor } from '../tabs/anchor.js?v=20261028f2';
+import { calcBearing } from '../tabs/bearing.js?v=20261028f2';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261028f2';
+import { calcFoundation } from '../tabs/foundation.js?v=20261028f2';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261028f2';
+import { renderLoadSummary } from '../tabs/loading.js?v=20261028f2';
+import { calcPile } from '../tabs/pile.js?v=20261028f2';
+import { calcSettlement } from '../tabs/settlement.js?v=20261028f2';
+import { calcRebar } from '../tabs/rebar.js?v=20261028f2';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261028f2';
+import { calcPlatformCap } from '../tabs/platformCap.js?v=20261028f2';
+import { renderWorkflowLive } from '../workflow/status.js?v=20261028f2';
+import { state } from '../core/state.js?v=20261028f2';
 
 // With a STAAD import (hundreds of load combinations) one full recalculation takes 0.5-1 s, so doing it on every keystroke
 // froze the page. Above LARGE_LC load types the call is debounced (one recalculation after the user pauses); code that

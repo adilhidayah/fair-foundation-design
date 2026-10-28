@@ -1,5 +1,5 @@
 // Conceptual failure mechanisms, not a scaled breakout surface or construction detail.
-import { escapeHtml } from '../core/dom.js?v=20261028p3';
+import { escapeHtml } from '../core/dom.js?v=20261028f2';
 
 export function anchorFailureDiagramSVG(key, label) {
   const concrete = '<rect x="40" y="68" width="240" height="100" fill="var(--bg-subtle)" stroke="var(--line)" stroke-width="1.5"/>';

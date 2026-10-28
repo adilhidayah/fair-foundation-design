@@ -1,6 +1,6 @@
 // Settlement diagrams: presentation of existing results only, no geotechnical calculation.
-import { escapeHtml } from '../core/dom.js?v=20261028p3';
-import { fmt } from '../core/format.js?v=20261028p3';
+import { escapeHtml } from '../core/dom.js?v=20261028f2';
+import { fmt } from '../core/format.js?v=20261028f2';
 
 const value = (n, digits = 2) => fmt(n, digits);
 const text = (x, y, s, extra = '') => `<text x="${x}" y="${y}" ${extra}>${escapeHtml(s)}</text>`;

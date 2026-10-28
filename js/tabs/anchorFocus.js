@@ -1,10 +1,10 @@
 // 09: presentation of anchor calculation snapshots. No design calculations here.
-import { escapeHtml } from '../core/dom.js?v=20261028p3';
-import { fmt } from '../core/format.js?v=20261028p3';
-import { lastResults, state } from '../core/state.js?v=20261028p3';
-import { comboLabel } from '../core/worksheet.js?v=20261028p3';
-import { ANCHOR_VIEWS, anchorViewportHTML } from './anchorViewport.js?v=20261028p3';
-import { anchorModeList } from './anchorModes.js?v=20261028p3';
+import { escapeHtml } from '../core/dom.js?v=20261028f2';
+import { fmt } from '../core/format.js?v=20261028f2';
+import { lastResults, state } from '../core/state.js?v=20261028f2';
+import { comboLabel } from '../core/worksheet.js?v=20261028f2';
+import { ANCHOR_VIEWS, anchorViewportHTML } from './anchorViewport.js?v=20261028f2';
+import { anchorModeList } from './anchorModes.js?v=20261028f2';
 
 const ucText = n => Number.isFinite(n) ? fmt(n, 3) : n === Infinity ? '∞' : '—';
 const tag = (uc, valid = true) => `<span class="fz-tag ${valid && uc <= 1 ? 'ok' : 'bad'}">${valid ? `UC ${ucText(uc)} · ${uc <= 1 ? 'PASS' : 'FAIL'}` : 'ERROR'}</span>`;

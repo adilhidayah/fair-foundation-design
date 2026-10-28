@@ -9,7 +9,7 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, loadPointList, pileList, platformColumnList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261028p3';
+import { boltList, comboState, designStandards, loadPointList, pileList, platformColumnList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261028f2';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
@@ -22,7 +22,7 @@ const clone = (v) => (v === undefined ? undefined : JSON.parse(JSON.stringify(v)
 // Inputs that are NOT stored by id: file pickers, buttons, and rows rebuilt from `lists` / load types (their values are in the
 // lists), plus the lcx-* Load Case boxes that only mirror the lc-* Load Values inputs.
 function skipInput(el) {
-  return !el.id || ['ab-focus-combo', 'ab-focus-mode', 'pd-focus-combo'].includes(el.id) || ['file', 'button', 'submit', 'reset'].includes(el.type) || el.id.startsWith('lcx-') ||
+  return !el.id || ['ab-focus-combo', 'ab-focus-mode', 'pd-focus-combo', 'fx-focus-combo'].includes(el.id) || ['file', 'button', 'submit', 'reset'].includes(el.type) || el.id.startsWith('lcx-') ||
     ['pile-input', 'bolt-input', 'combo-input', 'row-edit-input', 'skid-sup-input'].some((c) => el.classList.contains(c));
 }
 // Radio-style button groups (selectRadio / getRadioVal): the nearest ancestor with an id of each button[data-val].

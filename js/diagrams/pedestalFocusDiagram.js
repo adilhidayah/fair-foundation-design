@@ -1,6 +1,6 @@
 // 5A presentation only: section geometry, longitudinal bars and existing P-M results.
-import { escapeHtml } from '../core/dom.js?v=20261028p3';
-import { fmt } from '../core/format.js?v=20261028p3';
+import { escapeHtml } from '../core/dom.js?v=20261028f2';
+import { fmt } from '../core/format.js?v=20261028f2';
 
 const txt = (x,y,s,attrs='') => `<text x="${x}" y="${y}" ${attrs}>${escapeHtml(s)}</text>`;
 const svg = (body,label) => `<svg class="fdn-diagram pd-svg" viewBox="0 0 700 430" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeHtml(label)}" style="font:12px var(--sans);fill:var(--ink)">${body}</svg>`;

@@ -1,17 +1,18 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261028p3';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028p3';
-import { fmt } from '../core/format.js?v=20261028p3';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261028p3';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028p3';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261028p3';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028p3';
-import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261028p3';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028p3';
-import { pileComboLoads } from '../tabs/pile.js?v=20261028p3';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028p3';
-import { renderPedestalFocus } from './pedestalFocus.js?v=20261028p3';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261028f2';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028f2';
+import { fmt } from '../core/format.js?v=20261028f2';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261028f2';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028f2';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261028f2';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028f2';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261028f2';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028f2';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028f2';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028f2';
+import { renderPedestalFocus } from './pedestalFocus.js?v=20261028f2';
+import { renderFlexureFocus } from './flexureFocus.js?v=20261028f2';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -38,6 +39,7 @@ function layBars(c, bar, t) {
 export function calcRebar() {
   calculateRebar();
   renderPedestalFocus();
+  renderFlexureFocus();
 }
 function calculateRebar() {
   lastResults.pedestalRebar = { label: 'Pedestal Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
@@ -179,6 +181,13 @@ function calculateRebar() {
 // Units: pedestal / cap sizes are in mm (inputs), pile coordinates in m -> half-sizes are converted to m first, and
 // pileCapMomentAxis() then returns kN·m directly. Bars: x-direction bars are taken as the outer layer (d), z-direction (internal field y)
 // bars as the inner layer (d − d_b), for both faces.
+function flexureSnapshot(geometry, cases, combos, invalidCount, tight) {
+  return { ...geometry, topMode: topOpts().mode, rhoTop: topOpts().rhoTop, invalidCount,
+    cases: cases.map(c => ({ key:c.key, lbl:c.lbl, face:c.face, title:c.title, b:c.b, dEff:c.dEff,
+      required:c.required, minOnly:c.minOnly, Mu:c.Mu, govName:c.gov.name, location:c.ptTxt||'',
+      design:c.design, n:c.n||0, spacing:c.spacing||0, AsProv:c.AsProv||0 })),
+    combos: combos.map(r=>({name:r.name, invalid:r.invalid, m:{...r.m}})), tight:tight.map(c=>c.title) };
+}
 function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   if (isShallow()) return calcFootingFlexure({ fc, fy });
   let html = sectionHeader('6.3', 'Flexure', 'Bottom and top reinforcement in both directions at the pedestal faces (ACI 318M-19 §13.2.7.1) from the factored pile reactions beyond the faces.', true);
@@ -268,6 +277,10 @@ function calcPileCapFlexure({ fc, fy, Bp, Lp }) {
   const tightCap = CASES.filter(c => c.required && c.design && c.design.ok && (c.spacing - capBar) < minCapClear - 1e-9);
   lastResults.pileCapRebar.notices = tightCap.length ? [{ title: 'Pile cap bar spacing',
     text: `Clear spacing < ${fmt(minCapClear, 0)} mm = max(25 mm, d_b) (ACI 318M-19 §25.2.1): ${tightCap.map(c => `${c.title} ${fmt(c.spacing - capBar, 0)} mm (${c.n} × D${fmt(capBar, 0)})`).join('; ')} — use a larger bar or a second layer.` }] : [];
+  lastResults.pileCapRebar.viz = flexureSnapshot({ name:'Pile cap', shallow:false,
+    Bf:Bcap/1000, Lf:Lcap/1000, t, cc, db:capBar, piles:pileList.map(p=>({...p})), D:num('pf-dia')/1000,
+    ped:points ? points.map(p=>({x:p.x,y:p.y,Bp:p.c1*1000,Lp:p.c2*1000})) : {x:at.x,y:at.y,Bp,Lp}
+  }, CASES, capResults, invalidCap.length, tightCap);
 
   // Substitution behind each governing M_u: the piles beyond the face on the governing side, with their lever arms.
   CASES.filter(c => c.required && c.Mu > 1e-6 && c.gov.pileForces).forEach(c => {
@@ -382,6 +395,9 @@ function calcFootingFlexure({ fc, fy }) {
   const tight = CASES.filter(c => c.required && c.design && c.design.ok && (c.spacing - bar) < minClear - 1e-9);
   lastResults.pileCapRebar.notices = tight.length ? [{ title: 'Footing bar spacing',
     text: `Clear spacing < ${fmt(minClear, 0)} mm = max(25 mm, d_b) (ACI 318M-19 §25.2.1): ${tight.map(c => `${c.title} ${fmt(c.spacing - bar, 0)} mm (${c.n} × D${fmt(bar, 0)})`).join('; ')} — use a larger bar or a second layer.` }] : [];
+  lastResults.pileCapRebar.viz = flexureSnapshot({ name:'Footing', shallow:true, Bf:B, Lf:L, t, cc, db:bar, piles:[], D:0,
+    ped:multi ? fa.points.map(p=>({x:p.x,y:p.y,Bp:p.c1*1000,Lp:p.c2*1000})) : {x:ped.x,y:ped.z,Bp:ped.c1*1000,Lp:ped.c2*1000}
+  }, CASES, res, invalid.length, tight);
   const byIt = new Map(res.map(r => [r.it, r]));
   const strong = (r, c) => (r === c.gov && c.required ? `<strong>${fmt(r.m[c.key],1)}</strong>` : fmt(r.m[c.key],1));
   html += soilPressureHtml(fa, { head: CASES.map(c => `M<sub>u</sub> ${c.title.replace(' — ', ' ')} (kN·m)`), gov: null,

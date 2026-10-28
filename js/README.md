@@ -31,6 +31,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/pile.js` | 4B — pile table, `calcPile` |
 | `tabs/stabilityFocus.js` | 4A / 4B — Focus Canvas views (`#focus-foundation`, `#focus-pile`): check tiles with governing UC, diagram, UC / DCR table per combination; replace the A4 sheet only in Focus Canvas mode |
 | `tabs/rebar.js` | 5A/5B — `calcRebar` |
+| `tabs/flexureFocus.js`, `diagrams/flexureFocusDiagram.js` | 5B — reinforcement Focus Canvas from `lastResults.pileCapRebar.viz`: selected X/Z bottom/top layer, Plan / Section X / Isometric / design-section moments, LRFD selector and existing required/provided steel. Display only; bar placement is schematic and the moment chart is not a continuous field |
 | `tabs/pedestalFocus.js`, `diagrams/pedestalFocusDiagram.js` | 5A — Section 02-style viewport: cross-section / elevation / isometric / P–M. Reads `lastResults.pedestalRebar.viz`, selects LRFD points (`state.pedestalFocusLC`) and retains `state.pedestalFocusView`. The same two-face layout and factored curve as Report Preview; no inferred ties, end anchorage or biaxial design |
 | `tabs/shear.js` | 5B — `calcOneWay`, `calcTwoWay` |
 | `tabs/bearing.js`, `tabs/settlement.js` | 08 / 08B |

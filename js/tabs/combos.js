@@ -1,14 +1,14 @@
 // Load combinations: editable table, computed summary, standard LC101-126 set.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, staadReactionToFair, stdComboVector } from '../../lib/foundation/index.js?v=20261028p3';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028p3';
-import { fmt } from '../core/format.js?v=20261028p3';
-import { comboState, state } from '../core/state.js?v=20261028p3';
-import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261028p3';
-import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261028p3';
-import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261028p3';
-import { getWorkflowStepStatus } from '../workflow/status.js?v=20261028p3';
-import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261028p3';
+import { LOAD_KINDS, buildComboBase, buildLrfdCombos, buildStdCombos, combineLoadCombo, designSpectralAccel, staadReactionToFair, stdComboVector } from '../../lib/foundation/index.js?v=20261028f2';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028f2';
+import { fmt } from '../core/format.js?v=20261028f2';
+import { comboState, state } from '../core/state.js?v=20261028f2';
+import { EQUIPMENT_CODE_TO_FIELD } from '../tabs/loading.js?v=20261028f2';
+import { loadTransferDiagramSVG } from '../diagrams/loadTransferDiagram.js?v=20261028f2';
+import { loadingFocusHTML } from '../tabs/loadingFocus.js?v=20261028f2';
+import { getWorkflowStepStatus } from '../workflow/status.js?v=20261028f2';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261028f2';
 
 // "STAAD support reactions (Y up)" applies to the typed Load Values of the Support Reaction mode only (the manual-mode worksheets write the
 // FAIR convention). The conversion lives in staadReactionToFair() (lib) and is applied here, at the one place the values are read.

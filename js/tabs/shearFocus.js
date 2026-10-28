@@ -3,11 +3,11 @@
 // Shown instead of the A4 sheets of 6.1 / 6.2 while the preview is in Focus Canvas mode (css/app.css); Report Preview and print
 // keep #calc-oneway / #calc-twoway. Builds markup only from lastResults.oneway.viz / lastResults.twoway.viz (set by calcOneWay() /
 // calcTwoWay(), js/tabs/shear.js) — nothing is recomputed here. Declarations only; the click / hover wiring lives in app.js.
-import { escapeHtml } from '../core/dom.js?v=20261028p3';
-import { fmt } from '../core/format.js?v=20261028p3';
-import { lastResults, state } from '../core/state.js?v=20261028p3';
-import { platformCapFocusHtml } from './platformCapFocus.js?v=20261028p3';
-import { oneWayElevSVG, oneWayIsoSVG, oneWayPlanSVG, twoWayElevSVG, twoWayIsoSVG, twoWayPlanSVG } from '../diagrams/shearFocusDiagram.js?v=20261028p3';
+import { escapeHtml } from '../core/dom.js?v=20261028f2';
+import { fmt } from '../core/format.js?v=20261028f2';
+import { lastResults, state } from '../core/state.js?v=20261028f2';
+import { platformCapFocusHtml } from './platformCapFocus.js?v=20261028f2';
+import { oneWayElevSVG, oneWayIsoSVG, oneWayPlanSVG, twoWayElevSVG, twoWayIsoSVG, twoWayPlanSVG } from '../diagrams/shearFocusDiagram.js?v=20261028f2';
 
 const VIEWS = [['plan', '📐', 'Plan View'], ['elev', '📏', 'Elevation View'], ['iso', '🧊', 'Isometric 2.5D']];
 // The two canvases: key (also the data-sh-block value), section number, title, view kept in state, picture builders.

@@ -1747,8 +1747,9 @@
     .results[data-view="canvas"]:has(#calc-settlement.active) #focus-settlement,
     .results[data-view="canvas"]:has(#calc-anchor.active) #focus-anchor,
     .results[data-view="canvas"]:has(#calc-rebar.active) #focus-pedestal,
+    .results[data-view="canvas"]:has(#calc-rebarcap.active) #focus-flexure,
     .results[data-view="canvas"]:has(#calc-oneway.active) #focus-capcheck { display: block; }
-    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway, #calc-settlement, #calc-anchor, #calc-rebar).active { display: none; }
+    .results[data-view="canvas"] :is(#calc-foundsize, #calc-general, #calc-foundation, #calc-pile, #calc-oneway, #calc-twoway, #calc-settlement, #calc-anchor, #calc-rebar, #calc-rebarcap).active { display: none; }
     /* 03: the sheet stays under the Focus view while an OCR / paste review is open there (it holds the review tables). */
     .ld-results[data-view="canvas"] #focus-loading { display: block; margin-bottom: 16px; }
     .ld-results[data-view="canvas"] .ld-page:not(:has(#eq-ocr-preview:not(:empty), #eq-ocr-review:not(:empty), #lc-ocr-preview:not(:empty), #lc-ocr-review:not(:empty))) { display: none; }
@@ -2111,3 +2112,4 @@
   .av-mode-select select { flex: 1; min-width: min(100%, 240px); color: var(--ink); background: var(--panel); border: 1px solid var(--line); padding: 7px; border-radius: var(--radius-sm); }
   @container (max-width: 750px) { .av-scene { grid-template-columns: minmax(0, 1fr); } }
   .av-viewport { container-type: inline-size; }
+  #focus-flexure { margin-top: 24px; }
