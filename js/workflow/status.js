@@ -1,21 +1,22 @@
 // Workflow step status + live design-status bar.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
-import { comboState, lastResults, state } from '../core/state.js?v=20261028f2';
-import { calcAnchor } from '../tabs/anchor.js?v=20261028f2';
-import { calcBearing } from '../tabs/bearing.js?v=20261028f2';
-import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261028f2';
-import { calcFoundation } from '../tabs/foundation.js?v=20261028f2';
-import { calcFoundSize } from '../tabs/foundSize.js?v=20261028f2';
-import { renderGeneralSummary } from '../tabs/general.js?v=20261028f2';
-import { calcPile } from '../tabs/pile.js?v=20261028f2';
-import { calcRebar } from '../tabs/rebar.js?v=20261028f2';
-import { calcSettlement } from '../tabs/settlement.js?v=20261028f2';
-import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261028f2';
-import { renderGoverningBadges } from '../ui/viewMode.js?v=20261028f2';
-import { allowableBearing } from '../tabs/bearing.js?v=20261028f2';
-import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20261028f2';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
+import { comboState, lastResults, state } from '../core/state.js?v=20261028e4';
+import { calcAnchor } from '../tabs/anchor.js?v=20261028e4';
+import { calcBearing } from '../tabs/bearing.js?v=20261028e4';
+import { renderLcSummary, renderStdComboTables } from '../tabs/combos.js?v=20261028e4';
+import { calcFoundation } from '../tabs/foundation.js?v=20261028e4';
+import { calcFoundSize } from '../tabs/foundSize.js?v=20261028e4';
+import { renderGeneralSummary } from '../tabs/general.js?v=20261028e4';
+import { calcPile } from '../tabs/pile.js?v=20261028e4';
+import { calcRebar } from '../tabs/rebar.js?v=20261028e4';
+import { calcSettlement } from '../tabs/settlement.js?v=20261028e4';
+import { calcOneWay, calcTwoWay } from '../tabs/shear.js?v=20261028e4';
+import { renderGoverningBadges } from '../ui/viewMode.js?v=20261028e4';
+import { allowableBearing } from '../tabs/bearing.js?v=20261028e4';
+import { SCOPE_NA_LABEL, inScope, renderScopePanel } from './scope.js?v=20261028e4';
+import { pendingInputs, pendingProjectHtml, refreshProjectReadiness } from './projectReadiness.js?v=20261028e4';
 
 export function switchWorkflowTab(tabId) {
   const tabBtn = document.querySelector('.sidebar-menu .tab[data-tab="' + tabId + '"]');
@@ -28,6 +29,13 @@ export function recalcAllWorkflow() {
   if (wfV) wfV.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 export function getWorkflowStepStatus(stepId) {
+  const supportMode=getRadioVal('fs-support');
+  if((stepId==='4A'||stepId==='08')&&supportMode==='pile')return {status:'INFO',metric:'N/A',note:'Deep foundation selected (see 4B)'};
+  if(stepId==='4B'&&supportMode!=='pile')return {status:'INFO',metric:'N/A',note:'Shallow foundation selected (see 4A)'};
+  const requiredScope={'4A':'stability','4B':'stability','5A':'structural','5B':'structural','10':'structural','08':'bearing','08B':'settlement','09':'anchor'}[stepId];
+  if(requiredScope&&!inScope(requiredScope))return {status:'NA',metric:SCOPE_NA_LABEL[requiredScope],note:'Not in scope (Section 00 → Scope of Work)'};
+  const target={ '01':'general','02':'foundsize','03':'loadingdata','4A':'foundation','4B':'pile','5A':'capcheck','5B':'capcheck','08':'bearing','08B':'settlement','09':'anchor','10':'summary','11':'summary' }[stepId];
+  if(target&&pendingInputs(target).length)return {status:'PENDING',metric:'—',note:'Belum dihitung — lengkapi data proyek'};
   const support = getRadioVal('fs-support');
   const hasCombos = Array.isArray(comboState.lc) && comboState.lc.length > 0;
   if (stepId === '00') {
@@ -131,6 +139,7 @@ export function getWorkflowStepStatus(stepId) {
   return { status: '—', metric: '—', note: '—' };
 }
 export function renderWorkflowLive() {
+  refreshProjectReadiness();
   const tb = document.getElementById('workflow-body');
   const vd = document.getElementById('workflow-verdict');
   // Workflow table was removed from "00 — Equipment Setup"; still refresh the live status bar.
@@ -184,6 +193,7 @@ function ucTextOf(st) {
 // passes, INCOMPLETE while some are not computed, PENDING before any is. governing = the highest reported UC.
 // Out-of-scope checks (status 'NA', Section 00 → Scope of Work) are left out entirely.
 export function getGoverningStatus() {
+  if(pendingInputs('summary').length)return {status:'PENDING',fails:0,done:0,total:0,governing:null};
   const checks = LIVE_CHECKS.map(([id, label]) => ({ id, label, st: getWorkflowStepStatus(id) })).filter((c) => c.st.status !== 'INFO' && c.st.status !== 'NA');
   let fails = 0, done = 0, governing = null;
   checks.forEach((c) => {
@@ -199,6 +209,12 @@ export function getGoverningStatus() {
 export function renderLiveBar() {
   const bar = document.getElementById('live-status-bar');
   if (!bar) return;
+  if(pendingInputs('summary').length){
+    const tab=document.querySelector('.sidebar-menu .tab.active')?.dataset.tab||'setup';
+    const scopeEl=document.getElementById('scope-panel');if(scopeEl)scopeEl.hidden=tab!=='setup';
+    bar.innerHTML=tab==='setup'?'':pendingProjectHtml(tab==='general'||tab==='foundsize'||tab==='loadingdata'?tab:'summary');
+    renderGoverningBadges(true);return;
+  }
   // Declared inside the function (not as top-level consts) because this runs very early during
   // initial page setup — before the script has linearly executed down to a top-level "const" — and
   // a top-level const isn't accessible until its own declaration line actually runs (TDZ).

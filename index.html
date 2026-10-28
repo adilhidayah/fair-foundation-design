@@ -8,11 +8,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- IBM Plex: Sans for UI labels and prose, Mono for numbers, inputs, badges and diagram labels (--sans / --mono in css/app.css). -->
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;0,700;1,500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/app.css?v=20261028n2">
+<link rel="stylesheet" href="css/app.css?v=20261028e4">
 <!-- Saved light/dark choice applied before first paint (js/ui/theme.js, same key) — avoids a theme flash on refresh. -->
 <script>try { var t = localStorage.getItem('fair_fdn_theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 </head>
-<body>
+<body data-project-readiness="pending">
 <div class="sheet" data-navigation="expanded">
   <div class="titleblock">
     <div class="tb-main">
@@ -22,7 +22,7 @@
     <!-- Project file (js/workflow/project.js): New / Open / Save / Save As as *.fair.json -->
     <div class="tb-file" role="group" aria-label="Project file">
       <span class="tb-file-name" id="project-file-name" title="Project file">Untitled project</span>
-      <button type="button" class="tb-file-btn" id="project-new" title="New project (default values)">New</button>
+      <button type="button" class="tb-file-btn" id="project-new" title="New empty project">New</button>
       <button type="button" class="tb-file-btn" id="project-open" title="Open a project file (Ctrl+O)">Open</button>
       <button type="button" class="tb-file-btn" id="project-save" title="Save (Ctrl+S)">Save</button>
       <button type="button" class="tb-file-btn" id="project-saveas" title="Save As (Ctrl+Shift+S)">Save As</button>
@@ -32,7 +32,7 @@
     <button type="button" class="tb-ai-btn" id="ai-assistant-toggle" aria-expanded="false" aria-controls="right-panel" title="Open AI Assistant (Ctrl+J)">✦ AI Assistant <kbd>Ctrl+J</kbd></button>
   </div>
   <nav class="sidebar-menu" id="section-navigation" aria-label="Calculation sections">
-    <div class="nav-head"><span class="nav-heading">CALCULATION</span><button type="button" id="navigation-toggle" aria-expanded="true" aria-controls="navigation-items" aria-label="Collapse navigation" title="Collapse navigation">‹</button></div>
+    <div class="nav-head"><span class="nav-heading">CALCULATION</span><button type="button" class="sr-btn" id="navigation-toggle" aria-expanded="true" aria-controls="navigation-items" aria-label="Collapse navigation" title="Collapse navigation">◀</button></div>
     <div id="navigation-items" class="navigation-items">
       <button type="button" class="tab active" data-tab="setup"><span class="tab-code">00</span><span class="tab-label">EQUIPMENT SETUP</span></button>
       <button type="button" class="tab" data-tab="general"><span class="tab-code">01</span><span class="tab-label">GENERAL INPUT DATA</span></button>
@@ -72,7 +72,7 @@
             </div>
             <div class="field" id="eq-saddle-field" style="display:none;">
               <label for="eq-saddle">Saddle distance, Ls <span class="unit">m</span></label>
-              <input type="number" id="eq-saddle" value="6" min="0" step="0.1">
+              <input type="number" id="eq-saddle" value="" min="0" step="0.1">
               <div class="note">Center-to-center of saddles — passed to the horizontal-vessel helper in Tab 03 (informational until wired).</div>
             </div>
           </div>
@@ -96,25 +96,25 @@
             <div class="field">
               <label>Dead Load (Empty Piping + Structure), De <span class="unit">kN</span></label>
               <div style="display:flex; gap:10px;">
-                <input type="number" id="pr-de-p" placeholder="P (Axial)" value="150">
-                <input type="number" id="pr-de-hx" placeholder="Hx" value="15">
-                <input type="number" id="pr-de-hz" placeholder="Hz" value="5">
+                <input type="number" id="pr-de-p" placeholder="P (Axial)" value="">
+                <input type="number" id="pr-de-hx" placeholder="Hx" value="">
+                <input type="number" id="pr-de-hz" placeholder="Hz" value="">
               </div>
             </div>
             <div class="field">
               <label>Operating Load (Fluid/Contents), Do <span class="unit">kN</span></label>
               <div style="display:flex; gap:10px;">
-                <input type="number" id="pr-do-p" placeholder="P (Axial)" value="350">
-                <input type="number" id="pr-do-hx" placeholder="Hx" value="0">
-                <input type="number" id="pr-do-hz" placeholder="Hz" value="0">
+                <input type="number" id="pr-do-p" placeholder="P (Axial)" value="">
+                <input type="number" id="pr-do-hx" placeholder="Hx" value="">
+                <input type="number" id="pr-do-hz" placeholder="Hz" value="">
               </div>
             </div>
             <div class="field">
               <label>Thermal Friction (Pipe on Shoe), Tf <span class="unit">kN</span></label>
               <div style="display:flex; gap:10px;">
                 <input type="number" disabled placeholder="P" value="0">
-                <input type="number" id="pr-tf-hx" placeholder="Hx (Trans)" value="30">
-                <input type="number" id="pr-tf-hz" placeholder="Hz (Long)" value="80">
+                <input type="number" id="pr-tf-hx" placeholder="Hx (Trans)" value="">
+                <input type="number" id="pr-tf-hz" placeholder="Hz (Long)" value="">
               </div>
               <div class="note">Friction forces from piping expansion. Usually applied 100% in longitudinal or 50% transverse.</div>
             </div>
@@ -122,16 +122,16 @@
               <label>Thermal Anchor (Fixed Point), Ta <span class="unit">kN</span></label>
               <div style="display:flex; gap:10px;">
                 <input type="number" disabled placeholder="P" value="0">
-                <input type="number" id="pr-ta-hx" placeholder="Hx (Trans)" value="0">
-                <input type="number" id="pr-ta-hz" placeholder="Hz (Long)" value="150">
+                <input type="number" id="pr-ta-hx" placeholder="Hx (Trans)" value="">
+                <input type="number" id="pr-ta-hz" placeholder="Hz (Long)" value="">
               </div>
             </div>
             <div class="field">
               <label>Wind Load (Transverse & Longitudinal), W — strength level <span class="unit">kN</span></label>
               <div style="display:flex; gap:10px;">
-                <input type="number" id="pr-w-p" placeholder="P (Uplift/Down)" value="45">
-                <input type="number" id="pr-w-hx" placeholder="Hx (Trans)" value="90">
-                <input type="number" id="pr-w-hz" placeholder="Hz (Long)" value="35">
+                <input type="number" id="pr-w-p" placeholder="P (Uplift/Down)" value="">
+                <input type="number" id="pr-w-hx" placeholder="Hx (Trans)" value="">
+                <input type="number" id="pr-w-hz" placeholder="Hz (Long)" value="">
               </div>
             </div>
             <button type="button" id="pr-generate-combos" class="combo-add-btn" style="margin-top:15px; background:var(--pass); color:#fff; border:none; padding:10px; font-weight:bold; width:100%;">
@@ -157,32 +157,32 @@
       <div class="section-label">Vertical Vessel Base Reactions</div>
       <div class="field">
         <label>Erection Weight, De <span class="unit">kN</span></label>
-        <input type="number" id="vsl-de-p" placeholder="P (Axial)" value="200">
+        <input type="number" id="vsl-de-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Empty Weight, D <span class="unit">kN</span></label>
-        <input type="number" id="vsl-d-p" placeholder="P (Axial)" value="250">
+        <input type="number" id="vsl-d-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Operating Fluid Weight, Do <span class="unit">kN</span></label>
-        <input type="number" id="vsl-do-p" placeholder="P (Axial)" value="800">
+        <input type="number" id="vsl-do-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Test Fluid Weight, Dt <span class="unit">kN</span></label>
-        <input type="number" id="vsl-dt-p" placeholder="P (Axial)" value="1200">
+        <input type="number" id="vsl-dt-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Wind Load, W — strength level <span class="unit">kN, kN·m</span></label>
         <div style="display:flex; gap:10px;">
-          <input type="number" id="vsl-w-h" placeholder="H (Shear)" value="150">
-          <input type="number" id="vsl-w-m" placeholder="M (Moment)" value="1800">
+          <input type="number" id="vsl-w-h" placeholder="H (Shear)" value="">
+          <input type="number" id="vsl-w-m" placeholder="M (Moment)" value="">
         </div>
       </div>
       <div class="field">
         <label>Seismic Load, E <span class="unit">kN, kN·m</span></label>
         <div style="display:flex; gap:10px;">
-          <input type="number" id="vsl-e-h" placeholder="H (Shear)" value="250">
-          <input type="number" id="vsl-e-m" placeholder="M (Moment)" value="3000">
+          <input type="number" id="vsl-e-h" placeholder="H (Shear)" value="">
+          <input type="number" id="vsl-e-m" placeholder="M (Moment)" value="">
         </div>
       </div>
       <button type="button" id="vsl-generate-combos" class="combo-add-btn" style="margin-top:15px; background:var(--pass); color:#fff; border:none; padding:10px; font-weight:bold; width:100%;">
@@ -206,28 +206,28 @@
       <div class="section-label">Storage Tank Base Reactions</div>
       <div class="field">
         <label>Empty Weight (Shell + Roof + Bottom), D <span class="unit">kN</span></label>
-        <input type="number" id="tnk-d-p" placeholder="P (Axial)" value="500">
+        <input type="number" id="tnk-d-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Product Weight, Do <span class="unit">kN</span></label>
-        <input type="number" id="tnk-do-p" placeholder="P (Axial)" value="4500">
+        <input type="number" id="tnk-do-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Test Water Weight, Dt <span class="unit">kN</span></label>
-        <input type="number" id="tnk-dt-p" placeholder="P (Axial)" value="5500">
+        <input type="number" id="tnk-dt-p" placeholder="P (Axial)" value="">
       </div>
       <div class="field">
         <label>Wind Load, W — strength level <span class="unit">kN, kN·m</span></label>
         <div style="display:flex; gap:10px;">
-          <input type="number" id="tnk-w-h" placeholder="H (Shear)" value="300">
-          <input type="number" id="tnk-w-m" placeholder="M (Moment)" value="1500">
+          <input type="number" id="tnk-w-h" placeholder="H (Shear)" value="">
+          <input type="number" id="tnk-w-m" placeholder="M (Moment)" value="">
         </div>
       </div>
       <div class="field">
         <label>Seismic Load, E <span class="unit">kN, kN·m</span></label>
         <div style="display:flex; gap:10px;">
-          <input type="number" id="tnk-e-h" placeholder="H (Shear)" value="800">
-          <input type="number" id="tnk-e-m" placeholder="M (Moment)" value="3200">
+          <input type="number" id="tnk-e-h" placeholder="H (Shear)" value="">
+          <input type="number" id="tnk-e-m" placeholder="M (Moment)" value="">
         </div>
       </div>
       <button type="button" id="tnk-generate-combos" class="combo-add-btn" style="margin-top:15px; background:var(--pass); color:#fff; border:none; padding:10px; font-weight:bold; width:100%;">
@@ -314,8 +314,8 @@
         <div class="field"><label for="sti-std">STAAD input (.std)</label><input type="file" id="sti-std" accept=".std,.STD,.txt"></div>
         <div class="field"><label for="sti-anl">STAAD output (.ANL)</label><input type="file" id="sti-anl" accept=".anl,.ANL,.txt"></div>
         <div class="field"><label for="sti-node">Support node</label><select id="sti-node"></select></div>
-        <div class="field"><label for="sti-asd">ASD combinations (stability, anchor bolts)</label><input type="text" id="sti-asd" placeholder="101-164" value="101-164"></div>
-        <div class="field"><label for="sti-lrfd">LRFD combinations (pedestal, footing design)</label><input type="text" id="sti-lrfd" placeholder="301-400" value="301-400"></div>
+        <div class="field"><label for="sti-asd">ASD combinations (stability, anchor bolts)</label><input type="text" id="sti-asd" placeholder="101-164" value=""></div>
+        <div class="field"><label for="sti-lrfd">LRFD combinations (pedestal, footing design)</label><input type="text" id="sti-lrfd" placeholder="301-400" value=""></div>
         <button type="button" id="sti-import" class="combo-add-btn">⤓ Import STAAD reactions</button>
         <div id="sti-msg" class="note"></div>
       </div>
@@ -327,11 +327,11 @@
       <div class="section-label">Footing Self-Weight — Top → Bottom Transfer</div>
       <div class="field">
         <label for="lc-dW">Added weight, ΔW (footing + pedestal + backfill) <span class="unit">kN</span></label>
-        <input type="number" id="lc-dW" value="50" min="0" readonly>
+        <input type="number" id="lc-dW" value="" min="0" readonly>
       </div>
       <div class="field">
         <label for="lc-dh">Height, Δh (top of footing/pedestal to underside of footing) <span class="unit">m</span></label>
-        <input type="number" id="lc-dh" value="1.5" min="0" step="0.1" readonly>
+        <input type="number" id="lc-dh" value="" min="0" step="0.1" readonly>
       </div>
     </div>
     <!-- LOAD CASE: one input block per registered load type. Blocks tagged data-lc-codes are shown only while at
@@ -347,14 +347,14 @@
     <div class="gt-sub">Live Load (L)</div>
     <div class="field">
       <label for="ll-load-p">Live load, L <span class="unit">kN</span></label>
-      <input type="number" id="ll-load-p" value="200" step="1">
+      <input type="number" id="ll-load-p" value="" step="1">
     </div>
     </div>
     <div id="lc-case-Lr" data-lc-codes="Lr">
     <div class="gt-sub">Roof Live Load (Lr)</div>
     <div class="field">
       <label for="lr-load-p">Roof live load, Lr <span class="unit">kN</span></label>
-      <input type="number" id="lr-load-p" value="0" step="1">
+      <input type="number" id="lr-load-p" value="" step="1">
     </div>
     </div>
     <div id="ld-manual-fields">
@@ -364,15 +364,15 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;" data-lc-codes="E(E)">
         <label for="eq-load-ee"><span>Equipment empty load, E<sub>E</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="eq-load-ee" value="0" min="0" step="0.1">
+        <input type="number" id="eq-load-ee" value="" min="0" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;" data-lc-codes="E(O)">
         <label for="eq-load-eo"><span>Equipment operating load, E<sub>O</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="eq-load-eo" value="0" min="0" step="0.1">
+        <input type="number" id="eq-load-eo" value="" min="0" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;" data-lc-codes="E(T)">
         <label for="eq-load-et"><span>Equipment test load, E<sub>T</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="eq-load-et" value="0" min="0" step="0.1">
+        <input type="number" id="eq-load-et" value="" min="0" step="0.1">
       </div>
     </div>
     <div id="skid-sup-box" style="display:none;">
@@ -391,21 +391,21 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;">
         <label for="wl-direct-Fx"><span>Wind shear, F<sub>x</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="wl-direct-Fx" value="0" step="0.1">
+        <input type="number" id="wl-direct-Fx" value="" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;">
         <label for="wl-direct-Mz"><span>Wind moment, M<sub>z</sub></span> <span class="unit">kN·m</span></label>
-        <input type="number" id="wl-direct-Mz" value="0" step="0.1">
+        <input type="number" id="wl-direct-Mz" value="" step="0.1">
       </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;">
         <label for="wl-direct-Fz"><span>Wind shear, F<sub>z</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="wl-direct-Fz" value="0" step="0.1">
+        <input type="number" id="wl-direct-Fz" value="" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;">
         <label for="wl-direct-Mx"><span>Wind moment, M<sub>x</sub></span> <span class="unit">kN·m</span></label>
-        <input type="number" id="wl-direct-Mx" value="0" step="0.1">
+        <input type="number" id="wl-direct-Mx" value="" step="0.1">
       </div>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -420,21 +420,21 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Fx"><span>Seismic shear, F<sub>x</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="sg-direct-Fx" value="0" step="0.1">
+        <input type="number" id="sg-direct-Fx" value="" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Mz"><span>Seismic moment, M<sub>z</sub></span> <span class="unit">kN·m</span></label>
-        <input type="number" id="sg-direct-Mz" value="0" step="0.1">
+        <input type="number" id="sg-direct-Mz" value="" step="0.1">
       </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Fz"><span>Seismic shear, F<sub>z</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="sg-direct-Fz" value="0" step="0.1">
+        <input type="number" id="sg-direct-Fz" value="" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Mx"><span>Seismic moment, M<sub>x</sub></span> <span class="unit">kN·m</span></label>
-        <input type="number" id="sg-direct-Mx" value="0" step="0.1">
+        <input type="number" id="sg-direct-Mx" value="" step="0.1">
       </div>
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
@@ -447,21 +447,21 @@
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Fx-empty"><span>Seismic shear, F<sub>x</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="sg-direct-Fx-empty" value="0" step="0.1">
+        <input type="number" id="sg-direct-Fx-empty" value="" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Mz-empty"><span>Seismic moment, M<sub>z</sub></span> <span class="unit">kN·m</span></label>
-        <input type="number" id="sg-direct-Mz-empty" value="0" step="0.1">
+        <input type="number" id="sg-direct-Mz-empty" value="" step="0.1">
       </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Fz-empty"><span>Seismic shear, F<sub>z</sub></span> <span class="unit">kN</span></label>
-        <input type="number" id="sg-direct-Fz-empty" value="0" step="0.1">
+        <input type="number" id="sg-direct-Fz-empty" value="" step="0.1">
       </div>
       <div class="field" style="flex:1; min-width:160px;">
         <label for="sg-direct-Mx-empty"><span>Seismic moment, M<sub>x</sub></span> <span class="unit">kN·m</span></label>
-        <input type="number" id="sg-direct-Mx-empty" value="0" step="0.1">
+        <input type="number" id="sg-direct-Mx-empty" value="" step="0.1">
       </div>
     </div>
     </div>
@@ -556,7 +556,7 @@
         </details>
         <div class="gt-project">
           <div class="gt-head">Project</div>
-          <div class="field" style="margin-bottom:0;"><label for="gen-proj" class="sr-only">Equipment Name</label><input type="text" id="gen-proj" value="Patimban Vessel" placeholder="Equipment name"></div>
+          <div class="field" style="margin-bottom:0;"><label for="gen-proj" class="sr-only">Equipment Name</label><input type="text" id="gen-proj" value="" placeholder="Equipment name"></div>
         </div>
         <details class="gt-group" open>
         <summary>Foundation</summary>
@@ -572,28 +572,28 @@
           <div class="gt-sub">Pile Geometry</div>
           <div class="field">
             <label for="pf-type">Pile type</label>
-            <input type="text" id="pf-type" value="Precast Spun Pile">
+            <input type="text" id="pf-type" value="">
           </div>
           <div class="field">
             <label for="pf-dia"><span>Pile diameter, D</span> <span class="unit">mm</span></label>
-            <input type="number" id="pf-dia" value="400" min="0" step="10">
+            <input type="number" id="pf-dia" value="" min="0" step="10">
           </div>
           <div class="field">
             <label for="pf-L"><span>Embedment length, L</span> <span class="unit">m</span></label>
-            <input type="number" id="pf-L" value="12" min="0" step="0.5">
+            <input type="number" id="pf-L" value="" min="0" step="0.5">
           </div>
           <div class="gt-sub">Pile Capacity Parameters</div>
           <div class="field">
             <label for="pf-Qc"><span>Allowable compression, P<sub>all</sub> (single pile)</span> <span class="unit">kN</span></label>
-            <input type="number" id="pf-Qc" value="800" min="0">
+            <input type="number" id="pf-Qc" value="" min="0">
           </div>
           <div class="field">
             <label for="pf-Qt"><span>Allowable uplift/tension, T<sub>all</sub> (single pile)</span> <span class="unit">kN</span></label>
-            <input type="number" id="pf-Qt" value="300" min="0">
+            <input type="number" id="pf-Qt" value="" min="0">
           </div>
           <div class="field">
             <label for="pf-Ql"><span>Allowable lateral, H<sub>all</sub> (single pile)</span> <span class="unit">kN</span></label>
-            <input type="number" id="pf-Ql" value="80" min="0">
+            <input type="number" id="pf-Ql" value="" min="0">
           </div>
         </div>
         <div class="gt-sub" id="gen-shallow-fs-section-label">Safety Factors</div>
@@ -637,25 +637,25 @@
         <div class="gt-sub">Concrete</div>
         <div class="field">
           <label for="gen-fc"><span>Concrete strength, f'c</span> <span class="unit">MPa</span></label>
-          <input type="number" id="gen-fc" value="30" min="0">
+          <input type="number" id="gen-fc" value="" min="0">
         </div>
         <div class="field">
           <label for="gen-gc"><span>Concrete unit weight, γ<sub>c</sub></span> <span class="unit">kN/m³</span></label>
-          <input type="number" id="gen-gc" value="24" min="0" step="0.5">
+          <input type="number" id="gen-gc" value="" min="0" step="0.5">
         </div>
         <div class="field">
           <label for="gen-gl"><span>Lean concrete unit weight, γ<sub>L</sub></span> <span class="unit">kN/m³</span></label>
-          <input type="number" id="gen-gl" value="22" min="0" step="0.5">
+          <input type="number" id="gen-gl" value="" min="0" step="0.5">
         </div>
         <div class="gt-sub">Reinforcement</div>
         <div class="field">
           <label for="gen-fy"><span>Rebar yield strength, f<sub>y</sub></span> <span class="unit">MPa</span></label>
-          <input type="number" id="gen-fy" value="420" min="0">
+          <input type="number" id="gen-fy" value="" min="0">
         </div>
         <div class="gt-sub">Soil</div>
         <div class="field">
           <label for="gen-gs"><span>Soil unit weight, γ<sub>s</sub></span> <span class="unit">kN/m³</span></label>
-          <input type="number" id="gen-gs" value="18" min="0" step="0.5">
+          <input type="number" id="gen-gs" value="" min="0" step="0.5">
         </div>
         </div>
         </details>
@@ -668,19 +668,19 @@
         <div class="gt-sub">Geometry</div>
         <div class="field">
           <label for="ow-bw"><span>Web width, b<sub>w</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="ow-bw" value="1000" min="0">
+          <input type="number" id="ow-bw" value="" min="0">
         </div>
         <div class="field">
           <label for="ow-h"><span>Overall height, h (= H<sub>f</sub>, Tab 02)</span> <span class="unit">mm</span></label>
-          <input type="number" id="ow-h" value="400" min="0" step="50" readonly>
+          <input type="number" id="ow-h" value="" min="0" step="50" readonly>
         </div>
         <div class="field">
           <label for="ow-cc">Concrete cover, cc <span class="unit">mm</span></label>
-          <input type="number" id="ow-cc" value="40" min="0">
+          <input type="number" id="ow-cc" value="" min="0">
         </div>
         <div class="field">
           <label for="ow-D">Main bar diameter, D <span class="unit">mm</span></label>
-          <input type="number" id="ow-D" value="19" min="0">
+          <input type="number" id="ow-D" value="" min="0">
         </div>
         <div class="note">Effective depth, d = h - cc - D = <strong id="ow-d-out">—</strong> mm. Simplified (excludes stirrup diameter/bar layers) — verify against actual detailing.</div>
         <div class="gt-sub">Material</div>
@@ -703,7 +703,7 @@
         </div>
         <div class="field" id="ow-rho-field">
           <label for="ow-rho"><span>Longitudinal reinf. ratio, ρ<sub>w</sub></span> <span class="unit">%</span></label>
-          <input type="number" id="ow-rho" value="0.5" step="0.01" min="0">
+          <input type="number" id="ow-rho" value="" step="0.01" min="0">
           <div class="note">ρ<sub>w</sub> = A<sub>s</sub> / (b<sub>w</sub>·d) at the section, tension side.</div>
         </div>
         <div class="field check-field">
@@ -735,7 +735,7 @@
         </div>
         <div class="field">
           <label for="ow-vu"><span>Factored shear, V<sub>u</sub></span> <span class="unit">kN</span></label>
-          <input type="number" id="ow-vu" value="220" min="0">
+          <input type="number" id="ow-vu" value="" min="0">
         </div>
         <div id="opt-oneway"></div>
       </div>
@@ -749,24 +749,24 @@
         <div class="gt-sub">Column / Pedestal</div>
         <div class="field">
           <label for="tw-c1"><span>Dimension c<sub>1</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="tw-c1" value="500" min="0">
+          <input type="number" id="tw-c1" value="" min="0">
         </div>
         <div class="field">
           <label for="tw-c2"><span>Dimension c<sub>2</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="tw-c2" value="500" min="0">
+          <input type="number" id="tw-c2" value="" min="0">
         </div>
         <div class="note" id="tw-ped-src"></div>
         <div class="field">
           <label for="tw-h"><span>Overall height, h (= H<sub>f</sub>, Tab 02)</span> <span class="unit">mm</span></label>
-          <input type="number" id="tw-h" value="400" min="0" step="50" readonly>
+          <input type="number" id="tw-h" value="" min="0" step="50" readonly>
         </div>
         <div class="field">
           <label for="tw-cc">Concrete cover, cc <span class="unit">mm</span></label>
-          <input type="number" id="tw-cc" value="40" min="0">
+          <input type="number" id="tw-cc" value="" min="0">
         </div>
         <div class="field">
           <label for="tw-D">Main bar diameter, D <span class="unit">mm</span></label>
-          <input type="number" id="tw-D" value="19" min="0">
+          <input type="number" id="tw-D" value="" min="0">
         </div>
         <div class="note">Effective depth, d = h - cc - D = <strong id="tw-d-out">—</strong> mm. Simplified — verify against actual (often two-way) bar layer detailing.</div>
         <div class="field">
@@ -803,15 +803,15 @@
         </div>
         <div class="field">
           <label for="tw-muz"><span>Unbalanced moment M<sub>uz</sub> (bending along x)</span> <span class="unit">kN·m</span></label>
-          <input type="number" id="tw-muz" value="0" step="10">
+          <input type="number" id="tw-muz" value="" step="10">
         </div>
         <div class="field">
           <label for="tw-mux"><span>Unbalanced moment M<sub>ux</sub> (bending along z)</span> <span class="unit">kN·m</span></label>
-          <input type="number" id="tw-mux" value="0" step="10">
+          <input type="number" id="tw-mux" value="" step="10">
         </div>
         <div class="field">
           <label for="tw-vu"><span>Factored shear, V<sub>u</sub></span> <span class="unit">kN</span></label>
-          <input type="number" id="tw-vu" value="850" min="0">
+          <input type="number" id="tw-vu" value="" min="0">
           <div class="note">The moments add the eccentric shear stress γ<sub>v</sub>M<sub>u</sub>c/J<sub>c</sub> (§8.4.4.2). With "From pile reactions" or "From soil pressure" they are filled from the same LRFD combination (base of pedestal).</div>
         </div>
         <div id="opt-twoway"></div>
@@ -825,7 +825,7 @@
         <div class="gt-body">
         <div class="field">
           <label for="fd-mu">Base-soil friction coefficient, μ</label>
-          <input type="number" id="fd-mu" value="0.4" min="0" step="0.05">
+          <input type="number" id="fd-mu" value="" min="0" step="0.05">
         </div>
         </div>
         </details>
@@ -883,19 +883,19 @@
         <div class="gt-sub">Grid generator</div>
         <div class="field">
           <label for="pf-gen-nx"><span>Columns (piles along x)</span></label>
-          <input type="number" id="pf-gen-nx" value="2" min="1" step="1">
+          <input type="number" id="pf-gen-nx" value="" min="1" step="1">
         </div>
         <div class="field">
           <label for="pf-gen-ny"><span>Rows (piles along z)</span></label>
-          <input type="number" id="pf-gen-ny" value="2" min="1" step="1">
+          <input type="number" id="pf-gen-ny" value="" min="1" step="1">
         </div>
         <div class="field">
           <label for="pf-gen-sx"><span>Spacing in x</span> <span class="unit">m</span></label>
-          <input type="number" id="pf-gen-sx" value="1.2" min="0" step="0.05">
+          <input type="number" id="pf-gen-sx" value="" min="0" step="0.05">
         </div>
         <div class="field">
           <label for="pf-gen-sy"><span>Spacing in z</span> <span class="unit">m</span></label>
-          <input type="number" id="pf-gen-sy" value="1.2" min="0" step="0.05">
+          <input type="number" id="pf-gen-sy" value="" min="0" step="0.05">
         </div>
         <button type="button" id="pf-gen-grid" class="combo-add-btn">Generate grid (replaces all piles)</button>
         <div class="note">M is applied biaxially: M<sub>z</sub> &gt; 0 compresses the +x side, M<sub>x</sub> &gt; 0 compresses the −z side.</div>
@@ -921,7 +921,7 @@
         <div class="gt-body">
         <div class="field">
           <label for="pf-t"><span>Pile cap thickness, t (= H<sub>f</sub>, Tab 02)</span> <span class="unit">m</span></label>
-          <input type="number" id="pf-t" value="0.4" min="0" step="0.05" readonly>
+          <input type="number" id="pf-t" value="" min="0" step="0.05" readonly>
         </div>
         <div class="gt-sub">Fit cap size to piles</div>
         <div class="field">
@@ -995,8 +995,8 @@
         <div class="overflow-x">
           <table class="calc-table pm-table" id="pf-pm-table">
             <tr><th>s/D</th><th>Row 1</th><th>Row 2</th><th>Row 3+</th></tr>
-            <tr><td><input type="number" id="pm-s1" value="3" min="0" step="0.5"></td><td><input type="number" id="pm-a1" value="0.8" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-b1" value="0.4" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-c1" value="0.3" min="0" max="1" step="0.05"></td></tr>
-            <tr><td><input type="number" id="pm-s2" value="5" min="0" step="0.5"></td><td><input type="number" id="pm-a2" value="1" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-b2" value="0.85" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-c2" value="0.7" min="0" max="1" step="0.05"></td></tr>
+            <tr><td><input type="number" id="pm-s1" value="" min="0" step="0.5"></td><td><input type="number" id="pm-a1" value="" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-b1" value="" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-c1" value="" min="0" max="1" step="0.05"></td></tr>
+            <tr><td><input type="number" id="pm-s2" value="" min="0" step="0.5"></td><td><input type="number" id="pm-a2" value="" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-b2" value="" min="0" max="1" step="0.05"></td><td><input type="number" id="pm-c2" value="" min="0" max="1" step="0.05"></td></tr>
           </table>
         </div>
         <div class="field">
@@ -1035,11 +1035,11 @@
         <div class="section-label">Soil Parameters</div>
         <div class="field">
           <label for="bc-c">Cohesion, c <span class="unit">kPa</span></label>
-          <input type="number" id="bc-c" value="10" min="0">
+          <input type="number" id="bc-c" value="" min="0">
         </div>
         <div class="field">
           <label for="bc-phi">Friction angle, φ <span class="unit">deg</span></label>
-          <input type="number" id="bc-phi" value="30" min="0" max="50" step="0.5">
+          <input type="number" id="bc-phi" value="" min="0" max="50" step="0.5">
         </div>
         <div class="note">Soil unit weight γ is set in "01 — GENERAL INPUT DATA".</div>
         <div class="section-label">Footing Geometry</div>
@@ -1054,15 +1054,15 @@
         </div>
         <div class="field">
           <label for="bc-B">Width, B — shorter side (diameter if circular) <span class="unit">m</span></label>
-          <input type="number" id="bc-B" value="2.0" min="0" step="0.1">
+          <input type="number" id="bc-B" value="" min="0" step="0.1">
         </div>
         <div class="field">
           <label for="bc-L">Length, L — longer side (ignored if strip/square/circular) <span class="unit">m</span></label>
-          <input type="number" id="bc-L" value="3.0" min="0" step="0.1">
+          <input type="number" id="bc-L" value="" min="0" step="0.1">
         </div>
         <div class="field">
           <label for="bc-Df"><span>Depth of footing, D<sub>f</sub></span> <span class="unit">m</span></label>
-          <input type="number" id="bc-Df" value="1.5" min="0" step="0.1">
+          <input type="number" id="bc-Df" value="" min="0" step="0.1">
         </div>
         <div class="note">Shape, B, L and D<sub>f</sub> are taken from the footing in "02 — FOUNDATION DIMENSION" (B = shorter side) — edit them there.</div>
         <div class="section-label">Method</div>
@@ -1083,7 +1083,7 @@
         </div>
         <div class="field" id="bc-incl-field" style="display:none;">
           <label for="bc-beta">Load inclination from vertical, β <span class="unit">deg</span></label>
-          <input type="number" id="bc-beta" value="0" min="0" max="89" step="1">
+          <input type="number" id="bc-beta" value="" min="0" max="89" step="1">
         </div>
         <div class="section-label">Safety Factor</div>
         <div class="field">
@@ -1098,15 +1098,15 @@
         <div class="section-label">Soil — SPT Correlation (soilProperties.js)</div>
         <div class="field">
           <label for="st-N">Field SPT, N <span class="unit">blows/300mm</span></label>
-          <input type="number" id="st-N" value="10" min="0" step="1">
+          <input type="number" id="st-N" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-sigmaV">Overburden at test depth, σv <span class="unit">kPa</span></label>
-          <input type="number" id="st-sigmaV" value="100" min="0" step="1">
+          <input type="number" id="st-sigmaV" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-ER">Energy ratio, ER <span class="unit">%</span></label>
-          <input type="number" id="st-ER" value="60" min="0" step="1">
+          <input type="number" id="st-ER" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-soilType">Soil type</label>
@@ -1117,29 +1117,29 @@
         </div>
         <div class="field">
           <label for="st-k">Stroud k for cu = k·N60 <span class="unit">kPa</span></label>
-          <input type="number" id="st-k" value="5" min="0" step="0.5">
+          <input type="number" id="st-k" value="" min="0" step="0.5">
         </div>
         <div class="section-label">Elastic (Immediate) Settlement — Footing &amp; Load</div>
         <div class="field">
           <label for="st-qNet">Net contact pressure, q_net <span class="unit">kPa</span></label>
-          <input type="number" id="st-qNet" value="100" min="0" step="1">
+          <input type="number" id="st-qNet" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-B">Footing width, B <span class="unit">m</span></label>
-          <input type="number" id="st-B" value="2.0" min="0" step="0.1">
+          <input type="number" id="st-B" value="" min="0" step="0.1">
         </div>
         <div class="field">
           <label for="st-L">Footing length, L <span class="unit">m</span></label>
-          <input type="number" id="st-L" value="3.0" min="0" step="0.1">
+          <input type="number" id="st-L" value="" min="0" step="0.1">
         </div>
         <div class="field">
           <label for="st-Es">Soil modulus, Es <span class="unit">kPa</span></label>
-          <input type="number" id="st-Es" value="15000" min="0" step="100">
+          <input type="number" id="st-Es" value="" min="0" step="100">
         </div>
         <div class="note">Hint Es dari korelasi SPT (Bowles: granular 500·(N60+15); kohesif 300–500·cu) ditampilkan di hasil sebagai pembanding — override manual bila punya data lab.</div>
         <div class="field">
           <label for="st-nu">Poisson ratio, ν</label>
-          <input type="number" id="st-nu" value="0.3" min="0" max="0.5" step="0.01">
+          <input type="number" id="st-nu" value="" min="0" max="0.5" step="0.01">
         </div>
         <div class="field">
           <label for="st-rigid">Footing rigidity</label>
@@ -1154,27 +1154,27 @@
         <div class="section-label">Consolidation (Clay Layer) — set H=0 to skip</div>
         <div class="field">
           <label for="st-H">Compressible layer thickness, H <span class="unit">m</span></label>
-          <input type="number" id="st-H" value="0" min="0" step="0.1">
+          <input type="number" id="st-H" value="" min="0" step="0.1">
         </div>
         <div class="field">
           <label for="st-e0">Initial void ratio, e0</label>
-          <input type="number" id="st-e0" value="0.8" min="0" step="0.01">
+          <input type="number" id="st-e0" value="" min="0" step="0.01">
         </div>
         <div class="field">
           <label for="st-Cc">Compression index, Cc</label>
-          <input type="number" id="st-Cc" value="0.3" min="0" step="0.01">
+          <input type="number" id="st-Cc" value="" min="0" step="0.01">
         </div>
         <div class="field">
           <label for="st-Cr">Recompression index, Cr</label>
-          <input type="number" id="st-Cr" value="0.03" min="0" step="0.005">
+          <input type="number" id="st-Cr" value="" min="0" step="0.005">
         </div>
         <div class="field">
           <label for="st-sv0">Initial vertical stress, σv0 <span class="unit">kPa</span></label>
-          <input type="number" id="st-sv0" value="50" min="0" step="1">
+          <input type="number" id="st-sv0" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-dSigma">Added stress Δσ <span class="unit">kPa</span></label>
-          <input type="number" id="st-dSigma" value="40" min="0" step="1">
+          <input type="number" id="st-dSigma" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-pc">Preconsolidation pc <span class="unit">kPa</span> (blank = NC)</label>
@@ -1185,29 +1185,29 @@
         <div class="section-label">Pile Group Settlement (Vesic, Das §11.18)</div>
         <div class="field"><label for="st-pile-Q"><span>Working load per pile, Q<sub>w</sub> (blank = auto)</span> <span class="unit">kN</span></label><input type="number" id="st-pile-Q" value="" min="0" step="1" placeholder="auto"></div>
         <div class="note" id="st-pile-Q-note">Auto: the largest P / n of the sustained service combinations — gravity only, without live (L, Lr), test E(T), wind or earthquake.</div>
-        <div class="field"><label for="st-pile-shaft"><span>Shaft share of Q<sub>w</sub>, Q<sub>ws</sub> / Q<sub>w</sub></span> <span class="unit">%</span></label><input type="number" id="st-pile-shaft" value="66.67" min="0" max="100" step="0.01"></div>
+        <div class="field"><label for="st-pile-shaft"><span>Shaft share of Q<sub>w</sub>, Q<sub>ws</sub> / Q<sub>w</sub></span> <span class="unit">%</span></label><input type="number" id="st-pile-shaft" value="" min="0" max="100" step="0.01"></div>
         <div class="field"><label for="st-pile-xi"><span>Shaft friction distribution, ξ</span></label><select id="st-pile-xi"><option value="0.67" selected>0.67 — triangular / parabolic (friction piles)</option><option value="0.5">0.5 — uniform</option></select></div>
         <div class="field"><label for="st-pile-shape">Pile section</label><select id="st-pile-shape"><option value="square" selected>Square (A<sub>p</sub> = D², p = 4D)</option><option value="circular">Circular (A<sub>p</sub> = πD²/4, p = πD)</option></select></div>
-        <div class="field"><label for="st-pile-L"><span>Pile length, L</span> <span class="unit">m</span></label><input type="number" id="st-pile-L" value="14" min="0" step="0.1"></div>
-        <div class="field"><label for="st-pile-Ep"><span>Pile modulus, E<sub>p</sub></span> <span class="unit">MPa</span></label><input type="number" id="st-pile-Ep" value="29725" min="0" step="100"></div>
-        <div class="field"><label for="st-pile-Es"><span>Soil modulus at / below the tip, E<sub>s</sub></span> <span class="unit">kPa</span></label><input type="number" id="st-pile-Es" value="48000" min="0" step="1000"></div>
-        <div class="field"><label for="st-pile-mu"><span>Poisson ratio of the soil, μ<sub>s</sub></span></label><input type="number" id="st-pile-mu" value="0.3" min="0" max="0.49" step="0.05"></div>
-        <div class="field"><label for="st-pile-Iwp"><span>Tip influence factor, I<sub>wp</sub></span></label><input type="number" id="st-pile-Iwp" value="0.85" min="0" step="0.05"></div>
+        <div class="field"><label for="st-pile-L"><span>Pile length, L</span> <span class="unit">m</span></label><input type="number" id="st-pile-L" value="" min="0" step="0.1"></div>
+        <div class="field"><label for="st-pile-Ep"><span>Pile modulus, E<sub>p</sub></span> <span class="unit">MPa</span></label><input type="number" id="st-pile-Ep" value="" min="0" step="100"></div>
+        <div class="field"><label for="st-pile-Es"><span>Soil modulus at / below the tip, E<sub>s</sub></span> <span class="unit">kPa</span></label><input type="number" id="st-pile-Es" value="" min="0" step="1000"></div>
+        <div class="field"><label for="st-pile-mu"><span>Poisson ratio of the soil, μ<sub>s</sub></span></label><input type="number" id="st-pile-mu" value="" min="0" max="0.49" step="0.05"></div>
+        <div class="field"><label for="st-pile-Iwp"><span>Tip influence factor, I<sub>wp</sub></span></label><input type="number" id="st-pile-Iwp" value="" min="0" step="0.05"></div>
         <div class="note">Pile width D, the pile layout (group width B<sub>g</sub> = shorter side + D) and the cap come from "4B — Pile Foundation Stability" / Tab 02. E<sub>s</sub> must come from the geotechnical report.</div>
         </div>
         <div class="section-label">Allowable Limits</div>
         <div class="field">
           <label for="st-allowTotal">Allowable total settlement <span class="unit">mm</span></label>
-          <input type="number" id="st-allowTotal" value="25" min="0" step="1">
+          <input type="number" id="st-allowTotal" value="" min="0" step="1">
         </div>
         <div id="st-diff-box">
         <div class="field">
           <label for="st-diff">Estimated differential settlement <span class="unit">mm</span></label>
-          <input type="number" id="st-diff" value="5" min="0" step="1">
+          <input type="number" id="st-diff" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="st-allowDiff">Allowable differential <span class="unit">mm</span></label>
-          <input type="number" id="st-allowDiff" value="19" min="0" step="1">
+          <input type="number" id="st-allowDiff" value="" min="0" step="1">
         </div>
         </div>
         <div class="note">Methods: elastic Se = q·B·(1−ν²)/Es·If (Steinbrenner fit, rigid ×0.8); consolidation Sc 1-D single layer (Cc/Cr, log10). Limits default 25 mm total / 19 mm differential for static equipment — verify vs project criteria.</div>
@@ -1226,34 +1226,34 @@
         <div class="section-label">Pedestal Geometry</div>
         <div class="field">
           <label for="ab-Bp"><span>Pedestal width, B<sub>p</sub> (shear/moment direction, x)</span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-Bp" value="1250" min="0" step="10" readonly>
+          <input type="number" id="ab-Bp" value="" min="0" step="10" readonly>
         </div>
         <div class="field">
           <label for="ab-Lp"><span>Pedestal length, L<sub>p</sub> (perpendicular, z)</span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-Lp" value="1250" min="0" step="10" readonly>
+          <input type="number" id="ab-Lp" value="" min="0" step="10" readonly>
         </div>
         <div class="note" id="ab-ped-src"></div>
         <div class="note">Pedestal is assumed centered on the bolt group centroid. Edge distance c<sub>a1</sub> for concrete shear breakout is computed automatically per bolt (governing = smallest value in the group) instead of being entered manually.</div>
         <div class="section-label">Bolt Properties</div>
         <div class="field">
           <label for="ab-da"><span>Nominal diameter, d<sub>a</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-da" value="24" min="0">
+          <input type="number" id="ab-da" value="" min="0">
         </div>
         <div class="field">
           <label for="ab-Ase"><span>Effective tensile stress area, A<sub>se</sub></span> <span class="unit">mm²</span></label>
-          <input type="number" id="ab-Ase" value="353" min="0">
+          <input type="number" id="ab-Ase" value="" min="0">
         </div>
         <div class="field">
           <label for="ab-futa"><span>Ultimate tensile strength, f<sub>uta</sub></span> <span class="unit">MPa</span></label>
-          <input type="number" id="ab-futa" value="830" min="0">
+          <input type="number" id="ab-futa" value="" min="0">
         </div>
         <div class="field">
           <label for="ab-hef"><span>Effective embedment depth, h<sub>ef</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-hef" value="300" min="0">
+          <input type="number" id="ab-hef" value="" min="0">
         </div>
         <div class="field">
           <label for="ab-Abrg"><span>Bearing area of head/washer, A<sub>brg</sub></span> <span class="unit">mm²</span></label>
-          <input type="number" id="ab-Abrg" value="1000" min="0">
+          <input type="number" id="ab-Abrg" value="" min="0">
         </div>
         <div class="section-label">Concrete &amp; Anchor Type</div>
         <div class="note">f'c is set in "01 — GENERAL INPUT DATA".</div>
@@ -1311,11 +1311,11 @@
         <div id="ab-tie-box" style="display:none;">
         <div class="field">
           <label for="ab-tie-n"><span>Ties in the top 125 mm, n (min 2 × D13 / 3 × D10, §10.7.6.1.6)</span></label>
-          <input type="number" id="ab-tie-n" value="2" min="1" step="1">
+          <input type="number" id="ab-tie-n" value="" min="1" step="1">
         </div>
         <div class="field">
           <label for="ab-tie-db"><span>Tie bar, d<sub>b</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-tie-db" value="13" min="0">
+          <input type="number" id="ab-tie-db" value="" min="0">
         </div>
         <div class="field">
           <label for="ab-tie-case">Shear per anchor</label>
@@ -1335,11 +1335,11 @@
         <div id="ab-hp-box" style="display:none;">
         <div class="field">
           <label for="ab-hp-db"><span>Hairpin bar, d<sub>b</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-hp-db" value="13" min="0">
+          <input type="number" id="ab-hp-db" value="" min="0">
         </div>
         <div class="field">
           <label for="ab-hp-n"><span>Hairpins per anchor</span></label>
-          <input type="number" id="ab-hp-n" value="1" min="0" step="1">
+          <input type="number" id="ab-hp-n" value="" min="0" step="1">
         </div>
         <div class="field">
           <label for="ab-hp-r"><span>Leg offset from the anchor axis, r (empty = in contact)</span> <span class="unit">mm</span></label>
@@ -1354,12 +1354,12 @@
         </div>
         <div class="field">
           <label for="ab-hp-cover"><span>Side cover at the end of the legs</span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-hp-cover" value="40" min="0">
+          <input type="number" id="ab-hp-cover" value="" min="0">
         </div>
         </div>
         <div class="field">
           <label for="ab-topcover"><span>Top cover to the hooks of the anchor reinforcement</span> <span class="unit">mm</span></label>
-          <input type="number" id="ab-topcover" value="50" min="0">
+          <input type="number" id="ab-topcover" value="" min="0">
         </div>
         </div>
         <div class="section-label">Strength Reduction Factors, φ (Condition B default — editable)</div>
@@ -1396,21 +1396,21 @@
         <div class="gt-sub">Pedestal — Cross-Section</div>
         <div class="field">
           <label for="rb-Bp"><span>Depth in bending direction, B<sub>p</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-Bp" value="800" min="0" step="10">
+          <input type="number" id="rb-Bp" value="" min="0" step="10">
         </div>
         <div class="field">
           <label for="rb-Lp"><span>Width perpendicular, L<sub>p</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-Lp" value="800" min="0" step="10">
+          <input type="number" id="rb-Lp" value="" min="0" step="10">
         </div>
         <div class="note" id="rb-ped-src"></div>
         <div class="field">
           <label for="rb-cover">Cover to bar centroid, d′ <span class="unit">mm</span></label>
-          <input type="number" id="rb-cover" value="65" min="0">
+          <input type="number" id="rb-cover" value="" min="0">
         </div>
         <div class="note">f'c and fy are set in "01 — GENERAL INPUT DATA".</div>
         <div class="field">
           <label for="rb-bar"><span>Bar diameter, d<sub>b</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-bar" value="25" min="0">
+          <input type="number" id="rb-bar" value="" min="0">
         </div>
         <div class="note">Simplified 2-layer symmetric reinforcement (bars lumped at the two faces perpendicular to bending, at d′ from each face) — a conservative/common approximation for a full 4-side interaction diagram. Loads used are <strong>top of footing/pedestal</strong> P, M from the "03 — LOADING DATA" tab (same as anchor bolt design).</div>
         </div>
@@ -1424,24 +1424,24 @@
         <div class="gt-sub">Pile Cap — Section &amp; Cover</div>
         <div class="field">
           <label for="rb-Lcap"><span>Cap width ⟂ x-bending, L<sub>cap</sub> (= L<sub>f</sub>)</span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-Lcap" value="2400" min="0" step="10" readonly>
+          <input type="number" id="rb-Lcap" value="" min="0" step="10" readonly>
         </div>
         <div class="field">
           <label for="rb-Bcap"><span>Cap width ⟂ z-bending, B<sub>cap</sub> (= B<sub>f</sub>)</span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-Bcap" value="2400" min="0" step="10" readonly>
+          <input type="number" id="rb-Bcap" value="" min="0" step="10" readonly>
         </div>
         <div class="note">Both widths, the pedestal size B<sub>p</sub> × L<sub>p</sub> and the load point are read from "02 — FOUNDATION DIMENSION" — edit them there. The pedestal size is shown here only when Tab 02 has a pedestal.</div>
         <div class="field">
           <label for="rb-t"><span>Pile cap thickness, t (= H<sub>f</sub>, Tab 02)</span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-t" value="400" min="0" step="10" readonly>
+          <input type="number" id="rb-t" value="" min="0" step="10" readonly>
         </div>
         <div class="field">
           <label for="rb-cc">Concrete cover, cc <span class="unit">mm</span></label>
-          <input type="number" id="rb-cc" value="75" min="0">
+          <input type="number" id="rb-cc" value="" min="0">
         </div>
         <div class="field">
           <label for="rb-capbar"><span>Bar diameter (flexural), d<sub>b,cap</sub></span> <span class="unit">mm</span></label>
-          <input type="number" id="rb-capbar" value="25" min="0">
+          <input type="number" id="rb-capbar" value="" min="0">
         </div>
         <div class="field">
           <label for="rb-asmin">Minimum reinforcement, A<sub>s,min</sub></label>
@@ -1474,7 +1474,7 @@
         <div class="field"><label for="rpt-location">Location / Client</label><input type="text" id="rpt-location"></div>
         <div class="field"><label for="rpt-by">Calculated by</label><input type="text" id="rpt-by"></div>
         <div class="field"><label for="rpt-date">Date</label><input type="text" id="rpt-date" placeholder="YYYY-MM-DD"></div>
-        <div class="field"><label for="rpt-rev">Revision</label><input type="text" id="rpt-rev" value="0"></div>
+        <div class="field"><label for="rpt-rev">Revision</label><input type="text" id="rpt-rev" value=""></div>
         <div class="section-label">Report — Document Header (optional)</div>
         <div class="field check-field">
           <label for="rpt-use-docheader">
@@ -1552,14 +1552,14 @@
         <summary>Footing</summary>
         <div class="gt-body">
         <div class="gt-sub" id="fs-footing-section-label">Footing / Pile Cap Dimensions</div>
-        <div style="display:flex; gap:10px;"><div class="field" style="flex:1;"><label for="fs-Bf"><span id="fs-Bf-label">Width, B<sub>f</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Bf" value="2.4" min="0" step="0.05" placeholder="Bf"></div><div class="field" style="flex:1;"><label for="fs-Lf"><span id="fs-Lf-label">Length, L<sub>f</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Lf" value="2.4" min="0" step="0.05" placeholder="Lf"></div></div>
+        <div style="display:flex; gap:10px;"><div class="field" style="flex:1;"><label for="fs-Bf"><span id="fs-Bf-label">Width, B<sub>f</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Bf" value="" min="0" step="0.05" placeholder="Bf"></div><div class="field" style="flex:1;"><label for="fs-Lf"><span id="fs-Lf-label">Length, L<sub>f</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Lf" value="" min="0" step="0.05" placeholder="Lf"></div></div>
         <div class="field">
           <label for="fs-Hf"><span id="fs-Hf-label">Height, H<sub>f</sub></span> <span class="unit">m</span></label>
-          <input type="number" id="fs-Hf" value="0.4" min="0" step="0.05">
+          <input type="number" id="fs-Hf" value="" min="0" step="0.05">
         </div>
         <div class="field">
           <label for="fs-Df"><span title="Depth of foundation bottom below ground">Depth, D<sub>f</sub></span> <span class="unit">m</span></label>
-          <input type="number" id="fs-Df" value="1" min="0" step="0.05">
+          <input type="number" id="fs-Df" value="" min="0" step="0.05">
         </div>
         <div id="fs-grout-slot-footing"></div>
         <div class="field">
@@ -1572,11 +1572,11 @@
         <div class="gt-sub">Lean Concrete (Blinding)</div>
         <div class="field">
           <label for="fs-lean-proj"><span id="fs-lean-proj-label">Edge projection beyond footing (each side), e</span> <span class="unit">m</span></label>
-          <input type="number" id="fs-lean-proj" value="0.1" min="0" step="0.05">
+          <input type="number" id="fs-lean-proj" value="" min="0" step="0.05">
         </div>
         <div class="field">
           <label for="fs-lean-t"><span>Lean concrete thickness, t<sub>L</sub></span> <span class="unit">m</span></label>
-          <input type="number" id="fs-lean-t" value="0.05" min="0" step="0.01">
+          <input type="number" id="fs-lean-t" value="" min="0" step="0.01">
         </div>
         </div>
         </div>
@@ -1586,13 +1586,13 @@
         <div class="gt-body">
         <div id="fs-pedestal-fields">
           <div class="gt-sub">Pedestal Dimensions</div>
-          <div style="display:flex; gap:10px;"><div class="field" style="flex:1;"><label for="fs-Bp"><span>Width, B<sub>p</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Bp" value="1.25" min="0" step="0.05" placeholder="Bp"></div><div class="field" style="flex:1;"><label for="fs-Lp"><span>Length, L<sub>p</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Lp" value="1.25" min="0" step="0.05" placeholder="Lp"></div></div>
+          <div style="display:flex; gap:10px;"><div class="field" style="flex:1;"><label for="fs-Bp"><span>Width, B<sub>p</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Bp" value="" min="0" step="0.05" placeholder="Bp"></div><div class="field" style="flex:1;"><label for="fs-Lp"><span>Length, L<sub>p</sub></span> <span class="unit">m</span></label><input type="number" id="fs-Lp" value="" min="0" step="0.05" placeholder="Lp"></div></div>
           <div class="field">
             <label for="fs-Gp"><span>Height above ground, G<sub>p</sub></span> <span class="unit">m</span></label>
-            <input type="number" id="fs-Gp" value="0.275" min="0" step="0.025">
+            <input type="number" id="fs-Gp" value="" min="0" step="0.025">
           </div>
           <div class="gt-sub">Offset</div>
-          <div style="display:flex; gap:10px;"><div class="field" style="flex:1;"><label for="fs-OffX"><span>Offset X, Off<sub>X</sub></span> <span class="unit">m</span></label><input type="number" id="fs-OffX" value="0" step="0.05" placeholder="Offset X"></div><div class="field" style="flex:1;"><label for="fs-OffZ"><span>Offset Z, Off<sub>Z</sub></span> <span class="unit">m</span></label><input type="number" id="fs-OffZ" value="0" step="0.05" placeholder="Offset Z"></div></div>
+          <div style="display:flex; gap:10px;"><div class="field" style="flex:1;"><label for="fs-OffX"><span>Offset X, Off<sub>X</sub></span> <span class="unit">m</span></label><input type="number" id="fs-OffX" value="" step="0.05" placeholder="Offset X"></div><div class="field" style="flex:1;"><label for="fs-OffZ"><span>Offset Z, Off<sub>Z</sub></span> <span class="unit">m</span></label><input type="number" id="fs-OffZ" value="" step="0.05" placeholder="Offset Z"></div></div>
           <!-- Grouting block lives here for Footing + Pedestal; calcFoundSize() moves it to #fs-grout-slot-footing
                for Footing / Pile Cap Only (same element, same ids). -->
           <div id="fs-grout-slot-pedestal">
@@ -1606,7 +1606,7 @@
           </div>
           <div class="field" id="fs-grout-t-field" style="display:none;">
             <label for="fs-grout-t"><span>Grout thickness, t<sub>grout</sub></span> <span class="unit">mm</span></label>
-            <input type="number" id="fs-grout-t" value="25" min="0" step="5">
+            <input type="number" id="fs-grout-t" value="" min="0" step="5">
           </div>
           </div>
           </div>
@@ -1618,7 +1618,7 @@
         <div class="gt-body">
           <div class="field">
             <label for="fs-hpile">Embedded pile in pile cap, h <span class="unit">m</span></label>
-            <input type="number" id="fs-hpile" value="0.10" min="0" step="0.01">
+            <input type="number" id="fs-hpile" value="" min="0" step="0.01">
           </div>
         </div>
         </details>
@@ -1745,7 +1745,7 @@
     <div class="section-label">Wind Load Generator (ASCE 7-22 Ch. 29 — rigid equipment/vessel, force method)</div>
     <div class="field">
       <label for="wg-V">Basic wind speed, V <span class="unit">m/s</span></label>
-      <input type="number" id="wg-V" value="45" min="0">
+      <input type="number" id="wg-V" value="" min="0">
     </div>
     <div class="field">
       <label id="wg-exp-label">Exposure category</label>
@@ -1757,43 +1757,43 @@
     </div>
     <div class="field">
       <label for="wg-z">Reference height, z <span class="unit">m</span></label>
-      <input type="number" id="wg-z" value="6" min="0">
+      <input type="number" id="wg-z" value="" min="0">
     </div>
     <div class="field">
       <label for="wg-Kzt"><span>Topographic factor, K<sub>zt</sub></span></label>
-      <input type="number" id="wg-Kzt" value="1.0" min="0" step="0.05">
+      <input type="number" id="wg-Kzt" value="" min="0" step="0.05">
     </div>
     <div class="field">
       <label for="wg-Kd"><span>Directionality factor, K<sub>d</sub></span></label>
-      <input type="number" id="wg-Kd" value="0.90" min="0" step="0.05">
+      <input type="number" id="wg-Kd" value="" min="0" step="0.05">
     </div>
     <div class="field">
       <label for="wg-Ke"><span>Ground elevation factor, K<sub>e</sub></span></label>
-      <input type="number" id="wg-Ke" value="1.0" min="0" max="1" step="0.01">
+      <input type="number" id="wg-Ke" value="" min="0" max="1" step="0.01">
     </div>
     <div class="note">K<sub>e</sub> = e<sup>−0.000119·z<sub>e</sub></sup>, z<sub>e</sub> = ground elevation above sea level (m) — ASCE 7-22 Table 26.9-1. K<sub>e</sub> = 1.0 is permitted (conservative).</div>
     <div class="field">
       <label for="wg-G">Gust effect factor, G</label>
-      <input type="number" id="wg-G" value="0.85" min="0" step="0.05">
+      <input type="number" id="wg-G" value="" min="0" step="0.05">
     </div>
     <div class="field">
       <label for="wg-Cf"><span>Force coefficient, C<sub>f</sub></span></label>
-      <input type="number" id="wg-Cf" value="1.2" min="0" step="0.05">
+      <input type="number" id="wg-Cf" value="" min="0" step="0.05">
     </div>
     <div style="display:flex; gap:10px;">
       <div class="field" style="flex:1;">
         <label for="wg-Asx"><span>Projected area, A<sub>sx</sub></span> <span class="unit">m²</span></label>
-        <input type="number" id="wg-Asx" value="8" min="0">
+        <input type="number" id="wg-Asx" value="" min="0">
       </div>
       <div class="field" style="flex:1;">
         <label for="wg-Asz"><span>Projected area, A<sub>sz</sub></span> <span class="unit">m²</span></label>
-        <input type="number" id="wg-Asz" value="8" min="0">
+        <input type="number" id="wg-Asz" value="" min="0">
       </div>
     </div>
     <div class="note">Blocked/coverage area facing each direction — for a round section (e.g. a vent stack) A<sub>sx</sub> = A<sub>sz</sub>; for a rectangular structure they're usually different (each face has its own width).</div>
     <div class="field">
       <label for="wg-h">Moment arm (height to resultant force), h <span class="unit">m</span></label>
-      <input type="number" id="wg-h" value="3" min="0">
+      <input type="number" id="wg-h" value="" min="0">
     </div>
     <button type="button" id="wg-generate" class="combo-add-btn">Generate → fill Wind (W) row</button>
     <div id="wg-result">
@@ -1816,11 +1816,11 @@
     <div id="sg-compute-fields">
       <div class="field">
         <label for="sg-Ss"><span>S<sub>s</sub></span> <span class="unit">g</span></label>
-        <input type="number" id="sg-Ss" value="1.0" min="0" step="0.01">
+        <input type="number" id="sg-Ss" value="" min="0" step="0.01">
       </div>
       <div class="field">
         <label for="sg-S1"><span>S<sub>1</sub></span> <span class="unit">g</span></label>
-        <input type="number" id="sg-S1" value="0.4" min="0" step="0.01">
+        <input type="number" id="sg-S1" value="" min="0" step="0.01">
       </div>
       <div class="field">
         <label id="sg-site-label">Site Class</label>
@@ -1837,44 +1837,44 @@
     <div id="sg-direct-fields" style="display:none;">
       <div class="field">
         <label for="sg-SDS-direct"><span>S<sub>DS</sub></span> <span class="unit">g</span></label>
-        <input type="number" id="sg-SDS-direct" value="0.9" min="0" step="0.01">
+        <input type="number" id="sg-SDS-direct" value="" min="0" step="0.01">
       </div>
       <div class="field">
         <label for="sg-SD1-direct"><span>S<sub>D1</sub></span> <span class="unit">g</span></label>
-        <input type="number" id="sg-SD1-direct" value="0.5" min="0" step="0.01">
+        <input type="number" id="sg-SD1-direct" value="" min="0" step="0.01">
       </div>
     </div>
     <div class="field">
       <label for="sg-R">Response modification factor, R</label>
-      <input type="number" id="sg-R" value="2.5" min="0.1" step="0.1">
+      <input type="number" id="sg-R" value="" min="0.1" step="0.1">
     </div>
     <div class="field">
       <label for="sg-Ie"><span>Importance factor, I<sub>e</sub></span></label>
-      <input type="number" id="sg-Ie" value="1.0" min="0" step="0.05">
+      <input type="number" id="sg-Ie" value="" min="0" step="0.05">
     </div>
     <div class="field">
       <label for="sg-hn"><span>Mean height (to top of structure), h<sub>n</sub></span> <span class="unit">m</span></label>
-      <input type="number" id="sg-hn" value="8" min="0">
+      <input type="number" id="sg-hn" value="" min="0">
     </div>
     <div style="display:flex; gap:10px;">
       <div class="field" style="flex:1;">
         <label for="sg-Ct"><span>Period coefficient, C<sub>t</sub></span></label>
-        <input type="number" id="sg-Ct" value="0.049" min="0" step="0.001">
+        <input type="number" id="sg-Ct" value="" min="0" step="0.001">
       </div>
       <div class="field" style="flex:1;">
         <label for="sg-x">Period exponent, x</label>
-        <input type="number" id="sg-x" value="0.75" min="0" step="0.01">
+        <input type="number" id="sg-x" value="" min="0" step="0.01">
       </div>
     </div>
     <div class="note">Default C<sub>t</sub>/x per ASCE 7-22 Table 12.8-2, "all other structural systems" — change if a different structure type applies.</div>
     <div class="field">
       <label for="sg-TL"><span>Long-period transition period, T<sub>L</sub></span> <span class="unit">s</span></label>
-      <input type="number" id="sg-TL" value="8" min="0">
+      <input type="number" id="sg-TL" value="" min="0">
     </div>
     <div class="note">Site-specific — read from the ASCE 7-22 T<sub>L</sub> maps (Fig. 22-14 to 22-17) or the governing local code for your project location.</div>
     <div class="field">
       <label for="sg-h">Centre of gravity from above pedestal, CoG <span class="unit">m</span></label>
-      <input type="number" id="sg-h" value="2" min="0">
+      <input type="number" id="sg-h" value="" min="0">
     </div>
     <div class="note">Uses the Equipment Load (E) section's Empty/Operating weights directly (Tab 03, in kN) — V<sub>Empty</sub> = C<sub>s</sub>·E(E), V<sub>Operating</sub> = C<sub>s</sub>·E(O). No separate weight input needed.</div>
     <button type="button" id="sg-generate" class="combo-add-btn">Generate → fill Seismic (E) row</button>
@@ -1994,6 +1994,6 @@
     <button type="button" id="lrfd-reload-combos" class="combo-add-btn" style="background:transparent;">↺ Reload standard LRFD set (201+)</button>
   </div>
 </div>
-<script type="module" src="js/app.js?v=20261028n2"></script>
+<script type="module" src="js/app.js?v=20261028e4"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 // Section 02-style viewport. View changes display snapshots, never alter engineering results.
-import { state } from '../core/state.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
-import { anchorFocusDiagramSVG } from '../diagrams/anchorFocusDiagram.js?v=20261028f2';
-import { anchorGeometryDiagramSVG } from '../diagrams/anchorGeometryDiagram.js?v=20261028f2';
-import { anchorModesHTML } from './anchorModes.js?v=20261028f2';
+import { state } from '../core/state.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
+import { anchorFocusDiagramSVG } from '../diagrams/anchorFocusDiagram.js?v=20261028e4';
+import { anchorGeometryDiagramSVG } from '../diagrams/anchorGeometryDiagram.js?v=20261028e4';
+import { anchorModesHTML } from './anchorModes.js?v=20261028e4';
 
 export const ANCHOR_VIEWS = [['plan','📐 Plan View'],['elev','📏 Elevation View'],['iso','🧊 Isometric 2.5D'],['modes','Failure Modes · ACI']];
 export function anchorViewportHTML(v, result, forces) {

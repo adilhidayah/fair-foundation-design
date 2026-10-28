@@ -2129,7 +2129,7 @@
     .layout-wrapper { grid-column: 2; min-width: 0; border-radius: 0 0 var(--radius-lg) 0; }
     .nav-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 4px 12px; }
     .nav-heading { font: 600 10px var(--sans); letter-spacing: 1px; color: var(--ink-soft); }
-    #navigation-toggle { width: 30px; height: 30px; flex-shrink: 0; border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--bg); color: var(--ink); font-size: 22px; cursor: pointer; }
+    #navigation-toggle { flex-shrink: 0; }
     .navigation-items { display: flex; flex-direction: column; gap: 4px; }
     .sidebar-menu .tab { width: 100%; min-height: 42px; padding: 9px 8px; gap: 10px; border: 1px solid transparent; background: transparent; text-align: left; font-size: 11px; white-space: normal; line-height: 1.45; }
     .sidebar-menu .tab-code { width: 29px; font: 600 11px var(--mono); text-align: center; }
@@ -2174,3 +2174,20 @@
     .results, .ld-results { padding-inline: 12px; }
   }
   @media print { .workspace-section { display: none !important; } }
+
+  /* One UI font for project entry, selectors, labels and actions, including table/modal controls. */
+  body :is(input, select, textarea, button, label) { font-family: var(--sans) !important; font-variant-numeric: tabular-nums; }
+  .project-pending { display: none; }
+  .results[data-inputs-pending="true"] > .project-pending,
+  .ld-results[data-inputs-pending="true"] > .project-pending { display: block; }
+  :is(.results, .ld-results)[data-inputs-pending="true"] > :is(.calc-panel, .focus-panel, .ld-page) { display: none !important; }
+  .project-pending-card { max-width: 620px; padding: 24px; margin: 12px auto; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); font: 13px/1.6 var(--sans); }
+  .project-pending-card h2 { margin: 8px 0; font-size: 18px; font-weight: 600; }
+  .project-pending-card p, .project-pending-card ul { color: var(--ink-soft); }
+  .project-pending-card li { margin: 4px 0; }
+  .right-panel .project-pending-card { padding: 12px; margin: 0; font-size: 11px; }
+  .right-panel .project-pending-card h2 { font-size: 14px; }
+  @media screen {
+    body[data-project-readiness="pending"] :is(.results, .ld-results) > :is(.calc-panel, .focus-panel, .ld-page):not(#setup-status) { display: none !important; }
+    body[data-project-readiness="pending"] :is(#opt-oneway, #opt-twoway) { display: none; }
+  }

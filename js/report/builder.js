@@ -1,9 +1,10 @@
 // Printable report builder (sections, logos, document header).
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { flushRecalc } from '../workflow/recalc.js?v=20261028f2';
-import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261028f2';
-import { reportBlocks, state } from '../core/state.js?v=20261028f2';
-import { buildQuickStatusHtml } from '../report/summary.js?v=20261028f2';
+import { flushRecalc } from '../workflow/recalc.js?v=20261028e4';
+import { escapeHtml, getRadioVal } from '../core/dom.js?v=20261028e4';
+import { reportBlocks, state } from '../core/state.js?v=20261028e4';
+import { buildQuickStatusHtml } from '../report/summary.js?v=20261028e4';
+import { pendingInputs, pendingProjectHtml } from '../workflow/projectReadiness.js?v=20261028e4';
 
 export function renderBlockList() {
   document.getElementById('rpt-block-body').innerHTML = reportBlocks.map((b, i) => `
@@ -49,6 +50,7 @@ export function buildDocHeaderTable(title, rev) {
   </table>`;
 }
 export function generateReport() {
+  if(pendingInputs('summary').length){document.getElementById('calc-summary').innerHTML=pendingProjectHtml();return;}
   flushRecalc(); // a debounced recalculation (large STAAD imports) must finish before the report reads the results
   const name = document.getElementById('rpt-project').value || 'Untitled Project';
   const loc = document.getElementById('rpt-location').value;

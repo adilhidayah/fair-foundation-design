@@ -1,9 +1,9 @@
 // 6.3: snapshot-only Focus Canvas, shared by shallow footings and pile caps.
-import { escapeHtml } from '../core/dom.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
-import { state,lastResults } from '../core/state.js?v=20261028f2';
-import { pileCapRebarPlanSVG,pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028f2';
-import { flexureIsoSVG,flexureMomentsSVG } from '../diagrams/flexureFocusDiagram.js?v=20261028f2';
+import { escapeHtml } from '../core/dom.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
+import { state,lastResults } from '../core/state.js?v=20261028e4';
+import { pileCapRebarPlanSVG,pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028e4';
+import { flexureIsoSVG,flexureMomentsSVG } from '../diagrams/flexureFocusDiagram.js?v=20261028e4';
 const VIEWS=[['plan','📐 Plan View'],['elev','📏 Section X'],['iso','🧊 Isometric 2.5D'],['moments','Design Moments']];
 const selectedCase=v=>v.cases.find(c=>c.key===state.flexureCase)||v.cases[0];
 const selectedCombo=(v,c)=>v.combos.find(r=>r.name===state.flexureCombo)||v.combos.find(r=>r.name===c.govName)||v.combos[0];

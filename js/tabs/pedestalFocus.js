@@ -1,10 +1,10 @@
 // 5A display-only Focus Canvas. Engineering data is captured by calcRebar; wiring stays in app.js.
-import { escapeHtml } from '../core/dom.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
-import { lastResults, state } from '../core/state.js?v=20261028f2';
-import { comboLabel } from '../core/worksheet.js?v=20261028f2';
-import { pedestalSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028f2';
-import { pedestalGeometrySVG, pedestalPMFocusSVG } from '../diagrams/pedestalFocusDiagram.js?v=20261028f2';
+import { escapeHtml } from '../core/dom.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
+import { lastResults, state } from '../core/state.js?v=20261028e4';
+import { comboLabel } from '../core/worksheet.js?v=20261028e4';
+import { pedestalSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028e4';
+import { pedestalGeometrySVG, pedestalPMFocusSVG } from '../diagrams/pedestalFocusDiagram.js?v=20261028e4';
 
 const VIEWS=[['section','📐 Section View'],['elev','📏 Elevation View'],['iso','🧊 Isometric 2.5D'],['pm','P–M Interaction']];
 const ucText=n=>Number.isFinite(n)?fmt(n,3):n===Infinity?'∞':'—';

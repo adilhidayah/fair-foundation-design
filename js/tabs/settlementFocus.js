@@ -1,8 +1,8 @@
 // 08B: display-only settlement views. Functions are declared here; event wiring stays in app.js.
-import { escapeHtml } from '../core/dom.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
-import { state } from '../core/state.js?v=20261028f2';
-import { settlementDiagramSVG, settlementSummarySVG } from '../diagrams/settlementDiagram.js?v=20261028f2';
+import { escapeHtml } from '../core/dom.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
+import { state } from '../core/state.js?v=20261028e4';
+import { settlementDiagramSVG, settlementSummarySVG } from '../diagrams/settlementDiagram.js?v=20261028e4';
 
 const VIEWS = ['overlay', 'before', 'after'];
 export function setSettlementFocusView(view) {

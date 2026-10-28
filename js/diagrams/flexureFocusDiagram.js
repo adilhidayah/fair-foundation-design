@@ -1,6 +1,6 @@
 // 6.3 display-only reinforcement geometry and design-section moment bars.
-import { escapeHtml } from '../core/dom.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
+import { escapeHtml } from '../core/dom.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
 const text=(x,y,s,attrs='')=>`<text x="${x}" y="${y}" ${attrs}>${escapeHtml(s)}</text>`;
 const svg=(body,label)=>`<svg class="fdn-diagram fx-svg" viewBox="0 0 720 440" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeHtml(label)}" style="font:12px var(--sans);fill:var(--ink)">${body}</svg>`;
 export const FLEXURE_COLORS={xb:'var(--accent)',yb:'var(--pass)',xt:'var(--caution)',yt:'var(--ink-soft)'};

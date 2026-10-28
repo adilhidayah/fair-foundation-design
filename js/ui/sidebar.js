@@ -3,7 +3,7 @@
 // Two states on ".layout-wrapper[data-sidebar]": expanded (full input panel) and collapsed (hidden; the preview takes the
 // full width, "▶ Inputs" in the preview bar brings it back). The preference is kept per browser. (The former "compact" code
 // strip was removed on request — a saved "compact" falls back to expanded.)
-import { escapeHtml } from '../core/dom.js?v=20261028f2';
+import { escapeHtml } from '../core/dom.js?v=20261028e4';
 
 export const SIDEBAR_KEY = 'fair_fdn_sidebar_state';
 export const SIDEBAR_STATES = ['expanded', 'collapsed'];
@@ -20,7 +20,7 @@ export function setNavigationState(value, persist = true) {
   document.querySelector('.sheet').dataset.navigation = next;
   const button = document.getElementById('navigation-toggle');
   const label = next === 'collapsed' ? 'Expand navigation' : 'Collapse navigation';
-  button.textContent = next === 'collapsed' ? '›' : '‹';
+  button.textContent = next === 'collapsed' ? '▶' : '◀';
   button.setAttribute('aria-expanded', String(next === 'expanded'));
   button.setAttribute('aria-label', label); button.title = label;
   if (persist) { try { localStorage.setItem(NAVIGATION_KEY, next); } catch (e) {} }

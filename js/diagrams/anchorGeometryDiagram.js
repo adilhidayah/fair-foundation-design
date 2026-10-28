@@ -1,7 +1,7 @@
 // Anchor embedment views. Only Bp/Lp, bolt coordinates, and hef are geometric inputs.
 // Concrete below the embedment is cropped; no pedestal height or base-plate detail is inferred.
-import { escapeHtml } from '../core/dom.js?v=20261028f2';
-import { fmt } from '../core/format.js?v=20261028f2';
+import { escapeHtml } from '../core/dom.js?v=20261028e4';
+import { fmt } from '../core/format.js?v=20261028e4';
 
 export function anchorGeometryDiagramSVG(v, forces, view) {
   const { Bp, Lp } = v.site, hef = v.hef;

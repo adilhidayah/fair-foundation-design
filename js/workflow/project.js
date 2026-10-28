@@ -9,7 +9,7 @@
 //     lists:  { designStandards, pileList, boltList, reportBlocks, combosLc, combosLrfd },
 //     state:  { lcLoadTypes, windDirState, seismicDirState, rptLogo1, rptLogo2 } }
 // Values are stored as the inputs hold them (SI units, the same as the input labels); nothing is computed or converted here.
-import { boltList, comboState, designStandards, loadPointList, pileList, platformColumnList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261028f2';
+import { boltList, comboState, designStandards, loadPointList, pileList, platformColumnList, reportBlocks, skidSupportList, state } from '../core/state.js?v=20261028e4';
 
 export const PROJECT_FORMAT = 'fair-foundation-project';
 export const PROJECT_VERSION = 1;
@@ -53,6 +53,24 @@ export function collectProject() {
     project: ((document.getElementById('gen-proj') || {}).value || '').trim(),
     inputs, radios, lists, state: st
   };
+}
+
+// Keep application choices and code factors, remove project measurements and example layouts.
+export function emptyProjectData(template) {
+  const p=clone(template);
+  const criteria=/^(ab-phi-|ab-lambda$|fd-fs|fd-mincontact$|bc-FS$|rb-rhotop$)/;
+  Object.keys(p.inputs).forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el||el.tagName==='SELECT'||criteria.test(id))return;
+    if(el.type==='checkbox'||el.type==='radio')return;
+    p.inputs[id]='';
+  });
+  p.inputs['fs-grout']=false;p.project='';
+  ['pileList','boltList','loadPointList','platformColumnList','skidSupportList'].forEach(k=>{p.lists[k]=[];});
+  p.state.windDirState=null;
+  Object.keys(p.state.seismicDirState||{}).forEach(k=>{p.state.seismicDirState[k]=0;});
+  p.state.rptLogo1='';p.state.rptLogo2='';
+  return p;
 }
 
 // Throws a readable error when `p` is not a FAIR project this version can read.

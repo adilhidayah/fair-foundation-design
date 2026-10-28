@@ -1,4 +1,4 @@
-import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261028f2';
+import { defaultCombos, DEFAULT_KIND_BY_CODE } from '../../lib/foundation/index.js?v=20261028e4';
 
 // Shared UI state. Objects/arrays that are only ever mutated (never reassigned) are exported directly;
 // values that get reassigned live on `state` (ES module imports are read-only bindings), so every module
@@ -16,15 +16,11 @@ export const designStandards = [
 // flexure / shear checks (5B) — see loadLrfdCombos().
 export const comboState = { lc: defaultCombos(), lrfd: [] };
 // ---------- Pile layout table ----------
-export const pileList = [
-  { x: -0.6, y: -0.6 }, { x: 0.6, y: -0.6 }, { x: -0.6, y: 0.6 }, { x: 0.6, y: 0.6 }
-];
+export const pileList = [];
 // ---------- Load points on the pile cap (several equipment on one cap; used when Tab 02 "Load points" = Multiple) ----------
 // x, y (= z in the UI) = centre of the base plate / skid on the cap (m, cap-centre frame), c1 × c2 = its size (m), share = its part of
 // the superstructure loads of Section 03 (normalised in lib/foundation/shared/loadPoints.js).
-export const loadPointList = [
-  { x: 0, y: 0, c1: 1.25, c2: 1.25, share: 1 }
-];
+export const loadPointList = [];
 // ---------- Platform columns standing on the pile cap at their own positions (5B beam method, Tab 02 load points) ----------
 // x, y (= z in the UI) = centre of the base plate (m, cap-centre frame), c1 × c2 = its size (m), P = { loadTypeCode: vertical load, kN, down + }.
 export const platformColumnList = [];
@@ -32,9 +28,7 @@ export const platformColumnList = [];
 // x, z = centre from the footing / pile cap centre (m), c1 × c2 = footprint (m), PE / PO / PT = vertical reaction empty / operating / test (kN).
 export const skidSupportList = [];
 // ---------- Anchor bolt layout ----------
-export const boltList = [
-  { x: -150, y: -150 }, { x: 150, y: -150 }, { x: -150, y: 150 }, { x: 150, y: 150 }
-];
+export const boltList = [];
 // ---------- Report builder sections ----------
 export const reportBlocks = [
   { id: 'general', title: '01 — General Input Data', include: true, pageBreak: false },
