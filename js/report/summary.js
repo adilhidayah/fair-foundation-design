@@ -1,9 +1,9 @@
 // Summary report tab.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { getRadioVal } from '../core/dom.js?v=20261028c4';
-import { lastResults } from '../core/state.js?v=20261028c4';
-import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028c4';
-import { generateReport } from '../report/builder.js?v=20261028c4';
+import { getRadioVal } from '../core/dom.js?v=20261028p3';
+import { lastResults } from '../core/state.js?v=20261028p3';
+import { SCOPE_NA_LABEL, inScope } from '../workflow/scope.js?v=20261028p3';
+import { generateReport } from '../report/builder.js?v=20261028p3';
 
 export function buildQuickStatusHtml() {
   // 4A (shallow) and 4B (pile) are exclusive: the stability check of the other support is not part of this design

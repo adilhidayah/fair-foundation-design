@@ -1,16 +1,17 @@
 // 5A pedestal P-M reinforcement + 5B pile cap / shallow footing flexure.
 // Moved from app.js — function/const declarations only; event wiring stays in app.js.
-import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261028c4';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028c4';
-import { fmt } from '../core/format.js?v=20261028c4';
-import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261028c4';
-import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028c4';
-import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261028c4';
-import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028c4';
-import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261028c4';
-import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028c4';
-import { pileComboLoads } from '../tabs/pile.js?v=20261028c4';
-import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028c4';
+import { barLayout, evaluatePileGroupCombo, flexuralDesign, topLayerDesign, footingFlexureAxis, footingFlexurePoints, pedestalBaseActions, pileCapMomentAxis, searchPedestalBars, slabMinSteelRatio, stdComboVector } from '../../lib/foundation/index.js?v=20261028p3';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028p3';
+import { fmt } from '../core/format.js?v=20261028p3';
+import { comboState, lastResults, pileList, state } from '../core/state.js?v=20261028p3';
+import { chapterHeader, comboLabel, introPara, numberTables, sectionHeader } from '../core/worksheet.js?v=20261028p3';
+import { pmDiagramSVG } from '../diagrams/pmDiagram.js?v=20261028p3';
+import { pedestalSectionSVG, pileCapRebarPlanSVG, pileCapRebarSectionSVG } from '../diagrams/rebarDiagram.js?v=20261028p3';
+import { buildPedestalComboBase, buildStdComboBase } from '../tabs/combos.js?v=20261028p3';
+import { activeLoadPoints, loadPointsPedestals } from '../tabs/loadPoints.js?v=20261028p3';
+import { pileComboLoads } from '../tabs/pile.js?v=20261028p3';
+import { footingLrfdActions, isShallow, renderCh6Limits, soilPressureHtml } from '../tabs/footingSoil.js?v=20261028p3';
+import { renderPedestalFocus } from './pedestalFocus.js?v=20261028p3';
 
 // pmInteractionCurve(), phiMnAtP() and searchPedestalBars() live in lib/foundation/shared/pedestalCheck.js.
 // pileCapMomentAxis() and flexuralDesign() live in lib/foundation/shared/footingCheck.js.
@@ -35,6 +36,10 @@ function layBars(c, bar, t) {
   if (lay.valid) { c.n = lay.n; c.spacing = lay.s; c.AsProv = lay.AsProv; } else { c.n = 0; c.spacing = 0; c.AsProv = 0; }
 }
 export function calcRebar() {
+  calculateRebar();
+  renderPedestalFocus();
+}
+function calculateRebar() {
   lastResults.pedestalRebar = { label: 'Pedestal Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   lastResults.pileCapRebar = { label: 'Pile Cap Reinforcement', status: 'ERROR', metric: '—', detail: 'Not yet computed.' };
   // "Footing Only" (Tab 02, no pedestal): there is no pedestal to design — 5A is not applicable (NA: listed, not counted, tab
@@ -125,6 +130,15 @@ export function calcRebar() {
       const pedMinClear = Math.max(1.5 * barDia, 40);
       const pedClearOk = pedClear === null || pedClear >= pedMinClear - 1e-9;
       lastResults.pedestalRebar.notices = pedClearOk ? [] : [{ title: 'Pedestal bar spacing', text: `Clear spacing ${fmt(pedClear, 0)} mm < ${fmt(pedMinClear, 0)} mm = max(1.5·d_b, 40) (ACI 318M-19 §25.2.3) with ${search.n} × D${fmt(barDia, 0)} per face — increase the pedestal size in Tab 02 or use a smaller bar.` }];
+      // Display snapshot only: reuse the designed layout, P-M curve and the existing spacing check.
+      lastResults.pedestalRebar.viz = {
+        Bp, Lp, dPrime, barDia, fc, fy, Hp: state.pedHp * 1000,
+        groutT: document.getElementById('fs-grout')?.checked ? num('fs-grout-t') : 0,
+        n: search.n, Ast: search.Ast, rho: search.rho, curve: search.curve, perCombo: search.perCombo,
+        maxUC: search.maxUC, worstCombo: search.worstCombo, pedSpacing, pedClear, pedMinClear, pedClearOk,
+        siteIndex: multiPeds ? multiPeds.gov.idx : 1,
+        sites: multiPeds ? multiPeds.map(m => ({ idx: m.idx, Bp: m.Bp, Lp: m.Lp, search: m.search })) : [{ idx: 1, Bp, Lp, search }]
+      };
       const reinfTable = `<div class="overflow-x"><table class="calc-table">
         <caption>Recommended pedestal reinforcement</caption>
         <tr><th>Parameter</th><th>Expression</th><th>Value</th></tr>

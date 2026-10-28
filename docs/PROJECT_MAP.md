@@ -94,6 +94,7 @@ MASTER CALCULATOR/
 | [js/tabs/foundation.js](../js/tabs/foundation.js) | 18 KB | 4A — `calcFoundation()` |
 | [js/tabs/pile.js](../js/tabs/pile.js) | 10 KB | 4B — tabel tiang + `calcPile()` |
 | [js/tabs/rebar.js](../js/tabs/rebar.js) | 10 KB | 5A/5B — `calcRebar()` |
+| [js/tabs/pedestalFocus.js](../js/tabs/pedestalFocus.js), [js/diagrams/pedestalFocusDiagram.js](../js/diagrams/pedestalFocusDiagram.js) | — | 5A — Focus Canvas penampang / elevasi / isometrik / P–M, pilihan kombinasi LRFD, jarak tulangan dan pedestal penentu; data hitungan existing |
 | [js/tabs/shear.js](../js/tabs/shear.js) | 10 KB | 5B — `calcOneWay()`, `calcTwoWay()` |
 | [js/tabs/footingSoil.js](../js/tabs/footingSoil.js) | 5 KB | 5B shallow — `footingLrfdActions()` (beban LRFD di dasar footing + bidang tekanan tanah per kombinasi), `soilPressureHtml()` |
 | [js/tabs/bearing.js](../js/tabs/bearing.js) | 6 KB | 08 — `calcBearing()` |

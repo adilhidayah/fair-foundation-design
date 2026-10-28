@@ -31,6 +31,7 @@ Calculation formulas never live in `js/` — modules here read inputs, call `lib
 | `tabs/pile.js` | 4B — pile table, `calcPile` |
 | `tabs/stabilityFocus.js` | 4A / 4B — Focus Canvas views (`#focus-foundation`, `#focus-pile`): check tiles with governing UC, diagram, UC / DCR table per combination; replace the A4 sheet only in Focus Canvas mode |
 | `tabs/rebar.js` | 5A/5B — `calcRebar` |
+| `tabs/pedestalFocus.js`, `diagrams/pedestalFocusDiagram.js` | 5A — Section 02-style viewport: cross-section / elevation / isometric / P–M. Reads `lastResults.pedestalRebar.viz`, selects LRFD points (`state.pedestalFocusLC`) and retains `state.pedestalFocusView`. The same two-face layout and factored curve as Report Preview; no inferred ties, end anchorage or biaxial design |
 | `tabs/shear.js` | 5B — `calcOneWay`, `calcTwoWay` |
 | `tabs/bearing.js`, `tabs/settlement.js` | 08 / 08B |
 | `tabs/settlementFocus.js`, `diagrams/settlementDiagram.js` | 08B — display-only settlement Focus Canvas and static report SVGs: before / after / overlay, existing components and allowable checks; single-pile components remain separate from group settlement |

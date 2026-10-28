@@ -1,7 +1,7 @@
 // Failure-mode cards use the library's check operands. No capacity calculation in the UI.
-import { escapeHtml } from '../core/dom.js?v=20261028c4';
-import { fmt } from '../core/format.js?v=20261028c4';
-import { anchorFailureDiagramSVG } from '../diagrams/anchorFailureDiagram.js?v=20261028c4';
+import { escapeHtml } from '../core/dom.js?v=20261028p3';
+import { fmt } from '../core/format.js?v=20261028p3';
+import { anchorFailureDiagramSVG } from '../diagrams/anchorFailureDiagram.js?v=20261028p3';
 
 const MODE = {
   steelN: ['Steel failure · tension', 'The anchor steel carries tensile force.'],

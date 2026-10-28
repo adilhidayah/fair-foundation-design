@@ -7,7 +7,7 @@
 const TAB_OF = {
   'calc-summary': 'summary', 'calc-foundation': 'foundation', 'calc-pile': 'pile', 'calc-anchor': 'anchor',
   'calc-oneway': 'capcheck', 'calc-twoway': 'capcheck', 'calc-rebarcap': 'capcheck', 'calc-platformcap': 'capcheck', 'calc-rebar': 'pedcheck',
-  'focus-foundation': 'foundation', 'focus-pile': 'pile', 'focus-capcheck': 'capcheck', 'focus-loading': 'loadingdata', 'focus-settlement': 'settlement', 'focus-anchor': 'anchor',
+  'focus-foundation': 'foundation', 'focus-pile': 'pile', 'focus-capcheck': 'capcheck', 'focus-loading': 'loadingdata', 'focus-settlement': 'settlement', 'focus-anchor': 'anchor', 'focus-pedestal': 'pedcheck',
   'lc-summary-top': 'loadingdata', 'lc-summary-bottom': 'loadingdata',
   'lrfd-summary-top': 'loadingdata', 'lrfd-summary-ped': 'loadingdata', 'lrfd-summary-bottom': 'loadingdata'
 };

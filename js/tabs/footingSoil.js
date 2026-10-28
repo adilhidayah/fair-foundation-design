@@ -1,12 +1,12 @@
 // 5B shallow footing — factored (LRFD) soil pressure per combination, shared by the one-way shear, punching and flexure panels.
 // Function/const declarations only; event wiring stays in app.js.
-import { footingPointLoads, normalisePoints, pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261028c4';
-import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028c4';
-import { fmt } from '../core/format.js?v=20261028c4';
-import { comboState, lastResults, state } from '../core/state.js?v=20261028c4';
-import { comboLabel, introPara } from '../core/worksheet.js?v=20261028c4';
-import { buildStdComboBase } from '../tabs/combos.js?v=20261028c4';
-import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261028c4';
+import { footingPointLoads, normalisePoints, pedestalOffsetMoments, signedSoilPressure, stdComboVector } from '../../lib/foundation/index.js?v=20261028p3';
+import { escapeHtml, getRadioVal, num } from '../core/dom.js?v=20261028p3';
+import { fmt } from '../core/format.js?v=20261028p3';
+import { comboState, lastResults, state } from '../core/state.js?v=20261028p3';
+import { comboLabel, introPara } from '../core/worksheet.js?v=20261028p3';
+import { buildStdComboBase } from '../tabs/combos.js?v=20261028p3';
+import { activeLoadPoints } from '../tabs/loadPoints.js?v=20261028p3';
 
 export const isShallow = () => getRadioVal('fs-support') !== 'pile';
 
